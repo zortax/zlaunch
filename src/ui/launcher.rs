@@ -1,5 +1,6 @@
+use crate::compositor::Compositor;
 use crate::desktop::launch_application;
-use crate::items::{ApplicationItem, ListItem};
+use crate::items::ListItem;
 use crate::ui::items::ItemListDelegate;
 use crate::ui::theme::theme;
 use gpui::{
@@ -10,6 +11,7 @@ use gpui_component::IndexPath;
 use gpui_component::input::{Input, InputState};
 use gpui_component::list::{List, ListState};
 use gpui_component::{ActiveTheme, Icon, IconName};
+use std::sync::Arc;
 
 actions!(launcher, [SelectNext, SelectPrev, Confirm, Cancel]);
 
@@ -33,17 +35,12 @@ pub struct LauncherView {
 
 impl LauncherView {
     pub fn new(
-        applications: Vec<ApplicationItem>,
+        items: Vec<ListItem>,
+        compositor: Arc<dyn Compositor>,
         on_hide: impl Fn() + Send + Sync + 'static,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        // Convert applications to ListItems
-        let items: Vec<ListItem> = applications
-            .into_iter()
-            .map(ListItem::Application)
-            .collect();
-
         let mut delegate = ItemListDelegate::new(items);
 
         // Set up callbacks using Arc for sharing
@@ -52,20 +49,29 @@ impl LauncherView {
         let on_hide_for_cancel = on_hide.clone();
 
         delegate.set_on_confirm(move |item| {
-            if let ListItem::Application(app) = item {
-                // Convert back to DesktopEntry for launching
-                let entry = crate::desktop::DesktopEntry::new(
-                    app.id.clone(),
-                    app.name.clone(),
-                    app.exec.clone(),
-                    None,
-                    app.icon_path.clone(),
-                    app.description.clone(),
-                    vec![],
-                    app.terminal,
-                    app.desktop_path.clone(),
-                );
-                let _ = launch_application(&entry);
+            match item {
+                ListItem::Application(app) => {
+                    // Convert back to DesktopEntry for launching
+                    let entry = crate::desktop::DesktopEntry::new(
+                        app.id.clone(),
+                        app.name.clone(),
+                        app.exec.clone(),
+                        None,
+                        app.icon_path.clone(),
+                        app.description.clone(),
+                        vec![],
+                        app.terminal,
+                        app.desktop_path.clone(),
+                    );
+                    let _ = launch_application(&entry);
+                }
+                ListItem::Window(win) => {
+                    // Focus the window via compositor
+                    if let Err(e) = compositor.focus_window(&win.address) {
+                        tracing::warn!(%e, "Failed to focus window");
+                    }
+                }
+                _ => {}
             }
             on_hide_for_confirm();
         });
@@ -163,7 +169,13 @@ impl LauncherView {
             let current = delegate.selected_index().unwrap_or(0);
             let next = if current + 1 >= count { 0 } else { current + 1 };
             delegate.set_selected(next);
-            list_state.scroll_to_item(IndexPath::new(next), ScrollStrategy::Top, window, cx);
+            let (section, row) = delegate.global_to_section_row(next);
+            list_state.scroll_to_item(
+                IndexPath::new(row).section(section),
+                ScrollStrategy::Top,
+                window,
+                cx,
+            );
             cx.notify();
         });
     }
@@ -178,7 +190,13 @@ impl LauncherView {
             let current = delegate.selected_index().unwrap_or(0);
             let prev = if current == 0 { count - 1 } else { current - 1 };
             delegate.set_selected(prev);
-            list_state.scroll_to_item(IndexPath::new(prev), ScrollStrategy::Top, window, cx);
+            let (section, row) = delegate.global_to_section_row(prev);
+            list_state.scroll_to_item(
+                IndexPath::new(row).section(section),
+                ScrollStrategy::Top,
+                window,
+                cx,
+            );
             cx.notify();
         });
     }

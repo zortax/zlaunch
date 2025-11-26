@@ -1,17 +1,34 @@
 use anyhow::Result;
 use gpui::{Application, QuitMode, hsla};
 use gpui_component::theme::{Theme, ThemeMode};
+use std::sync::Arc;
+use tracing::{debug, error, info};
 
 use crate::app::{DaemonEvent, WindowEvent, create_daemon_channel, window};
+use crate::compositor::{Compositor, detect_compositor};
 use crate::desktop::cache::load_applications;
 use crate::desktop::capture_session_environment;
 use crate::ipc::{Command, IpcServer, client};
 use crate::items::ApplicationItem;
 use crate::ui::init_launcher;
 
+/// Initialize the tracing subscriber for logging.
+pub fn init_logging() {
+    use tracing_subscriber::{EnvFilter, fmt, prelude::*};
+
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+
+    tracing_subscriber::registry()
+        .with(fmt::layer().with_target(false).without_time())
+        .with(filter)
+        .init();
+}
+
 /// Run the launcher daemon.
 /// This is the main entry point when no subcommand is provided.
 pub fn run() -> Result<()> {
+    init_logging();
+
     // Capture the full session environment early, including from systemd user session.
     // This ensures launched applications get proper theming variables.
     capture_session_environment();
@@ -20,7 +37,7 @@ pub fn run() -> Result<()> {
         Ok(server) => server,
         Err(e) => {
             if client::is_daemon_running() {
-                eprintln!("Daemon already running, sending toggle command...");
+                debug!("Daemon already running, sending toggle command");
                 client::send_command(Command::Toggle)?;
                 return Ok(());
             }
@@ -28,10 +45,13 @@ pub fn run() -> Result<()> {
         }
     };
 
+    // Detect compositor for window switching support
+    let compositor: Arc<dyn Compositor> = Arc::from(detect_compositor());
+
     // Load applications and convert to ApplicationItems
     let entries = load_applications();
     let applications: Vec<ApplicationItem> = entries.into_iter().map(Into::into).collect();
-    println!("Loaded {} applications", applications.len());
+    info!(count = applications.len(), "Loaded applications");
 
     // Create unified event channel
     let (event_tx, event_rx) = create_daemon_channel();
@@ -62,6 +82,7 @@ pub fn run() -> Result<()> {
             configure_theme(cx);
 
             let applications_clone = applications.clone();
+            let compositor_clone = compositor.clone();
             let mut window_handle = None;
             let mut visible = false;
 
@@ -83,6 +104,7 @@ pub fn run() -> Result<()> {
                                 Command::Show | Command::Toggle if !visible => {
                                     match window::create_and_show_window(
                                         applications_clone.clone(),
+                                        compositor_clone.clone(),
                                         event_tx.clone(),
                                         cx,
                                     ) {
@@ -90,7 +112,7 @@ pub fn run() -> Result<()> {
                                             window_handle = Some(handle);
                                             visible = true;
                                         }
-                                        Err(e) => eprintln!("Failed to create window: {}", e),
+                                        Err(e) => error!(%e, "Failed to create window"),
                                     }
                                 }
                                 Command::Hide | Command::Toggle if visible => {

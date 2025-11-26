@@ -40,6 +40,11 @@ pub struct LauncherTheme {
     // Empty state
     pub empty_state_height: Pixels,
     pub empty_state_color: Hsla,
+
+    // Section headers
+    pub section_header_color: Hsla,
+    pub section_header_margin_top: Pixels,
+    pub section_header_margin_bottom: Pixels,
 }
 
 impl Default for LauncherTheme {
@@ -82,6 +87,11 @@ impl Default for LauncherTheme {
             // Empty state
             empty_state_height: px(200.0),
             empty_state_color: hsla(0.0, 0.0, 1.0, 0.25), // 25% white
+
+            // Section headers
+            section_header_color: hsla(0.0, 0.0, 1.0, 0.4), // 40% white (like descriptions)
+            section_header_margin_top: px(8.0),
+            section_header_margin_bottom: px(4.0),
         }
     }
 }

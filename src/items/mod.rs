@@ -49,7 +49,7 @@ impl ListItem {
     pub fn description(&self) -> Option<&str> {
         match self {
             Self::Application(app) => app.description.as_deref(),
-            Self::Window(win) => Some(&win.app_name),
+            Self::Window(win) => Some(&win.description),
             Self::Action(act) => act.description.as_deref(),
             Self::Submenu(sub) => sub.description.as_deref(),
         }
@@ -92,6 +92,28 @@ impl ListItem {
             Self::Window(_) => "Switch",
             Self::Action(_) => "Run",
             Self::Submenu(_) => "Open",
+        }
+    }
+
+    /// Get the sort priority for this item type.
+    /// Lower values appear first in the list.
+    /// Windows (0) < Applications (1) < Actions (2) < Submenus (3)
+    pub fn sort_priority(&self) -> u8 {
+        match self {
+            Self::Window(_) => 0,
+            Self::Application(_) => 1,
+            Self::Action(_) => 2,
+            Self::Submenu(_) => 3,
+        }
+    }
+
+    /// Get the section name for this item type.
+    pub fn section_name(&self) -> &'static str {
+        match self {
+            Self::Window(_) => "Windows",
+            Self::Application(_) => "Applications",
+            Self::Action(_) => "Actions",
+            Self::Submenu(_) => "Submenus",
         }
     }
 }

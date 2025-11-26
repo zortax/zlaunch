@@ -27,7 +27,7 @@ fn render_window(win: &crate::items::WindowItem, selected: bool, row: usize) -> 
         .child(render_icon(win.icon_path.as_ref()))
         .child(render_text_content(
             &win.title,
-            Some(&win.app_name),
+            Some(&win.description),
             selected,
         ));
 

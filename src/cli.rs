@@ -38,9 +38,7 @@ impl Commands {
 /// Handle a client command by sending it to the running daemon.
 pub fn handle_client_command(cmd: Commands) -> Result<()> {
     if !client::is_daemon_running() {
-        eprintln!("Error: zlaunch daemon is not running");
-        eprintln!("Start the daemon first by running: zlaunch");
-        std::process::exit(1);
+        anyhow::bail!("zlaunch daemon is not running. Start it first by running: zlaunch");
     }
 
     client::send_command(cmd.to_ipc_command())?;
