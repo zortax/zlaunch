@@ -1,13 +1,21 @@
 # zlaunch
 
-A fast application launcher and window switcher for Linux, built with [GPUI](https://github.com/zed-industries/zed).
+A fast cross-platform application launcher and window switcher, built with [GPUI](https://github.com/zed-industries/zed).
 
 ## Features
 
-- **Application launching** - Fuzzy search through desktop entries with icons
-- **Window switching** - Quickly switch between open windows
+- **Application launching** - Fuzzy search through installed applications
+- **Window switching** - Quickly switch between open windows (Linux only)
 - **Daemon architecture** - Runs in background for instant response
-- **Compositor support** - Native integration with Hyprland and KDE/KWin
+- **Cross-platform** - Works on Linux and Windows
+
+### Platform Support
+
+| Feature | Linux | Windows |
+|---------|-------|---------|
+| Application launching | ✅ | ✅ |
+| Window switching | ✅ (Hyprland, KDE/KWin) | ❌ |
+| Icon support | ✅ | Limited |
 
 ## Usage
 

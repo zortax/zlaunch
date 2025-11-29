@@ -2,6 +2,7 @@ pub mod cache;
 pub mod entry;
 pub mod env;
 pub mod exec;
+#[cfg(unix)]
 pub mod parser;
 pub mod scanner;
 

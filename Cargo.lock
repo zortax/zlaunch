@@ -8089,6 +8089,7 @@ dependencies = [
  "serde_json",
  "tracing",
  "tracing-subscriber",
+ "winreg",
 ]
 
 [[package]]

@@ -1,3 +1,6 @@
+//! Desktop file parser for Unix/Linux systems.
+//! This module is only compiled on Unix platforms.
+
 use crate::desktop::entry::DesktopEntry;
 use freedesktop_desktop_entry::DesktopEntry as FdEntry;
 use std::path::Path;
