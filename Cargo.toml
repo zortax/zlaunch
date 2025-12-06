@@ -14,8 +14,6 @@ gpui-component-assets = "0.4.1"
 rust-embed = "8"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
-freedesktop-desktop-entry = "0.7"
-freedesktop-icons = "0.4"
 dirs = "6"
 flume = "0.11"
 fuzzy-matcher = "0.3"
@@ -25,9 +23,18 @@ lazy_static = "1.4"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 fasteval = "0.2"
-arboard = { version = "3", features = ["wayland-data-control"] }
 regex = "1"
 emojis = "0.8"
+
+# Platform-specific dependencies
+[target.'cfg(unix)'.dependencies]
+freedesktop-desktop-entry = "0.7"
+freedesktop-icons = "0.4"
+arboard = { version = "3", features = ["wayland-data-control"] }
+
+[target.'cfg(windows)'.dependencies]
+arboard = "3"
+winreg = "0.55"
 
 [patch.crates-io]
 gpui = { git = "https://github.com/zed-industries/zed", rev = "7c724c0f1049e610c541c2f4f6a8739f91865e02" }

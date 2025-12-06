@@ -3,17 +3,26 @@ use crate::desktop::env::get_session_environment;
 use std::process::Command;
 
 pub fn launch_application(entry: &DesktopEntry) -> anyhow::Result<()> {
-    let exec = clean_exec_string(&entry.exec);
+    #[cfg(unix)]
+    {
+        let exec = clean_exec_string(&entry.exec);
 
-    if entry.terminal {
-        launch_in_terminal(&exec)?;
-    } else {
-        launch_detached(&exec)?;
+        if entry.terminal {
+            launch_in_terminal_unix(&exec)?;
+        } else {
+            launch_detached_unix(&exec)?;
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        launch_windows(entry)?;
     }
 
     Ok(())
 }
 
+#[cfg(unix)]
 fn clean_exec_string(exec: &str) -> String {
     let mut result = exec.to_string();
 
@@ -26,7 +35,8 @@ fn clean_exec_string(exec: &str) -> String {
     result.trim().to_string()
 }
 
-fn launch_detached(exec: &str) -> anyhow::Result<()> {
+#[cfg(unix)]
+fn launch_detached_unix(exec: &str) -> anyhow::Result<()> {
     let parts: Vec<&str> = exec.split_whitespace().collect();
     if parts.is_empty() {
         anyhow::bail!("Empty exec command");
@@ -47,8 +57,9 @@ fn launch_detached(exec: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn launch_in_terminal(exec: &str) -> anyhow::Result<()> {
-    let terminal = get_terminal()?;
+#[cfg(unix)]
+fn launch_in_terminal_unix(exec: &str) -> anyhow::Result<()> {
+    let terminal = get_terminal_unix()?;
 
     Command::new(&terminal)
         .arg("-e")
@@ -63,7 +74,8 @@ fn launch_in_terminal(exec: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn get_terminal() -> anyhow::Result<String> {
+#[cfg(unix)]
+fn get_terminal_unix() -> anyhow::Result<String> {
     if let Ok(terminal) = std::env::var("TERMINAL") {
         return Ok(terminal);
     }
@@ -77,4 +89,36 @@ fn get_terminal() -> anyhow::Result<String> {
     }
 
     anyhow::bail!("No terminal emulator found. Set $TERMINAL environment variable.")
+}
+
+#[cfg(windows)]
+fn launch_windows(entry: &DesktopEntry) -> anyhow::Result<()> {
+    use std::os::windows::process::CommandExt;
+    
+    // Windows creation flags
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    const DETACHED_PROCESS: u32 = 0x00000008;
+    
+    let path = &entry.path;
+    
+    // For .lnk files, use cmd /c start to launch them
+    if path.extension().is_some_and(|ext| ext == "lnk") {
+        Command::new("cmd")
+            .args(["/c", "start", "", path.to_str().unwrap_or("")])
+            .creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS)
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()?;
+    } else {
+        // For executables, run directly
+        Command::new(&entry.exec)
+            .creation_flags(DETACHED_PROCESS)
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .spawn()?;
+    }
+
+    Ok(())
 }

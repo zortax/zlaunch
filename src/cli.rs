@@ -5,7 +5,7 @@ use crate::ipc::{Command, client};
 
 #[derive(Parser)]
 #[command(name = "zlaunch")]
-#[command(about = "A fast application launcher for Linux")]
+#[command(about = "A fast cross-platform application launcher")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,

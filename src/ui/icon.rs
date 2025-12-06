@@ -1,10 +1,15 @@
 use std::collections::HashMap;
-use std::fs;
 use std::path::PathBuf;
-use std::sync::{Arc, OnceLock, RwLock};
+use std::sync::{Arc, RwLock};
+
+#[cfg(unix)]
+use std::fs;
+#[cfg(unix)]
+use std::sync::OnceLock;
 
 // Request higher resolution icons (64px) and let GPUI scale them down to display size.
 // This provides natural anti-aliasing as extra pixels are blended during downscaling.
+#[cfg(unix)]
 const ICON_SIZE: u16 = 64;
 
 lazy_static::lazy_static! {
@@ -12,9 +17,11 @@ lazy_static::lazy_static! {
         Arc::new(RwLock::new(HashMap::new()));
 }
 
+#[cfg(unix)]
 static ICON_THEME: OnceLock<Option<String>> = OnceLock::new();
 
 /// Get the configured icon theme from KDE/GTK settings
+#[cfg(unix)]
 fn get_icon_theme() -> Option<&'static str> {
     ICON_THEME
         .get_or_init(|| {
@@ -38,6 +45,7 @@ fn get_icon_theme() -> Option<&'static str> {
         .as_deref()
 }
 
+#[cfg(unix)]
 fn read_kde_icon_theme() -> Option<String> {
     let config_path = dirs::config_dir()?.join("kdeglobals");
     let content = fs::read_to_string(config_path).ok()?;
@@ -56,6 +64,7 @@ fn read_kde_icon_theme() -> Option<String> {
     None
 }
 
+#[cfg(unix)]
 fn read_gtk3_icon_theme() -> Option<String> {
     let config_path = dirs::config_dir()?.join("gtk-3.0/settings.ini");
     let content = fs::read_to_string(config_path).ok()?;
@@ -69,6 +78,7 @@ fn read_gtk3_icon_theme() -> Option<String> {
     None
 }
 
+#[cfg(unix)]
 fn read_gtk4_icon_theme() -> Option<String> {
     let config_path = dirs::config_dir()?.join("gtk-4.0/settings.ini");
     let content = fs::read_to_string(config_path).ok()?;
@@ -98,6 +108,7 @@ pub fn resolve_icon_path(icon_name: &str) -> Option<PathBuf> {
     path
 }
 
+#[cfg(unix)]
 fn resolve_icon_internal(icon_name: &str) -> Option<PathBuf> {
     // Absolute path - use directly
     if icon_name.starts_with('/') {
@@ -134,4 +145,12 @@ fn resolve_icon_internal(icon_name: &str) -> Option<PathBuf> {
     freedesktop_icons::lookup(icon_name)
         .with_size(ICON_SIZE)
         .find()
+}
+
+#[cfg(windows)]
+fn resolve_icon_internal(_icon_name: &str) -> Option<PathBuf> {
+    // On Windows, icon resolution is not yet implemented.
+    // Applications launched from .lnk files will use their embedded icons
+    // through the Windows shell.
+    None
 }

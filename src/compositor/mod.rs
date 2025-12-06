@@ -1,11 +1,14 @@
 //! Compositor abstraction for window management.
 //!
 //! This module provides a trait-based abstraction for interacting with
-//! Wayland compositors to list windows and switch focus. Implementations
-//! are provided for Hyprland (IPC socket) and KDE/KWin (DBus).
+//! window managers to list windows and switch focus. On Unix/Linux,
+//! implementations are provided for Hyprland (IPC socket) and KDE/KWin (DBus).
+//! On Windows, a NoopCompositor is used as window switching is not yet supported.
 
 mod detect;
+#[cfg(unix)]
 mod hyprland;
+#[cfg(unix)]
 mod kwin;
 mod noop;
 
