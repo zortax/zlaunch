@@ -1,6 +1,6 @@
-//! Calculator item representing a calculation result.
-
 use crate::calculator::CalcResult;
+
+use super::traits::{Categorizable, DisplayItem, Executable, IconProvider, Previewable};
 
 /// A calculator item representing a calculation result.
 #[derive(Clone, Debug)]
@@ -48,11 +48,56 @@ impl CalculatorItem {
     }
 
     /// Get the text to copy to clipboard.
-    /// Returns the clipboard result for successful calculations,
-    /// or the display result for errors (so user can still copy the error message).
     pub fn text_for_clipboard(&self) -> &str {
         self.clipboard_result
             .as_deref()
             .unwrap_or(&self.display_result)
+    }
+}
+
+impl DisplayItem for CalculatorItem {
+    fn id(&self) -> &str {
+        &self.id
+    }
+
+    fn name(&self) -> &str {
+        &self.expression
+    }
+
+    fn description(&self) -> Option<&str> {
+        Some(&self.display_result)
+    }
+
+    fn action_label(&self) -> &'static str {
+        "Copy"
+    }
+}
+
+impl IconProvider for CalculatorItem {
+    // Calculator uses a custom icon (not path or named)
+}
+
+impl Executable for CalculatorItem {
+    fn execute(&self) -> anyhow::Result<()> {
+        // Copy to clipboard
+        crate::calculator::copy_to_clipboard(self.text_for_clipboard())
+            .map_err(|e| anyhow::anyhow!("Failed to copy to clipboard: {}", e))?;
+        Ok(())
+    }
+}
+
+impl Categorizable for CalculatorItem {
+    fn section_name(&self) -> &'static str {
+        "Calculator"
+    }
+
+    fn sort_priority(&self) -> u8 {
+        0
+    }
+}
+
+impl Previewable for CalculatorItem {
+    fn has_preview(&self) -> bool {
+        false
     }
 }

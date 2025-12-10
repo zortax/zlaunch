@@ -38,7 +38,18 @@ pub fn add_item(content: ClipboardContent) {
 fn is_same_content(a: &ClipboardContent, b: &ClipboardContent) -> bool {
     match (a, b) {
         (ClipboardContent::Text(a), ClipboardContent::Text(b)) => a == b,
-        (ClipboardContent::Image(a), ClipboardContent::Image(b)) => a == b,
+        (
+            ClipboardContent::Image {
+                width: w1,
+                height: h1,
+                rgba_bytes: b1,
+            },
+            ClipboardContent::Image {
+                width: w2,
+                height: h2,
+                rgba_bytes: b2,
+            },
+        ) => w1 == w2 && h1 == h2 && b1 == b2,
         (ClipboardContent::FilePaths(a), ClipboardContent::FilePaths(b)) => a == b,
         (
             ClipboardContent::RichText {
@@ -69,7 +80,7 @@ pub fn search_items(query: &str) -> Vec<ClipboardItem> {
         .filter_map(|item| {
             let search_text = match &item.content {
                 ClipboardContent::Text(text) => text.clone(),
-                ClipboardContent::Image(_) => "image".to_string(),
+                ClipboardContent::Image { .. } => "image".to_string(),
                 ClipboardContent::FilePaths(paths) => paths
                     .iter()
                     .filter_map(|p| p.to_str())

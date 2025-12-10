@@ -1,0 +1,91 @@
+# One Dark theme for zlaunch
+# Based on Atom's One Dark theme
+name = "one-dark"
+
+# Window settings - modern and spacious
+window_background = "#282c34e6"      # Background
+window_border = "#61afef26"          # Blue
+window_border_radius = 16.0          # Very round
+
+# List items - generous padding
+item_margin_x = 14.0
+item_margin_y = 2.5
+item_padding_x = 14.0
+item_padding_y = 10.0
+item_border_radius = 10.0
+item_background = "#00000000"
+item_background_selected = "#2c313a"  # Lighter bg
+
+# Item content
+item_title_color = "#abb2bf"         # Foreground
+item_description_color = "#5c6370"   # Comment
+item_title_line_height = 19.0
+item_content_height = 40.0
+
+# Icons - extra large
+icon_size = 32.0
+icon_placeholder_background = "#21252b"
+icon_placeholder_color = "#5c6370"
+
+# Empty state
+empty_state_height = 240.0
+empty_state_color = "#5c6370"
+
+[calculator]
+padding_multiplier = 1.7
+content_height_multiplier = 1.35
+icon_background = "#61afef26"        # Blue
+icon_color = "#61afef"
+error_color = "#e06c75"              # Red
+content_gap = 4.0
+
+[action_indicator]
+width = 80.0
+right_position = 14.0
+label_color = "#5c6370"
+key_background = "#2c313a"
+key_border = "#3e4451"
+key_color = "#abb2bf"
+key_padding_x = 7.0
+key_padding_top = 4.0
+key_padding_bottom = 3.0
+key_border_radius = 5.0
+key_font_size = 12.0
+key_line_height = 12.0
+
+[emoji]
+columns = 8
+cell_size = 72.0
+font_size = 32.0
+cell_selected_bg = "#2c313a"
+cell_border_radius = 10.0
+cell_gap = 4.0
+
+[ai]
+error_background = "#e06c75"
+error_title_color = "#282c34"
+error_message_color = "#1e2127"
+
+[markdown]
+paragraph_line_height = 24.0
+heading_line_height = 26.0
+code_block_radius = 10.0
+code_line_height = 22.0
+
+[clipboard]
+color_icon_size = 20.0
+preview_padding = 20.0
+color_swatch_size = 140.0
+color_preview_gap = 24.0
+color_code_gap = 12.0
+color_label_width = 70.0
+
+[section_header]
+color = "#5c6370"
+margin_top = 12.0
+margin_bottom = 6.0
+padding_y = 8.0
+
+[layout]
+separator_width = 1.0
+item_description_height = 22.0

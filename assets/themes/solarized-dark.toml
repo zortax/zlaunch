@@ -1,0 +1,91 @@
+# Solarized Dark theme for zlaunch
+# Based on https://ethanschoonover.com/solarized/
+name = "solarized-dark"
+
+# Window settings - compact and precise
+window_background = "#002b36d9"      # Base03
+window_border = "#268bd222"          # Blue
+window_border_radius = 8.0           # Sharp corners
+
+# List items - tight spacing
+item_margin_x = 6.0
+item_margin_y = 0.5
+item_padding_x = 8.0
+item_padding_y = 6.0
+item_border_radius = 4.0
+item_background = "#00000000"
+item_background_selected = "#073642"  # Base02
+
+# Item content
+item_title_color = "#839496"         # Base0
+item_description_color = "#586e75"   # Base01
+item_title_line_height = 16.0
+item_content_height = 32.0
+
+# Icons - standard size
+icon_size = 22.0
+icon_placeholder_background = "#073642"
+icon_placeholder_color = "#586e75"
+
+# Empty state
+empty_state_height = 180.0
+empty_state_color = "#586e75"
+
+[calculator]
+padding_multiplier = 1.4
+content_height_multiplier = 1.2
+icon_background = "#268bd222"        # Blue
+icon_color = "#268bd2"
+error_color = "#dc322f"              # Red
+content_gap = 2.0
+
+[action_indicator]
+width = 60.0
+right_position = 6.0
+label_color = "#586e75"
+key_background = "#073642"
+key_border = "#586e75"
+key_color = "#93a1a1"
+key_padding_x = 4.0
+key_padding_top = 2.0
+key_padding_bottom = 1.0
+key_border_radius = 2.0
+key_font_size = 10.0
+key_line_height = 10.0
+
+[emoji]
+columns = 8
+cell_size = 62.0
+font_size = 26.0
+cell_selected_bg = "#073642"
+cell_border_radius = 4.0
+cell_gap = 1.0
+
+[ai]
+error_background = "#dc322f"
+error_title_color = "#002b36"
+error_message_color = "#001f27"
+
+[markdown]
+paragraph_line_height = 19.0
+heading_line_height = 21.0
+code_block_radius = 4.0
+code_line_height = 18.0
+
+[clipboard]
+color_icon_size = 16.0
+preview_padding = 14.0
+color_swatch_size = 110.0
+color_preview_gap = 16.0
+color_code_gap = 6.0
+color_label_width = 56.0
+
+[section_header]
+color = "#586e75"
+margin_top = 6.0
+margin_bottom = 3.0
+padding_y = 5.0
+
+[layout]
+separator_width = 1.0
+item_description_height = 16.0

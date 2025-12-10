@@ -1,5 +1,7 @@
 use std::process::Command;
 
+use super::traits::{Categorizable, DisplayItem, Executable, IconProvider};
+
 /// The kind of action to perform.
 #[derive(Clone, Debug)]
 pub enum ActionKind {
@@ -45,7 +47,6 @@ impl ActionItem {
     }
 
     /// Create a built-in action item for the given kind.
-    /// Icon names correspond to Phosphor bold icons in assets/icons/.
     pub fn builtin(kind: ActionKind) -> Self {
         let (id, name, description, icon_name) = match &kind {
             ActionKind::Shutdown => (
@@ -88,9 +89,34 @@ impl ActionItem {
             Self::builtin(ActionKind::Logout),
         ]
     }
+}
 
-    /// Execute the action.
-    pub fn execute(&self) -> anyhow::Result<()> {
+impl DisplayItem for ActionItem {
+    fn id(&self) -> &str {
+        &self.id
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn description(&self) -> Option<&str> {
+        self.description.as_deref()
+    }
+
+    fn action_label(&self) -> &'static str {
+        "Run"
+    }
+}
+
+impl IconProvider for ActionItem {
+    fn icon_name(&self) -> Option<&str> {
+        self.icon_name.as_deref()
+    }
+}
+
+impl Executable for ActionItem {
+    fn execute(&self) -> anyhow::Result<()> {
         match &self.kind {
             ActionKind::Shutdown => {
                 Command::new("systemctl").arg("poweroff").spawn()?;
@@ -114,5 +140,15 @@ impl ActionItem {
             }
         }
         Ok(())
+    }
+}
+
+impl Categorizable for ActionItem {
+    fn section_name(&self) -> &'static str {
+        "Commands"
+    }
+
+    fn sort_priority(&self) -> u8 {
+        3
     }
 }

@@ -1,0 +1,91 @@
+# Synthwave theme for zlaunch
+# Retro cyberpunk inspired
+name = "synthwave"
+
+# Window settings - futuristic and bold
+window_background = "#262335d9"      # Background
+window_border = "#ff7edb4d"          # Neon pink
+window_border_radius = 20.0          # Very rounded, retro
+
+# List items - neon spacing
+item_margin_x = 15.0
+item_margin_y = 2.5
+item_padding_x = 15.0
+item_padding_y = 11.0
+item_border_radius = 12.0
+item_background = "#00000000"
+item_background_selected = "#34294f"  # Purple highlight
+
+# Item content
+item_title_color = "#f9f9ff"         # Bright white
+item_description_color = "#848bbd"   # Muted blue
+item_title_line_height = 19.0
+item_content_height = 40.0
+
+# Icons - glowing
+icon_size = 32.0
+icon_placeholder_background = "#34294f"
+icon_placeholder_color = "#ff7edb"   # Neon pink
+
+# Empty state
+empty_state_height = 240.0
+empty_state_color = "#848bbd"
+
+[calculator]
+padding_multiplier = 1.75
+content_height_multiplier = 1.4
+icon_background = "#ff7edb4d"        # Neon pink
+icon_color = "#ff7edb"
+error_color = "#fe4450"              # Neon red
+content_gap = 4.0
+
+[action_indicator]
+width = 80.0
+right_position = 15.0
+label_color = "#848bbd"
+key_background = "#34294f"
+key_border = "#ff7edb"               # Neon border
+key_color = "#f9f9ff"
+key_padding_x = 7.0
+key_padding_top = 4.0
+key_padding_bottom = 3.0
+key_border_radius = 6.0
+key_font_size = 12.0
+key_line_height = 12.0
+
+[emoji]
+columns = 8
+cell_size = 72.0
+font_size = 32.0
+cell_selected_bg = "#34294f"
+cell_border_radius = 12.0
+cell_gap = 4.0
+
+[ai]
+error_background = "#fe4450"
+error_title_color = "#262335"
+error_message_color = "#1a1625"
+
+[markdown]
+paragraph_line_height = 24.0
+heading_line_height = 26.0
+code_block_radius = 12.0
+code_line_height = 22.0
+
+[clipboard]
+color_icon_size = 20.0
+preview_padding = 20.0
+color_swatch_size = 140.0
+color_preview_gap = 24.0
+color_code_gap = 12.0
+color_label_width = 70.0
+
+[section_header]
+color = "#848bbd"
+margin_top = 12.0
+margin_bottom = 6.0
+padding_y = 8.0
+
+[layout]
+separator_width = 2.0                # Thicker for neon effect
+item_description_height = 22.0

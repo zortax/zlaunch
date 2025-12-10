@@ -22,7 +22,8 @@ pub fn create_and_show_window(
     let windows = fetch_windows(compositor.as_ref());
 
     // Combine windows and applications into items list
-    // Windows come first (handled by sort_priority in delegate)
+    // Built-in actions and submenus are added by the delegate
+    // Order doesn't matter here - sort_priority in delegate handles display order
     let mut items: Vec<ListItem> = Vec::with_capacity(windows.len() + applications.len());
     items.extend(windows.into_iter().map(ListItem::Window));
     items.extend(applications.into_iter().map(ListItem::Application));

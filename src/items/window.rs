@@ -1,6 +1,8 @@
 use crate::compositor::WindowInfo;
 use std::path::PathBuf;
 
+use super::traits::{Categorizable, DisplayItem, Executable, IconProvider};
+
 /// A window item representing an open window for window switching.
 #[derive(Clone, Debug)]
 pub struct WindowItem {
@@ -25,6 +27,10 @@ pub struct WindowItem {
 }
 
 impl WindowItem {
+    /// Create a new window item directly with all fields.
+    ///
+    /// Prefer using `from_window_info` when creating from compositor data.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: String,
         address: String,
@@ -50,9 +56,6 @@ impl WindowItem {
     }
 
     /// Create a WindowItem from compositor WindowInfo.
-    ///
-    /// The app_name is derived from the class if not provided separately.
-    /// Icon resolution should be done externally and passed in.
     pub fn from_window_info(info: WindowInfo, icon_path: Option<PathBuf>) -> Self {
         let app_name = titlecase_app_name(&info.class);
         let description = format!("{} - Workspace {}", app_name, info.workspace);
@@ -70,13 +73,51 @@ impl WindowItem {
     }
 }
 
-/// Convert an app class to a human-readable name.
-/// e.g., "firefox" -> "Firefox", "org.kde.dolphin" -> "Dolphin"
-fn titlecase_app_name(class: &str) -> String {
-    // Handle reverse-DNS style names (org.kde.dolphin -> dolphin)
-    let name = class.rsplit('.').next().unwrap_or(class);
+impl DisplayItem for WindowItem {
+    fn id(&self) -> &str {
+        &self.id
+    }
 
-    // Capitalize first letter
+    fn name(&self) -> &str {
+        &self.title
+    }
+
+    fn description(&self) -> Option<&str> {
+        Some(&self.description)
+    }
+
+    fn action_label(&self) -> &'static str {
+        "Switch"
+    }
+}
+
+impl IconProvider for WindowItem {
+    fn icon_path(&self) -> Option<&PathBuf> {
+        self.icon_path.as_ref()
+    }
+}
+
+impl Executable for WindowItem {
+    fn execute(&self) -> anyhow::Result<()> {
+        // Note: This will need access to compositor
+        // We'll handle this through a callback mechanism in the UI layer
+        Ok(())
+    }
+}
+
+impl Categorizable for WindowItem {
+    fn section_name(&self) -> &'static str {
+        "Windows"
+    }
+
+    fn sort_priority(&self) -> u8 {
+        2
+    }
+}
+
+/// Convert an app class to a human-readable name.
+fn titlecase_app_name(class: &str) -> String {
+    let name = class.rsplit('.').next().unwrap_or(class);
     let mut chars = name.chars();
     match chars.next() {
         None => String::new(),

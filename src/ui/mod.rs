@@ -1,14 +1,15 @@
-pub mod ai;
-pub mod clipboard;
-pub mod emoji;
+pub mod components;
+pub mod core;
+pub mod delegates;
 pub mod icon;
-pub mod items;
 pub mod launcher;
 pub mod markdown;
+pub mod modes;
 pub mod theme;
+pub mod utils;
+pub mod views;
 
-pub use ai::AiResponseView;
-pub use clipboard::delegate::ClipboardListDelegate;
-pub use emoji::EmojiGridDelegate;
-pub use launcher::{LauncherView, init as init_launcher};
-pub use theme::{LauncherTheme, theme};
+// Re-export main types for convenience
+pub use launcher::{init, init as init_launcher, LauncherView, ViewMode};
+pub use theme::{theme, LauncherTheme};
+pub use views::AiResponseView;

@@ -1,0 +1,91 @@
+# Material theme for zlaunch
+# Based on Material Design
+name = "material"
+
+# Window settings - material design
+window_background = "#263238e6"      # Background
+window_border = "#82aaff33"          # Blue
+window_border_radius = 4.0           # Material corners
+
+# List items - material spacing
+item_margin_x = 16.0
+item_margin_y = 3.0
+item_padding_x = 16.0
+item_padding_y = 12.0
+item_border_radius = 4.0
+item_background = "#00000000"
+item_background_selected = "#2e3c43"  # Selection
+
+# Item content
+item_title_color = "#eeffff"         # Foreground
+item_description_color = "#546e7a"   # Comment
+item_title_line_height = 20.0
+item_content_height = 42.0
+
+# Icons - material size
+icon_size = 30.0
+icon_placeholder_background = "#2e3c43"
+icon_placeholder_color = "#546e7a"
+
+# Empty state
+empty_state_height = 250.0
+empty_state_color = "#546e7a"
+
+[calculator]
+padding_multiplier = 1.8
+content_height_multiplier = 1.4
+icon_background = "#82aaff33"        # Blue
+icon_color = "#82aaff"
+error_color = "#ff5370"              # Red
+content_gap = 4.0
+
+[action_indicator]
+width = 84.0
+right_position = 16.0
+label_color = "#546e7a"
+key_background = "#2e3c43"
+key_border = "#546e7a"
+key_color = "#eeffff"
+key_padding_x = 8.0
+key_padding_top = 4.0
+key_padding_bottom = 3.0
+key_border_radius = 2.0
+key_font_size = 12.0
+key_line_height = 12.0
+
+[emoji]
+columns = 8
+cell_size = 74.0
+font_size = 34.0
+cell_selected_bg = "#2e3c43"
+cell_border_radius = 4.0
+cell_gap = 4.0
+
+[ai]
+error_background = "#ff5370"
+error_title_color = "#263238"
+error_message_color = "#1e272c"
+
+[markdown]
+paragraph_line_height = 24.0
+heading_line_height = 26.0
+code_block_radius = 4.0
+code_line_height = 22.0
+
+[clipboard]
+color_icon_size = 20.0
+preview_padding = 20.0
+color_swatch_size = 140.0
+color_preview_gap = 24.0
+color_code_gap = 12.0
+color_label_width = 70.0
+
+[section_header]
+color = "#546e7a"
+margin_top = 12.0
+margin_bottom = 6.0
+padding_y = 8.0
+
+[layout]
+separator_width = 1.0
+item_description_height = 22.0

@@ -3,7 +3,7 @@
 //! Focuses on proper text wrapping with structural elements (lists, headings, code blocks).
 
 use crate::ui::theme::theme;
-use gpui::{Div, SharedString, div, prelude::*, px};
+use gpui::{Div, SharedString, div, prelude::*};
 use gpui_component::scroll::ScrollableElement;
 use pulldown_cmark::{Event, HeadingLevel, Parser, Tag, TagEnd};
 
@@ -63,7 +63,7 @@ pub fn render_markdown(text: &str) -> Div {
                                 .w_full()
                                 .text_sm()
                                 .text_color(t.item_title_color)
-                                .line_height(px(20.0))
+                                .line_height(t.markdown.paragraph_line_height)
                                 .child(SharedString::from(current_text.trim().to_string()));
 
                             container = container.child(para);
@@ -108,7 +108,7 @@ pub fn render_markdown(text: &str) -> Div {
                                         .min_w_0()
                                         .text_sm()
                                         .text_color(t.item_title_color)
-                                        .line_height(px(20.0))
+                                        .line_height(t.markdown.paragraph_line_height)
                                         .child(SharedString::from(current_text.trim().to_string())),
                                 );
 
@@ -134,7 +134,7 @@ pub fn render_markdown(text: &str) -> Div {
                                 .text_color(t.item_title_color)
                                 .mb_1()
                                 .mt_1()
-                                .line_height(px(22.0))
+                                .line_height(t.markdown.heading_line_height)
                                 .child(SharedString::from(current_text.trim().to_string()));
 
                             container = container.child(heading);
@@ -152,12 +152,12 @@ pub fn render_markdown(text: &str) -> Div {
                                 .px_3()
                                 .py_2()
                                 .bg(t.item_background_selected)
-                                .rounded(px(6.0))
+                                .rounded(t.markdown.code_block_radius)
                                 .overflow_x_scrollbar()
-                                .font_family("Hack Nerd Font Mono")
+                                .font_family(t.markdown.code_font_family)
                                 .text_xs()
                                 .text_color(t.item_title_color)
-                                .line_height(px(18.0))
+                                .line_height(t.markdown.code_line_height)
                                 .child(SharedString::from(code_text));
 
                             container = container.child(code_block);
@@ -197,7 +197,7 @@ pub fn render_markdown(text: &str) -> Div {
             .w_full()
             .text_sm()
             .text_color(t.item_title_color)
-            .line_height(px(20.0))
+            .line_height(t.markdown.paragraph_line_height)
             .child(SharedString::from(current_text.trim().to_string()));
         container = container.child(para);
     }

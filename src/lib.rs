@@ -5,6 +5,7 @@ pub mod calculator;
 pub mod cli;
 pub mod clipboard;
 pub mod compositor;
+pub mod config;
 pub mod daemon;
 pub mod desktop;
 pub mod emoji;

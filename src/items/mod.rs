@@ -1,18 +1,22 @@
 mod action;
+mod ai;
 mod application;
 mod calculator;
 mod search;
 mod submenu;
+mod theme;
+mod traits;
 mod window;
 
 pub use action::{ActionItem, ActionKind};
+pub use ai::AiItem;
 pub use application::ApplicationItem;
 pub use calculator::CalculatorItem;
 pub use search::SearchItem;
 pub use submenu::{SubmenuItem, SubmenuLayout};
+pub use theme::{ThemeItem, ThemeSource};
+pub use traits::{Categorizable, DisplayItem, Executable, IconProvider, Previewable};
 pub use window::WindowItem;
-
-use crate::ai::AiItem;
 
 use std::path::PathBuf;
 
@@ -34,58 +38,78 @@ pub enum ListItem {
     Search(SearchItem),
     /// An AI query item
     Ai(AiItem),
+    /// A theme item
+    Theme(ThemeItem),
 }
 
 impl ListItem {
     /// Get the unique identifier for this item.
     pub fn id(&self) -> &str {
         match self {
-            Self::Application(app) => &app.id,
-            Self::Window(win) => &win.id,
-            Self::Action(act) => &act.id,
-            Self::Submenu(sub) => &sub.id,
-            Self::Calculator(calc) => &calc.id,
-            Self::Search(search) => &search.id,
-            Self::Ai(ai) => &ai.id,
+            Self::Application(item) => item.id(),
+            Self::Window(item) => item.id(),
+            Self::Action(item) => item.id(),
+            Self::Submenu(item) => item.id(),
+            Self::Calculator(item) => item.id(),
+            Self::Search(item) => item.id(),
+            Self::Ai(item) => item.id(),
+            Self::Theme(item) => item.id(),
         }
     }
 
     /// Get the display name for this item.
     pub fn name(&self) -> &str {
         match self {
-            Self::Application(app) => &app.name,
-            Self::Window(win) => &win.title,
-            Self::Action(act) => &act.name,
-            Self::Submenu(sub) => &sub.name,
-            Self::Calculator(calc) => &calc.expression,
-            Self::Search(search) => &search.name,
-            Self::Ai(ai) => &ai.name,
+            Self::Application(item) => item.name(),
+            Self::Window(item) => item.name(),
+            Self::Action(item) => item.name(),
+            Self::Submenu(item) => item.name(),
+            Self::Calculator(item) => item.name(),
+            Self::Search(item) => item.name(),
+            Self::Ai(item) => item.name(),
+            Self::Theme(item) => item.name(),
         }
     }
 
     /// Get the description/subtitle for this item.
     pub fn description(&self) -> Option<&str> {
         match self {
-            Self::Application(app) => app.description.as_deref(),
-            Self::Window(win) => Some(&win.description),
-            Self::Action(act) => act.description.as_deref(),
-            Self::Submenu(sub) => sub.description.as_deref(),
-            Self::Calculator(calc) => Some(&calc.display_result),
-            Self::Search(_) => None,
-            Self::Ai(_) => None, // Description handled in render function
+            Self::Application(item) => item.description(),
+            Self::Window(item) => item.description(),
+            Self::Action(item) => item.description(),
+            Self::Submenu(item) => item.description(),
+            Self::Calculator(item) => item.description(),
+            Self::Search(item) => item.description(),
+            Self::Ai(item) => item.description(),
+            Self::Theme(item) => item.description(),
         }
     }
 
     /// Get the icon path for this item.
     pub fn icon_path(&self) -> Option<&PathBuf> {
         match self {
-            Self::Application(app) => app.icon_path.as_ref(),
-            Self::Window(win) => win.icon_path.as_ref(),
-            Self::Action(_) => None,     // Actions use icon names, not paths
-            Self::Submenu(_) => None,    // Submenus use icon names, not paths
-            Self::Calculator(_) => None, // Calculator uses custom icon
-            Self::Search(_) => None,     // Search uses Phosphor icons
-            Self::Ai(_) => None,         // AI uses Phosphor icons
+            Self::Application(item) => item.icon_path(),
+            Self::Window(item) => item.icon_path(),
+            Self::Action(item) => item.icon_path(),
+            Self::Submenu(item) => item.icon_path(),
+            Self::Calculator(item) => item.icon_path(),
+            Self::Search(item) => item.icon_path(),
+            Self::Ai(item) => item.icon_path(),
+            Self::Theme(item) => item.icon_path(),
+        }
+    }
+
+    /// Get the icon name for this item.
+    pub fn icon_name(&self) -> Option<&str> {
+        match self {
+            Self::Application(item) => item.icon_name(),
+            Self::Window(item) => item.icon_name(),
+            Self::Action(item) => item.icon_name(),
+            Self::Submenu(item) => item.icon_name(),
+            Self::Calculator(item) => item.icon_name(),
+            Self::Search(item) => item.icon_name(),
+            Self::Ai(item) => item.icon_name(),
+            Self::Theme(item) => item.icon_name(),
         }
     }
 
@@ -117,41 +141,43 @@ impl ListItem {
     /// Get the action label to display (e.g., "Open", "Switch", "Run").
     pub fn action_label(&self) -> &'static str {
         match self {
-            Self::Application(_) => "Open",
-            Self::Window(_) => "Switch",
-            Self::Action(_) => "Run",
-            Self::Submenu(_) => "Open",
-            Self::Calculator(_) => "Copy",
-            Self::Search(_) => "Open",
-            Self::Ai(_) => "Ask",
+            Self::Application(item) => item.action_label(),
+            Self::Window(item) => item.action_label(),
+            Self::Action(item) => item.action_label(),
+            Self::Submenu(item) => item.action_label(),
+            Self::Calculator(item) => item.action_label(),
+            Self::Search(item) => item.action_label(),
+            Self::Ai(item) => item.action_label(),
+            Self::Theme(item) => item.action_label(),
         }
     }
 
     /// Get the sort priority for this item type.
     /// Lower values appear first in the list.
-    /// Calculator (0) < AI/Search (1) < Windows (2) < Commands/Actions (3) < Applications (4)
     pub fn sort_priority(&self) -> u8 {
         match self {
-            Self::Calculator(_) => 0,
-            Self::Ai(_) => 1,
-            Self::Search(_) => 1,
-            Self::Window(_) => 2,
-            Self::Submenu(_) => 3,
-            Self::Action(_) => 3, // Actions are grouped with Commands
-            Self::Application(_) => 4,
+            Self::Application(item) => item.sort_priority(),
+            Self::Window(item) => item.sort_priority(),
+            Self::Action(item) => item.sort_priority(),
+            Self::Submenu(item) => item.sort_priority(),
+            Self::Calculator(item) => item.sort_priority(),
+            Self::Search(item) => item.sort_priority(),
+            Self::Ai(item) => item.sort_priority(),
+            Self::Theme(item) => item.sort_priority(),
         }
     }
 
     /// Get the section name for this item type.
     pub fn section_name(&self) -> &'static str {
         match self {
-            Self::Calculator(_) => "Calculator",
-            Self::Ai(_) => "AI",
-            Self::Search(_) => "Search",
-            Self::Window(_) => "Windows",
-            Self::Submenu(_) => "Commands",
-            Self::Action(_) => "Commands", // Actions are grouped with Commands
-            Self::Application(_) => "Applications",
+            Self::Application(item) => item.section_name(),
+            Self::Window(item) => item.section_name(),
+            Self::Action(item) => item.section_name(),
+            Self::Submenu(item) => item.section_name(),
+            Self::Calculator(item) => item.section_name(),
+            Self::Search(item) => item.section_name(),
+            Self::Ai(item) => item.section_name(),
+            Self::Theme(item) => item.section_name(),
         }
     }
 }
@@ -197,5 +223,11 @@ impl From<SearchItem> for ListItem {
 impl From<AiItem> for ListItem {
     fn from(item: AiItem) -> Self {
         Self::Ai(item)
+    }
+}
+
+impl From<ThemeItem> for ListItem {
+    fn from(item: ThemeItem) -> Self {
+        Self::Theme(item)
     }
 }

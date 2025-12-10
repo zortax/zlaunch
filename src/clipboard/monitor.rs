@@ -220,23 +220,32 @@ fn read_clipboard_content() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut clipboard = Clipboard::new()?;
 
-    // Try to get text first
+    // Try to get image first - browsers often put both image data and HTML markup
+    // on the clipboard, and we prefer the actual image over the HTML representation
+    if let Ok(image) = clipboard.get_image()
+        && !image.bytes.is_empty()
+    {
+        debug!(
+            "Adding image to clipboard history: {}×{} ({} bytes)",
+            image.width,
+            image.height,
+            image.bytes.len()
+        );
+        data::add_item(ClipboardContent::Image {
+            width: image.width,
+            height: image.height,
+            rgba_bytes: image.bytes.to_vec(),
+        });
+        return Ok(());
+    }
+
+    // Try to get text
     if let Ok(text) = clipboard.get_text()
         && !text.is_empty()
     {
         debug!("Adding text to clipboard history: {} chars", text.len());
         data::add_item(ClipboardContent::Text(text));
         return Ok(());
-    }
-
-    // Try to get image
-    if let Ok(image) = clipboard.get_image() {
-        let bytes = image.bytes.to_vec();
-        if !bytes.is_empty() {
-            debug!("Adding image to clipboard history: {} bytes", bytes.len());
-            data::add_item(ClipboardContent::Image(bytes));
-            return Ok(());
-        }
     }
 
     Ok(())

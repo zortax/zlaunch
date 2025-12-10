@@ -1,0 +1,91 @@
+# Everforest theme for zlaunch
+# Based on https://github.com/sainnhe/everforest
+name = "everforest"
+
+# Window settings - natural and organic
+window_background = "#2b3339e6"      # Background
+window_border = "#a7c08026"          # Green
+window_border_radius = 15.0
+
+# List items - earthy spacing
+item_margin_x = 12.0
+item_margin_y = 2.0
+item_padding_x = 12.0
+item_padding_y = 9.0
+item_border_radius = 8.0
+item_background = "#00000000"
+item_background_selected = "#3d484d"  # Current line
+
+# Item content
+item_title_color = "#d3c6aa"         # Foreground
+item_description_color = "#859289"   # Gray
+item_title_line_height = 18.0
+item_content_height = 38.0
+
+# Icons
+icon_size = 28.0
+icon_placeholder_background = "#323d43"
+icon_placeholder_color = "#859289"
+
+# Empty state
+empty_state_height = 225.0
+empty_state_color = "#859289"
+
+[calculator]
+padding_multiplier = 1.6
+content_height_multiplier = 1.3
+icon_background = "#a7c08026"        # Green
+icon_color = "#a7c080"
+error_color = "#e67e80"              # Red
+content_gap = 3.0
+
+[action_indicator]
+width = 72.0
+right_position = 12.0
+label_color = "#859289"
+key_background = "#3d484d"
+key_border = "#4f585e"
+key_color = "#d3c6aa"
+key_padding_x = 6.0
+key_padding_top = 3.0
+key_padding_bottom = 2.0
+key_border_radius = 4.0
+key_font_size = 11.0
+key_line_height = 11.0
+
+[emoji]
+columns = 8
+cell_size = 68.0
+font_size = 30.0
+cell_selected_bg = "#3d484d"
+cell_border_radius = 8.0
+cell_gap = 3.0
+
+[ai]
+error_background = "#e67e80"
+error_title_color = "#2b3339"
+error_message_color = "#232a2e"
+
+[markdown]
+paragraph_line_height = 22.0
+heading_line_height = 24.0
+code_block_radius = 8.0
+code_line_height = 20.0
+
+[clipboard]
+color_icon_size = 18.0
+preview_padding = 18.0
+color_swatch_size = 130.0
+color_preview_gap = 22.0
+color_code_gap = 10.0
+color_label_width = 65.0
+
+[section_header]
+color = "#859289"
+margin_top = 10.0
+margin_bottom = 5.0
+padding_y = 7.0
+
+[layout]
+separator_width = 1.0
+item_description_height = 20.0

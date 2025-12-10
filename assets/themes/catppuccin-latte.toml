@@ -1,0 +1,91 @@
+# Catppuccin Latte theme for zlaunch (Light theme)
+# Based on https://github.com/catppuccin/catppuccin
+name = "catppuccin-latte"
+
+# Window settings - light and airy
+window_background = "#eff1f5e6"      # Base with transparency
+window_border = "#1e66f533"          # Blue
+window_border_radius = 12.0
+
+# List items
+item_margin_x = 8.0
+item_margin_y = 1.0
+item_padding_x = 8.0
+item_padding_y = 7.0
+item_border_radius = 6.0
+item_background = "#00000000"        # Transparent
+item_background_selected = "#bcc0cc26"  # Surface2 highlight
+
+# Item content
+item_title_color = "#4c4f69"         # Text
+item_description_color = "#9ca0b0"   # Overlay0
+item_title_line_height = 16.0
+item_content_height = 34.0
+
+# Icons
+icon_size = 24.0
+icon_placeholder_background = "#e6e9ef"  # Surface0
+icon_placeholder_color = "#9ca0b0"       # Overlay0
+
+# Empty state
+empty_state_height = 200.0
+empty_state_color = "#9ca0b0"        # Overlay0
+
+[calculator]
+padding_multiplier = 1.5
+content_height_multiplier = 1.25
+icon_background = "#1e66f533"        # Blue
+icon_color = "#1e66f5"               # Blue
+error_color = "#d20f39"              # Red
+content_gap = 2.0
+
+[action_indicator]
+width = 64.0
+right_position = 8.0
+label_color = "#9ca0b0"              # Overlay0
+key_background = "#e6e9ef"           # Surface0
+key_border = "#ccd0da"               # Surface1
+key_color = "#4c4f69"                # Text
+key_padding_x = 4.0
+key_padding_top = 2.0
+key_padding_bottom = 1.0
+key_border_radius = 3.0
+key_font_size = 10.0
+key_line_height = 10.0
+
+[emoji]
+columns = 8
+cell_size = 64.0
+font_size = 28.0
+cell_selected_bg = "#bcc0cc33"       # Surface2
+cell_border_radius = 6.0
+cell_gap = 2.0
+
+[ai]
+error_background = "#d20f39"         # Red
+error_title_color = "#eff1f5"        # Base
+error_message_color = "#e6e9ef"      # Surface0
+
+[markdown]
+paragraph_line_height = 20.0
+heading_line_height = 22.0
+code_block_radius = 6.0
+code_line_height = 18.0
+
+[clipboard]
+color_icon_size = 16.0
+preview_padding = 16.0
+color_swatch_size = 120.0
+color_preview_gap = 20.0
+color_code_gap = 8.0
+color_label_width = 60.0
+
+[section_header]
+color = "#9ca0b0"                    # Overlay0
+margin_top = 8.0
+margin_bottom = 4.0
+padding_y = 6.0
+
+[layout]
+separator_width = 1.0
+item_description_height = 18.0

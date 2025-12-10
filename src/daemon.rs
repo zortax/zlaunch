@@ -17,7 +17,10 @@ use crate::ui::init_launcher;
 pub fn init_logging() {
     use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
-    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    // By default, only log from zlaunch crate at info level
+    // Users can override with RUST_LOG environment variable
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("zlaunch=info"));
 
     tracing_subscriber::registry()
         .with(fmt::layer().with_target(false).without_time())

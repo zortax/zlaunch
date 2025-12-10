@@ -1,5 +1,6 @@
+use super::traits::{Categorizable, DisplayItem, IconProvider};
+
 /// The layout style for a submenu.
-/// Different submenus may have different UI layouts.
 #[derive(Clone, Debug, Default)]
 pub enum SubmenuLayout {
     /// Standard vertical list (default)
@@ -7,12 +8,11 @@ pub enum SubmenuLayout {
     List,
     /// Grid layout (e.g., for emoji picker)
     Grid { columns: usize },
-    /// Custom layout identified by name (e.g., "calculator", "unit-converter")
+    /// Custom layout identified by name
     Custom(String),
 }
 
 /// A submenu item that opens a nested list or custom UI.
-/// This is a placeholder for future implementation.
 #[derive(Clone, Debug)]
 pub struct SubmenuItem {
     pub id: String,
@@ -86,5 +86,39 @@ impl SubmenuItem {
     pub fn with_icon(mut self, icon_name: impl Into<String>) -> Self {
         self.icon_name = Some(icon_name.into());
         self
+    }
+}
+
+impl DisplayItem for SubmenuItem {
+    fn id(&self) -> &str {
+        &self.id
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn description(&self) -> Option<&str> {
+        self.description.as_deref()
+    }
+
+    fn action_label(&self) -> &'static str {
+        "Open"
+    }
+}
+
+impl IconProvider for SubmenuItem {
+    fn icon_name(&self) -> Option<&str> {
+        self.icon_name.as_deref()
+    }
+}
+
+impl Categorizable for SubmenuItem {
+    fn section_name(&self) -> &'static str {
+        "Commands"
+    }
+
+    fn sort_priority(&self) -> u8 {
+        3
     }
 }

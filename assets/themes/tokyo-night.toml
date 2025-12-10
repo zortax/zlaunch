@@ -1,0 +1,91 @@
+# Tokyo Night theme for zlaunch
+# Based on https://github.com/tokyo-night/tokyo-night-vscode-theme
+name = "tokyo-night"
+
+# Window settings
+window_background = "#1a1b26b3"      # Background with transparency
+window_border = "#7aa2f726"          # Blue with low opacity
+window_border_radius = 12.0
+
+# List items
+item_margin_x = 8.0
+item_margin_y = 1.0
+item_padding_x = 8.0
+item_padding_y = 7.0
+item_border_radius = 6.0
+item_background = "#00000000"        # Transparent
+item_background_selected = "#7aa2f71a"  # Blue highlight
+
+# Item content
+item_title_color = "#c0caf5"         # Foreground
+item_description_color = "#565f89"   # Comment
+item_title_line_height = 16.0
+item_content_height = 34.0
+
+# Icons
+icon_size = 24.0
+icon_placeholder_background = "#24283b"  # Terminal black
+icon_placeholder_color = "#565f89"       # Comment
+
+# Empty state
+empty_state_height = 200.0
+empty_state_color = "#565f89"        # Comment
+
+[calculator]
+padding_multiplier = 1.5
+content_height_multiplier = 1.25
+icon_background = "#7aa2f726"        # Blue
+icon_color = "#7aa2f7"               # Blue
+error_color = "#f7768e"              # Red
+content_gap = 2.0
+
+[action_indicator]
+width = 64.0
+right_position = 8.0
+label_color = "#565f89"              # Comment
+key_background = "#24283b"           # Terminal black
+key_border = "#414868"               # Foreground gutter
+key_color = "#c0caf5"                # Foreground
+key_padding_x = 4.0
+key_padding_top = 2.0
+key_padding_bottom = 1.0
+key_border_radius = 3.0
+key_font_size = 10.0
+key_line_height = 10.0
+
+[emoji]
+columns = 8
+cell_size = 64.0
+font_size = 28.0
+cell_selected_bg = "#7aa2f71a"       # Blue
+cell_border_radius = 6.0
+cell_gap = 2.0
+
+[ai]
+error_background = "#f7768e"         # Red
+error_title_color = "#1a1b26"        # Background
+error_message_color = "#16161e"      # Black
+
+[markdown]
+paragraph_line_height = 20.0
+heading_line_height = 22.0
+code_block_radius = 6.0
+code_line_height = 18.0
+
+[clipboard]
+color_icon_size = 16.0
+preview_padding = 16.0
+color_swatch_size = 120.0
+color_preview_gap = 20.0
+color_code_gap = 8.0
+color_label_width = 60.0
+
+[section_header]
+color = "#565f89"                    # Comment
+margin_top = 8.0
+margin_bottom = 4.0
+padding_y = 6.0
+
+[layout]
+separator_width = 1.0
+item_description_height = 18.0

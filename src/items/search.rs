@@ -1,12 +1,12 @@
-//! Search item representing a web search query.
-
 use crate::assets::PhosphorIcon;
 use crate::search::SearchProvider;
+
+use super::traits::{Categorizable, DisplayItem, Executable, IconProvider};
 
 /// A search item representing a web search query for a specific provider.
 #[derive(Clone, Debug)]
 pub struct SearchItem {
-    /// Unique identifier for this item (e.g., "search-google-rust")
+    /// Unique identifier for this item
     pub id: String,
     /// Display name (e.g., "Search on Google")
     pub name: String,
@@ -37,9 +37,46 @@ impl SearchItem {
     pub fn icon(&self) -> PhosphorIcon {
         self.provider.icon
     }
+}
 
-    /// Get the action label.
-    pub fn action_label(&self) -> &'static str {
+impl DisplayItem for SearchItem {
+    fn id(&self) -> &str {
+        &self.id
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn description(&self) -> Option<&str> {
+        None
+    }
+
+    fn action_label(&self) -> &'static str {
         "Open"
+    }
+}
+
+impl IconProvider for SearchItem {
+    // Uses Phosphor icons via icon() method
+}
+
+impl Executable for SearchItem {
+    fn execute(&self) -> anyhow::Result<()> {
+        // Open URL in browser
+        std::process::Command::new("xdg-open")
+            .arg(&self.url)
+            .spawn()?;
+        Ok(())
+    }
+}
+
+impl Categorizable for SearchItem {
+    fn section_name(&self) -> &'static str {
+        "Search"
+    }
+
+    fn sort_priority(&self) -> u8 {
+        1
     }
 }

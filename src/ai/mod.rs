@@ -4,6 +4,8 @@
 
 pub mod client;
 pub mod item;
+pub mod streaming;
 
 pub use client::GeminiClient;
 pub use item::AiItem;
+pub use streaming::spawn_stream;

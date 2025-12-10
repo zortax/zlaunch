@@ -34,9 +34,9 @@ pub fn detect_search(input: &str) -> SearchDetection {
 
     // Check if input starts with a trigger
     for provider in get_providers() {
-        if trimmed.starts_with(provider.trigger) {
+        if let Some(stripped) = trimmed.strip_prefix(provider.trigger) {
             // Extract the query after the trigger
-            let query = trimmed[provider.trigger.len()..].trim();
+            let query = stripped.trim();
 
             if query.is_empty() {
                 // Just the trigger, no query yet - don't show anything

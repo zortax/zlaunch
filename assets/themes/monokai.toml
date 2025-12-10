@@ -1,0 +1,91 @@
+# Monokai theme for zlaunch
+# Based on the classic Monokai theme
+name = "monokai"
+
+# Window settings - classic proportions
+window_background = "#272822d9"      # Background
+window_border = "#66d9ef33"          # Cyan
+window_border_radius = 10.0
+
+# List items - balanced spacing
+item_margin_x = 10.0
+item_margin_y = 1.5
+item_padding_x = 10.0
+item_padding_y = 8.0
+item_border_radius = 7.0
+item_background = "#00000000"
+item_background_selected = "#3e3d32"  # Highlight line
+
+# Item content
+item_title_color = "#f8f8f2"         # Foreground
+item_description_color = "#75715e"   # Comment
+item_title_line_height = 17.0
+item_content_height = 36.0
+
+# Icons
+icon_size = 26.0
+icon_placeholder_background = "#3e3d32"
+icon_placeholder_color = "#75715e"
+
+# Empty state
+empty_state_height = 210.0
+empty_state_color = "#75715e"
+
+[calculator]
+padding_multiplier = 1.55
+content_height_multiplier = 1.28
+icon_background = "#66d9ef33"        # Cyan
+icon_color = "#66d9ef"
+error_color = "#f92672"              # Pink/Red
+content_gap = 2.5
+
+[action_indicator]
+width = 68.0
+right_position = 10.0
+label_color = "#75715e"
+key_background = "#3e3d32"
+key_border = "#75715e"
+key_color = "#f8f8f2"
+key_padding_x = 5.0
+key_padding_top = 3.0
+key_padding_bottom = 2.0
+key_border_radius = 3.5
+key_font_size = 10.5
+key_line_height = 10.5
+
+[emoji]
+columns = 8
+cell_size = 65.0
+font_size = 29.0
+cell_selected_bg = "#3e3d32"
+cell_border_radius = 7.0
+cell_gap = 2.5
+
+[ai]
+error_background = "#f92672"
+error_title_color = "#272822"
+error_message_color = "#1e1f1c"
+
+[markdown]
+paragraph_line_height = 21.0
+heading_line_height = 23.0
+code_block_radius = 7.0
+code_line_height = 19.0
+
+[clipboard]
+color_icon_size = 17.0
+preview_padding = 17.0
+color_swatch_size = 125.0
+color_preview_gap = 21.0
+color_code_gap = 9.0
+color_label_width = 62.0
+
+[section_header]
+color = "#75715e"
+margin_top = 9.0
+margin_bottom = 4.5
+padding_y = 6.5
+
+[layout]
+separator_width = 1.0
+item_description_height = 19.0

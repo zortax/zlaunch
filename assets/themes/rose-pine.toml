@@ -1,0 +1,91 @@
+# Rosé Pine theme for zlaunch
+# Based on https://rosepinetheme.com/
+name = "rose-pine"
+
+# Window settings - cozy and soft
+window_background = "#191724e6"      # Base
+window_border = "#ebbcba26"          # Rose
+window_border_radius = 18.0          # Extra soft corners
+
+# List items - comfortable spacing
+item_margin_x = 11.0
+item_margin_y = 2.0
+item_padding_x = 11.0
+item_padding_y = 9.0
+item_border_radius = 9.0
+item_background = "#00000000"
+item_background_selected = "#1f1d2e"  # Surface
+
+# Item content
+item_title_color = "#e0def4"         # Text
+item_description_color = "#6e6a86"   # Muted
+item_title_line_height = 18.0
+item_content_height = 37.0
+
+# Icons
+icon_size = 27.0
+icon_placeholder_background = "#1f1d2e"
+icon_placeholder_color = "#6e6a86"
+
+# Empty state
+empty_state_height = 215.0
+empty_state_color = "#6e6a86"
+
+[calculator]
+padding_multiplier = 1.6
+content_height_multiplier = 1.3
+icon_background = "#ebbcba26"        # Rose
+icon_color = "#ebbcba"
+error_color = "#eb6f92"              # Love
+content_gap = 3.0
+
+[action_indicator]
+width = 70.0
+right_position = 11.0
+label_color = "#6e6a86"
+key_background = "#1f1d2e"
+key_border = "#403d52"
+key_color = "#e0def4"
+key_padding_x = 6.0
+key_padding_top = 3.0
+key_padding_bottom = 2.0
+key_border_radius = 4.5
+key_font_size = 11.0
+key_line_height = 11.0
+
+[emoji]
+columns = 8
+cell_size = 67.0
+font_size = 30.0
+cell_selected_bg = "#1f1d2e"
+cell_border_radius = 9.0
+cell_gap = 3.0
+
+[ai]
+error_background = "#eb6f92"
+error_title_color = "#191724"
+error_message_color = "#26233a"
+
+[markdown]
+paragraph_line_height = 22.0
+heading_line_height = 24.0
+code_block_radius = 9.0
+code_line_height = 20.0
+
+[clipboard]
+color_icon_size = 18.0
+preview_padding = 18.0
+color_swatch_size = 130.0
+color_preview_gap = 22.0
+color_code_gap = 10.0
+color_label_width = 65.0
+
+[section_header]
+color = "#6e6a86"
+margin_top = 10.0
+margin_bottom = 5.0
+padding_y = 7.0
+
+[layout]
+separator_width = 1.0
+item_description_height = 20.0

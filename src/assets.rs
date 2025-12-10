@@ -71,6 +71,7 @@ pub enum PhosphorIcon {
     BookOpen,
     YoutubeLogo,
     Brain,
+    Palette,
 }
 
 impl PhosphorIcon {
@@ -95,6 +96,7 @@ impl PhosphorIcon {
             Self::BookOpen => "icons/book-open-bold.svg",
             Self::YoutubeLogo => "icons/youtube-logo-bold.svg",
             Self::Brain => "icons/brain-bold.svg",
+            Self::Palette => "icons/palette-bold.svg",
         }
     }
 
@@ -119,6 +121,7 @@ impl PhosphorIcon {
             "book-open" => Some(Self::BookOpen),
             "youtube-logo" => Some(Self::YoutubeLogo),
             "brain" => Some(Self::Brain),
+            "palette" => Some(Self::Palette),
             _ => None,
         }
     }

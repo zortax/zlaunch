@@ -36,7 +36,7 @@ impl GeminiClient {
         let llm = LLMBuilder::new()
             .backend(LLMBackend::Google)
             .api_key(&self.api_key)
-            .model("gemini-2.0-flash-exp")
+            .model("gemini-flash-latest")
             .max_tokens(2000)
             .temperature(0.7)
             .build()

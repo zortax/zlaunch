@@ -1,0 +1,91 @@
+# Dracula theme for zlaunch
+# Based on https://draculatheme.com/
+name = "dracula"
+
+# Window settings - slightly wider for dramatic effect
+window_background = "#282a36e6"      # Background with high opacity
+window_border = "#bd93f933"          # Purple border
+window_border_radius = 14.0
+
+# List items - more generous spacing
+item_margin_x = 12.0
+item_margin_y = 2.0
+item_padding_x = 12.0
+item_padding_y = 9.0
+item_border_radius = 8.0
+item_background = "#00000000"
+item_background_selected = "#44475a"  # Current line
+
+# Item content
+item_title_color = "#f8f8f2"         # Foreground
+item_description_color = "#6272a4"   # Comment
+item_title_line_height = 18.0
+item_content_height = 38.0
+
+# Icons - larger
+icon_size = 28.0
+icon_placeholder_background = "#44475a"
+icon_placeholder_color = "#6272a4"
+
+# Empty state
+empty_state_height = 220.0
+empty_state_color = "#6272a4"
+
+[calculator]
+padding_multiplier = 1.6
+content_height_multiplier = 1.3
+icon_background = "#bd93f933"        # Purple
+icon_color = "#bd93f9"
+error_color = "#ff5555"              # Red
+content_gap = 3.0
+
+[action_indicator]
+width = 72.0
+right_position = 12.0
+label_color = "#6272a4"
+key_background = "#44475a"
+key_border = "#6272a4"
+key_color = "#f8f8f2"
+key_padding_x = 6.0
+key_padding_top = 3.0
+key_padding_bottom = 2.0
+key_border_radius = 4.0
+key_font_size = 11.0
+key_line_height = 11.0
+
+[emoji]
+columns = 8
+cell_size = 66.0
+font_size = 30.0
+cell_selected_bg = "#44475a"
+cell_border_radius = 8.0
+cell_gap = 3.0
+
+[ai]
+error_background = "#ff5555"
+error_title_color = "#282a36"
+error_message_color = "#21222c"
+
+[markdown]
+paragraph_line_height = 22.0
+heading_line_height = 24.0
+code_block_radius = 8.0
+code_line_height = 20.0
+
+[clipboard]
+color_icon_size = 18.0
+preview_padding = 18.0
+color_swatch_size = 128.0
+color_preview_gap = 22.0
+color_code_gap = 10.0
+color_label_width = 64.0
+
+[section_header]
+color = "#6272a4"
+margin_top = 10.0
+margin_bottom = 5.0
+padding_y = 7.0
+
+[layout]
+separator_width = 1.0
+item_description_height = 20.0
