@@ -237,4 +237,5 @@ fn configure_theme(cx: &mut gpui::App) {
     theme.list_active_border = hsla(0.0, 0.0, 0.0, 0.0); // No selection border
     theme.list_active = hsla(0.0, 0.0, 0.0, 0.0); // Fully transparent - we handle selection ourselves
     theme.list_hover = hsla(0.0, 0.0, 0.0, 0.0); // Fully transparent - we handle hover ourselves
+    theme.mono_font_family = "Mononoki Nerd Font Mono".into(); // Monospace font for code blocks
 }

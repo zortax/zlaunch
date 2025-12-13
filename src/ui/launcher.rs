@@ -790,7 +790,7 @@ impl Focusable for LauncherView {
 }
 
 impl gpui::Render for LauncherView {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = &self.current_theme;
         let config = crate::config::config();
 
@@ -917,7 +917,7 @@ impl gpui::Render for LauncherView {
                 if let Some(ref handler) = self.ai_mode_handler {
                     div()
                         .flex_1()
-                        .child(handler.view().render())
+                        .child(handler.view().render(window, cx))
                         .overflow_hidden()
                         .into_any_element()
                 } else {

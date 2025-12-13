@@ -2,7 +2,7 @@
 
 use crate::ui::markdown::render_markdown;
 use crate::ui::theme::theme;
-use gpui::{Div, SharedString, div, prelude::*};
+use gpui::{App, Div, SharedString, Window, div, prelude::*};
 use gpui_component::scroll::ScrollableElement;
 
 /// View for displaying AI response with streaming support.
@@ -66,7 +66,7 @@ impl AiResponseView {
     }
 
     /// Render the AI response view.
-    pub fn render(&self) -> Div {
+    pub fn render(&self, window: &mut Window, cx: &mut App) -> Div {
         let t = theme();
 
         let container = div().w_full().h_full().flex().flex_col().gap_3().p_0();
@@ -124,7 +124,11 @@ impl AiResponseView {
                 response_text.push_str(" ▌");
             }
 
-            let response_content = div().w_full().p_4().child(render_markdown(&response_text));
+            let response_content =
+                div()
+                    .w_full()
+                    .p_4()
+                    .child(render_markdown(&response_text, window, cx));
 
             div()
                 .id("ai-response-scroll")
