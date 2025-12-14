@@ -2,7 +2,7 @@ use anyhow::Result;
 use gpui::{Application, QuitMode, hsla};
 use gpui_component::theme::{Theme, ThemeMode};
 use std::sync::Arc;
-use tracing::{debug, error, info};
+use tracing::{error, info};
 
 use crate::app::window::LauncherWindow;
 use crate::app::{DaemonEvent, WindowEvent, create_daemon_channel, window};
@@ -39,6 +39,21 @@ pub fn run() -> Result<()> {
         "Starting zlaunch daemon"
     );
 
+    // Create unified event channel
+    let (event_tx, event_rx) = create_daemon_channel();
+
+    // Start tarpc IPC server
+    let _ipc_handle: IpcServerHandle = match start_server(event_tx.clone()) {
+        Ok(handle) => handle,
+        Err(e) => {
+            if client::is_daemon_running() {
+                error!("Daemon already running, exiting");
+                return Ok(());
+            }
+            return Err(e);
+        }
+    };
+
     // Initialize config from file (single source of truth)
     crate::config::init_config();
 
@@ -52,22 +67,6 @@ pub fn run() -> Result<()> {
 
     // Start clipboard monitor
     let _clipboard_monitor_handle = crate::clipboard::monitor::start_monitor();
-
-    // Create unified event channel
-    let (event_tx, event_rx) = create_daemon_channel();
-
-    // Start tarpc IPC server
-    let _ipc_handle: IpcServerHandle = match start_server(event_tx.clone()) {
-        Ok(handle) => handle,
-        Err(e) => {
-            if client::is_daemon_running() {
-                debug!("Daemon already running, sending toggle command");
-                client::toggle()?;
-                return Ok(());
-            }
-            return Err(e);
-        }
-    };
 
     // Detect compositor for window switching support
     let compositor: Arc<dyn Compositor> = Arc::from(detect_compositor());
