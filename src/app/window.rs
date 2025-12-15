@@ -25,14 +25,39 @@ pub fn create_and_show_window(
     event_tx: DaemonEventSender,
     cx: &mut App,
 ) -> anyhow::Result<LauncherWindow> {
-    // Fetch open windows from compositor (if not disabled)
-    let disabled_modules = config().disabled_modules.unwrap_or_default();
-    let windows = if disabled_modules.contains(&ConfigModule::Windows) {
-        Vec::new()
-    } else {
-        fetch_windows(compositor.as_ref())
-    };
+    let windows = fetch_windows(compositor.as_ref());
+    create_and_show_window_impl(applications, compositor, windows, event_tx, cx)
+}
 
+/// Create and show the launcher window with pre-fetched windows.
+/// This variant is used when windows have been fetched outside of cx.update()
+/// to avoid blocking GPUI's event loop with D-Bus calls.
+pub fn create_and_show_window_with_windows(
+    applications: Vec<ApplicationItem>,
+    compositor: Arc<dyn Compositor>,
+    window_infos: Vec<WindowInfo>,
+    event_tx: DaemonEventSender,
+    cx: &mut App,
+) -> anyhow::Result<LauncherWindow> {
+    // Convert WindowInfo to WindowItem with icon resolution
+    let windows: Vec<WindowItem> = window_infos
+        .into_iter()
+        .map(|info| {
+            let icon_path = resolve_window_icon(&info.class);
+            WindowItem::from_window_info(info, icon_path)
+        })
+        .collect();
+
+    create_and_show_window_impl(applications, compositor, windows, event_tx, cx)
+}
+
+fn create_and_show_window_impl(
+    applications: Vec<ApplicationItem>,
+    compositor: Arc<dyn Compositor>,
+    windows: Vec<WindowItem>,
+    event_tx: DaemonEventSender,
+    cx: &mut App,
+) -> anyhow::Result<LauncherWindow> {
     // Combine windows and applications into items list
     // Built-in actions and submenus are added by the delegate
     // Order doesn't matter here - sort_priority in delegate handles display order
