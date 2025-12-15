@@ -2,7 +2,6 @@ use anyhow::Result;
 use gpui::{Application, QuitMode, hsla};
 use gpui_component::theme::{Theme, ThemeMode};
 use std::sync::Arc;
-use std::time::Duration;
 use tracing::{debug, error, info};
 
 use crate::app::window::LauncherWindow;
@@ -109,14 +108,67 @@ pub fn run() -> Result<()> {
             let mut launcher_window: Option<LauncherWindow> = None;
             let mut visible = false;
 
-            // Use a polling-based event loop with short intervals
-            // This ensures events are processed even when GPUI's executor isn't being woken up
+            // Main event loop - async wait on channel, no polling needed
             cx.spawn(async move |cx: &mut gpui::AsyncApp| {
-                loop {
-                    // Poll the channel without blocking
-                    while let Ok(event) = event_rx.try_recv() {
-                        match event {
-                            DaemonEvent::Window(WindowEvent::RequestHide) if visible => {
+                while let Ok(event) = event_rx.recv_async().await {
+                    match event {
+                        DaemonEvent::Window(WindowEvent::RequestHide) if visible => {
+                            let _ = cx.update(|cx| {
+                                if let Some(ref lw) = launcher_window {
+                                    window::close_window(&lw.handle, cx);
+                                }
+                            });
+                            launcher_window = None;
+                            visible = false;
+                        }
+
+                        DaemonEvent::Show { response_tx } => {
+                            let result = if !visible {
+                                // Fetch windows (if not disabled) in a background thread
+                                let windows = if disabled_modules_clone.contains(&ConfigModule::Windows) {
+                                    Vec::new()
+                                } else {
+                                    let comp = compositor_clone.clone();
+                                    let handle = std::thread::spawn(move || {
+                                        match comp.list_windows() {
+                                            Ok(w) => w,
+                                            Err(e) => {
+                                                tracing::warn!(%e, "Failed to list windows");
+                                                Vec::new()
+                                            }
+                                        }
+                                    });
+                                    handle.join().unwrap_or_default()
+                                };
+
+                                cx.update(|cx| {
+                                    match window::create_and_show_window_with_windows(
+                                        applications_clone.clone(),
+                                        compositor_clone.clone(),
+                                        windows,
+                                        event_tx.clone(),
+                                        cx,
+                                    ) {
+                                        Ok(lw) => {
+                                            launcher_window = Some(lw);
+                                            visible = true;
+                                            Ok(())
+                                        }
+                                        Err(e) => {
+                                            error!(%e, "Failed to create window");
+                                            Err(format!("Failed to create window: {}", e))
+                                        }
+                                    }
+                                })
+                                .unwrap_or(Err("Failed to update app".to_string()))
+                            } else {
+                                Ok(()) // Already visible
+                            };
+                            let _ = response_tx.send(result);
+                        }
+
+                        DaemonEvent::Hide { response_tx } => {
+                            if visible {
                                 let _ = cx.update(|cx| {
                                     if let Some(ref lw) = launcher_window {
                                         window::close_window(&lw.handle, cx);
@@ -125,153 +177,91 @@ pub fn run() -> Result<()> {
                                 launcher_window = None;
                                 visible = false;
                             }
+                            let _ = response_tx.send(Ok(()));
+                        }
 
-                            DaemonEvent::Show { response_tx } => {
-                                let result = if !visible {
-                                    // Fetch windows (if not disabled) in a background thread
-                                    let windows = if disabled_modules_clone.contains(&ConfigModule::Windows) {
-                                        Vec::new()
-                                    } else {
-                                        let comp = compositor_clone.clone();
-                                        let handle = std::thread::spawn(move || {
-                                            match comp.list_windows() {
-                                                Ok(w) => w,
-                                                Err(e) => {
-                                                    tracing::warn!(%e, "Failed to list windows");
-                                                    Vec::new()
-                                                }
-                                            }
-                                        });
-                                        handle.join().unwrap_or_default()
-                                    };
-
-                                    cx.update(|cx| {
-                                        match window::create_and_show_window_with_windows(
-                                            applications_clone.clone(),
-                                            compositor_clone.clone(),
-                                            windows,
-                                            event_tx.clone(),
-                                            cx,
-                                        ) {
-                                            Ok(lw) => {
-                                                launcher_window = Some(lw);
-                                                visible = true;
-                                                Ok(())
-                                            }
-                                            Err(e) => {
-                                                error!(%e, "Failed to create window");
-                                                Err(format!("Failed to create window: {}", e))
-                                            }
-                                        }
-                                    })
-                                    .unwrap_or(Err("Failed to update app".to_string()))
+                        DaemonEvent::Toggle { response_tx } => {
+                            debug!("Processing Toggle event, visible={}", visible);
+                            let result = if visible {
+                                let _ = cx.update(|cx| {
+                                    if let Some(ref lw) = launcher_window {
+                                        window::close_window(&lw.handle, cx);
+                                    }
+                                });
+                                launcher_window = None;
+                                visible = false;
+                                Ok(())
+                            } else {
+                                // Fetch windows (if not disabled) in a background thread
+                                let windows = if disabled_modules_clone.contains(&ConfigModule::Windows) {
+                                    Vec::new()
                                 } else {
-                                    Ok(()) // Already visible
-                                };
-                                let _ = response_tx.send(result);
-                            }
-
-                            DaemonEvent::Hide { response_tx } => {
-                                if visible {
-                                    let _ = cx.update(|cx| {
-                                        if let Some(ref lw) = launcher_window {
-                                            window::close_window(&lw.handle, cx);
-                                        }
-                                    });
-                                    launcher_window = None;
-                                    visible = false;
-                                }
-                                let _ = response_tx.send(Ok(()));
-                            }
-
-                            DaemonEvent::Toggle { response_tx } => {
-                                debug!("Processing Toggle event, visible={}", visible);
-                                let result = if visible {
-                                    let _ = cx.update(|cx| {
-                                        if let Some(ref lw) = launcher_window {
-                                            window::close_window(&lw.handle, cx);
-                                        }
-                                    });
-                                    launcher_window = None;
-                                    visible = false;
-                                    Ok(())
-                                } else {
-                                    // Fetch windows (if not disabled) in a background thread
-                                    let windows = if disabled_modules_clone.contains(&ConfigModule::Windows) {
-                                        Vec::new()
-                                    } else {
-                                        let comp = compositor_clone.clone();
-                                        let handle = std::thread::spawn(move || {
-                                            match comp.list_windows() {
-                                                Ok(w) => w,
-                                                Err(e) => {
-                                                    tracing::warn!(%e, "Failed to list windows");
-                                                    Vec::new()
-                                                }
-                                            }
-                                        });
-                                        match handle.join() {
+                                    let comp = compositor_clone.clone();
+                                    let handle = std::thread::spawn(move || {
+                                        match comp.list_windows() {
                                             Ok(w) => w,
-                                            Err(_) => {
-                                                error!("Window fetch thread panicked");
+                                            Err(e) => {
+                                                tracing::warn!(%e, "Failed to list windows");
                                                 Vec::new()
                                             }
                                         }
-                                    };
-
-                                    cx.update(|cx| {
-                                        match window::create_and_show_window_with_windows(
-                                            applications_clone.clone(),
-                                            compositor_clone.clone(),
-                                            windows,
-                                            event_tx.clone(),
-                                            cx,
-                                        ) {
-                                            Ok(lw) => {
-                                                launcher_window = Some(lw);
-                                                visible = true;
-                                                Ok(())
-                                            }
-                                            Err(e) => {
-                                                error!(%e, "Failed to create window");
-                                                Err(format!("Failed to create window: {}", e))
-                                            }
-                                        }
-                                    })
-                                    .unwrap_or(Err("Failed to update app".to_string()))
-                                };
-                                let _ = response_tx.send(result);
-                            }
-
-                            DaemonEvent::Quit { response_tx } => {
-                                let _ = response_tx.send(Ok(()));
-                                let _ = cx.update(|cx| {
-                                    cx.quit();
-                                });
-                                return;
-                            }
-
-                            DaemonEvent::SetTheme { name, response_tx } => {
-                                let result = handle_set_theme(&name);
-                                // If window is open, refresh the theme on the view
-                                if visible && let Some(ref lw) = launcher_window {
-                                    let view = lw.launcher_view.clone();
-                                    let _ = cx.update(|cx| {
-                                        view.update(cx, |launcher, cx| {
-                                            launcher.refresh_theme(cx);
-                                        });
                                     });
-                                }
-                                let _ = response_tx.send(result);
-                            }
+                                    match handle.join() {
+                                        Ok(w) => w,
+                                        Err(_) => {
+                                            error!("Window fetch thread panicked");
+                                            Vec::new()
+                                        }
+                                    }
+                                };
 
-                            _ => {}
+                                cx.update(|cx| {
+                                    match window::create_and_show_window_with_windows(
+                                        applications_clone.clone(),
+                                        compositor_clone.clone(),
+                                        windows,
+                                        event_tx.clone(),
+                                        cx,
+                                    ) {
+                                        Ok(lw) => {
+                                            launcher_window = Some(lw);
+                                            visible = true;
+                                            Ok(())
+                                        }
+                                        Err(e) => {
+                                            error!(%e, "Failed to create window");
+                                            Err(format!("Failed to create window: {}", e))
+                                        }
+                                    }
+                                })
+                                .unwrap_or(Err("Failed to update app".to_string()))
+                            };
+                            let _ = response_tx.send(result);
                         }
-                    }
 
-                    // Sleep briefly then poll again
-                    // Use futures_timer which doesn't require a specific runtime
-                    futures_timer::Delay::new(Duration::from_millis(50)).await;
+                        DaemonEvent::Quit { response_tx } => {
+                            let _ = response_tx.send(Ok(()));
+                            let _ = cx.update(|cx| {
+                                cx.quit();
+                            });
+                        }
+
+                        DaemonEvent::SetTheme { name, response_tx } => {
+                            let result = handle_set_theme(&name);
+                            // If window is open, refresh the theme on the view
+                            if visible && let Some(ref lw) = launcher_window {
+                                let view = lw.launcher_view.clone();
+                                let _ = cx.update(|cx| {
+                                    view.update(cx, |launcher, cx| {
+                                        launcher.refresh_theme(cx);
+                                    });
+                                });
+                            }
+                            let _ = response_tx.send(result);
+                        }
+
+                        _ => {}
+                    }
                 }
             })
             .detach();

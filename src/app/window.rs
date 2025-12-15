@@ -24,39 +24,8 @@ pub fn create_and_show_window(
     event_tx: DaemonEventSender,
     cx: &mut App,
 ) -> anyhow::Result<LauncherWindow> {
+    // Fetch open windows from compositor
     let windows = fetch_windows(compositor.as_ref());
-    create_and_show_window_impl(applications, compositor, windows, event_tx, cx)
-}
-
-/// Create and show the launcher window with pre-fetched windows.
-/// This variant is used when windows have been fetched outside of cx.update()
-/// to avoid blocking GPUI's event loop with D-Bus calls.
-pub fn create_and_show_window_with_windows(
-    applications: Vec<ApplicationItem>,
-    compositor: Arc<dyn Compositor>,
-    window_infos: Vec<WindowInfo>,
-    event_tx: DaemonEventSender,
-    cx: &mut App,
-) -> anyhow::Result<LauncherWindow> {
-    // Convert WindowInfo to WindowItem with icon resolution
-    let windows: Vec<WindowItem> = window_infos
-        .into_iter()
-        .map(|info| {
-            let icon_path = resolve_window_icon(&info.class);
-            WindowItem::from_window_info(info, icon_path)
-        })
-        .collect();
-
-    create_and_show_window_impl(applications, compositor, windows, event_tx, cx)
-}
-
-fn create_and_show_window_impl(
-    applications: Vec<ApplicationItem>,
-    compositor: Arc<dyn Compositor>,
-    windows: Vec<WindowItem>,
-    event_tx: DaemonEventSender,
-    cx: &mut App,
-) -> anyhow::Result<LauncherWindow> {
     // Combine windows and applications into items list
     // Built-in actions and submenus are added by the delegate
     // Order doesn't matter here - sort_priority in delegate handles display order
@@ -114,6 +83,87 @@ fn create_and_show_window_impl(
         });
 
         // Store the view entity for later access
+        *launcher_view_cell.borrow_mut() = Some(view.clone());
+
+        cx.new(|cx| Root::new(view, window, cx))
+    })?;
+
+    window_handle.update(cx, |_root, window, _cx| {
+        window.activate_window();
+    })?;
+
+    let launcher_view = launcher_view_cell
+        .into_inner()
+        .expect("Launcher view should have been created");
+
+    Ok(LauncherWindow {
+        handle: window_handle,
+        launcher_view,
+    })
+}
+
+/// Create and show the launcher window with pre-fetched windows.
+/// This variant is used when windows have been fetched outside of cx.update()
+/// to avoid blocking GPUI's event loop with D-Bus calls.
+pub fn create_and_show_window_with_windows(
+    applications: Vec<ApplicationItem>,
+    compositor: Arc<dyn Compositor>,
+    window_infos: Vec<WindowInfo>,
+    event_tx: DaemonEventSender,
+    cx: &mut App,
+) -> anyhow::Result<LauncherWindow> {
+    // Convert WindowInfo to WindowItem with icon resolution
+    let windows: Vec<WindowItem> = window_infos
+        .into_iter()
+        .map(|info| {
+            let icon_path = resolve_window_icon(&info.class);
+            WindowItem::from_window_info(info, icon_path)
+        })
+        .collect();
+
+    // Combine windows and applications into items list
+    let mut items: Vec<ListItem> = Vec::with_capacity(windows.len() + applications.len());
+    items.extend(windows.into_iter().map(ListItem::Window));
+    items.extend(applications.into_iter().map(ListItem::Application));
+
+    let display_size = size(px(1920.0), px(1080.0));
+
+    let fullscreen_bounds = Bounds {
+        origin: point(px(0.0), px(0.0)),
+        size: display_size,
+    };
+
+    let options = WindowOptions {
+        window_bounds: Some(WindowBounds::Windowed(fullscreen_bounds)),
+        titlebar: None,
+        focus: true,
+        show: true,
+        app_id: Some("zlaunch".to_string()),
+        window_background: WindowBackgroundAppearance::Transparent,
+        window_decorations: Some(WindowDecorations::Server),
+        kind: WindowKind::LayerShell(LayerShellOptions {
+            namespace: "zlaunch".to_string(),
+            layer: Layer::Overlay,
+            anchor: Anchor::TOP | Anchor::BOTTOM | Anchor::LEFT | Anchor::RIGHT,
+            keyboard_interactivity: KeyboardInteractivity::Exclusive,
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
+
+    let launcher_view_cell: std::cell::RefCell<Option<Entity<LauncherView>>> =
+        std::cell::RefCell::new(None);
+
+    let window_handle = cx.open_window(options, |window, cx| {
+        let on_hide = move || {
+            let _ = event_tx.send(DaemonEvent::Window(WindowEvent::RequestHide));
+        };
+        let view = cx.new(|cx| LauncherView::new(items, compositor.clone(), on_hide, window, cx));
+
+        view.update(cx, |launcher: &mut LauncherView, cx| {
+            launcher.focus(window, cx);
+        });
+
         *launcher_view_cell.borrow_mut() = Some(view.clone());
 
         cx.new(|cx| Root::new(view, window, cx))
