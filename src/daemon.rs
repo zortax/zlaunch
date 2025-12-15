@@ -2,7 +2,6 @@ use anyhow::Result;
 use gpui::{Application, QuitMode, hsla};
 use gpui_component::theme::{Theme, ThemeMode};
 use std::sync::Arc;
-use std::time::Duration;
 use tracing::{debug, error, info};
 
 use crate::app::window::LauncherWindow;
@@ -109,6 +108,7 @@ pub fn run() -> Result<()> {
             let mut launcher_window: Option<LauncherWindow> = None;
             let mut visible = false;
 
+            // Main event loop - async wait on channel, no polling needed
             cx.spawn(async move |cx: &mut gpui::AsyncApp| {
                 while let Ok(event) = event_rx.recv_async().await {
                     match event {
@@ -163,6 +163,7 @@ pub fn run() -> Result<()> {
                         }
 
                         DaemonEvent::Toggle { response_tx } => {
+                            debug!("Processing Toggle event, visible={}", visible);
                             let result = if visible {
                                 let _ = cx.update(|cx| {
                                     if let Some(ref lw) = launcher_window {
