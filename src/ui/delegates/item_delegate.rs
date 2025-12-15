@@ -65,6 +65,10 @@ impl ItemListDelegate {
             items.push(ListItem::Action(action));
         }
 
+        // Sort items by priority to ensure correct section order
+        // (Windows=2, Commands=3, Applications=4)
+        items.sort_by_key(|item| item.sort_priority());
+
         let section_info =
             Self::compute_section_info(&items, &(0..items.len()).collect::<Vec<_>>());
 
@@ -204,10 +208,15 @@ impl ItemListDelegate {
     /// Filter items based on the current query
     fn filter_items(&mut self) {
         let query = self.base.query();
+        let items = self.base.items();
+
         if query.is_empty() {
-            self.base.reset_filter();
+            // Sort by priority even when showing all items
+            // This ensures sections (Windows, Commands, Applications) appear in correct order
+            let mut sorted_indices: Vec<usize> = (0..items.len()).collect();
+            sorted_indices.sort_by_key(|&idx| items[idx].sort_priority());
+            self.base.apply_filtered_indices(sorted_indices);
         } else {
-            let items = self.base.items();
             let filtered_indices = Self::filter_items_sync(items, query);
             self.base.apply_filtered_indices(filtered_indices);
         }
