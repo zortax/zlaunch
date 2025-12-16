@@ -10,7 +10,7 @@ A fast application launcher and window switcher for Linux Wayland, built with
 ## Features
 
 - **Application launching** - Fuzzy search through desktop entries with icons
-- **Window switching** - Switch between open windows (Hyprland, KDE/KWin)
+- **Window switching** - Switch between open windows (Hyprland)
 - **Calculator** - Evaluate math expressions, copies result to clipboard
 - **Web search** - Search Google, DuckDuckGo, Wikipedia, YouTube, and more
 - **Emoji picker** - Searchable emoji grid
@@ -34,7 +34,7 @@ Start the daemon:
 zlaunch
 ```
 
-Control via CLI:
+Control via CLI (use these commands in you key binds):
 ```bash
 zlaunch toggle  # Toggle visibility
 zlaunch show    # Show launcher
@@ -43,6 +43,9 @@ zlaunch quit    # Stop daemon
 ```
 
 Theme management:
+
+Use the theme selector in the UI, or the CLI/IPC interface:
+
 ```bash
 zlaunch theme           # Show current theme
 zlaunch theme list      # List available themes
@@ -54,14 +57,17 @@ zlaunch theme set NAME  # Set theme by name
 | Key | Action |
 |-----|--------|
 | `↑` / `↓` | Navigate items |
-| `Tab` / `Shift+Tab` | Switch categories |
+| `Tab` / `Shift+Tab` | Navigate in grid |
 | `Enter` | Execute selected item |
-| `Escape` | Hide launcher |
-| `Backspace` | Go back (in submenus) |
+| `Escape` | Back / Hide launcher |
 
 ## Configuration
 
 Config file: `~/.config/zlaunch/config.toml`
+
+By default, zlaunch will not persist changes in the UI (theme) or auto-create
+the config file. Create the config file manually, after that in-UI theme
+changes will be persisted.
 
 ```toml
 theme = "dracula"
@@ -89,11 +95,28 @@ Colors can be specified as:
 
 See bundled themes in `assets/themes/` for examples.
 
+### Background Blur
+
+As a wlr layer shell window is being used, the window blur does not work on
+most compositors. On Hyprland, zlaunch automatically applies `layerrule`s via
+the Hyprland IPC socket to enable blur. To disable this, set the following in
+your config:
+
+```toml
+hyprland_auto_blur = false
+```
+
 ## Compositor Support
 
-- **Hyprland** - Window switching via IPC socket
-- **KDE/KWin** - Window switching via DBus
-- Other compositors should work for application launching but without window switching
+- **Hyprland** - Window switching via IPC socket, clipboard fully supported
+- **wlr based compositors** - untested, should work with clipboard history, windows switching not implemented
+- **KDE/KWin** - WIP, window creation buggy, blur not supported, clipboard not working
+- other compositors will probably not work, Gnome support not planned
+
+## AI Mode
+
+To enable AI mode, run the daemon with the `GEMINI_API_KEY` env var set to an
+appropriate key.
 
 ## License
 
