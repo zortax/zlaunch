@@ -20,6 +20,9 @@ struct SectionInfo {
     app_count: usize,
 }
 
+/// Type alias for confirm callback
+type ConfirmCallback = Arc<dyn Fn(&ListItem) + Send + Sync>;
+
 /// Enhanced delegate for the main item list.
 ///
 /// This delegate composes with BaseDelegate<ListItem> and adds:
@@ -38,6 +41,8 @@ pub struct ItemListDelegate {
     ai_item: Option<AiItem>,
     /// Search items (shown when query triggers search providers)
     search_items: Vec<SearchItem>,
+    /// Confirm callback (stored here to handle dynamic items)
+    on_confirm: Option<ConfirmCallback>,
 }
 
 impl ItemListDelegate {
@@ -78,12 +83,13 @@ impl ItemListDelegate {
             calculator_item: None,
             ai_item: None,
             search_items: Vec::new(),
+            on_confirm: None,
         }
     }
 
     /// Set the confirm callback
     pub fn set_on_confirm(&mut self, callback: impl Fn(&ListItem) + Send + Sync + 'static) {
-        self.base.set_on_confirm(callback);
+        self.on_confirm = Some(Arc::new(callback));
     }
 
     /// Set the cancel callback
@@ -325,21 +331,11 @@ impl ItemListDelegate {
 
     /// Execute confirm callback for the selected item
     pub fn do_confirm(&self) {
-        // We need to handle the callback directly since we have dynamic items
-        // that aren't in the base delegate
         if let Some(idx) = self.selected_index()
-            && let Some(_item) = self.get_item_at(idx)
+            && let Some(item) = self.get_item_at(idx)
+            && let Some(ref callback) = self.on_confirm
         {
-            // Call the callback stored in base delegate
-            // Since we can't access it directly, we need a different approach
-            // For now, just call base do_confirm which will handle regular items
-            // Dynamic items (calculator, AI, search) need special handling in the callback
-            if let Some(_regular_item) = self.base.selected_item() {
-                // If it's a regular item from base, use base's confirm
-                self.base.do_confirm();
-            }
-            // Note: In full implementation, callbacks would be stored here directly
-            // For now, this demonstrates the pattern
+            callback(&item);
         }
     }
 

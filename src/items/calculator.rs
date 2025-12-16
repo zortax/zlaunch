@@ -80,7 +80,7 @@ impl IconProvider for CalculatorItem {
 impl Executable for CalculatorItem {
     fn execute(&self) -> anyhow::Result<()> {
         // Copy to clipboard
-        crate::calculator::copy_to_clipboard(self.text_for_clipboard())
+        crate::clipboard::copy_to_clipboard(self.text_for_clipboard())
             .map_err(|e| anyhow::anyhow!("Failed to copy to clipboard: {}", e))?;
         Ok(())
     }

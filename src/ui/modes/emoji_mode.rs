@@ -5,7 +5,7 @@
 //! - Setting up input filtering
 //! - Handling emoji selection and copying
 
-use crate::calculator::copy_to_clipboard;
+use crate::clipboard::copy_to_clipboard;
 use crate::emoji::all_emojis;
 use crate::ui::delegates::EmojiGridDelegate;
 use gpui::{AppContext, Context, Entity, Subscription, Window};

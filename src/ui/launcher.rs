@@ -1,4 +1,4 @@
-use crate::calculator::copy_to_clipboard;
+use crate::clipboard::copy_to_clipboard;
 use crate::compositor::Compositor;
 use crate::desktop::launch_application;
 use crate::items::{Executable, ListItem};
@@ -442,6 +442,14 @@ impl LauncherView {
                 {
                     clipboard_state.update(cx, |state, cx| {
                         state.delegate_mut().select_down();
+                        if let Some(idx) = state.delegate().selected_index() {
+                            state.scroll_to_item(
+                                IndexPath::new(idx),
+                                ScrollStrategy::Top,
+                                window,
+                                cx,
+                            );
+                        }
                         cx.notify();
                     });
                 }
@@ -507,6 +515,14 @@ impl LauncherView {
                 {
                     clipboard_state.update(cx, |state, cx| {
                         state.delegate_mut().select_up();
+                        if let Some(idx) = state.delegate().selected_index() {
+                            state.scroll_to_item(
+                                IndexPath::new(idx),
+                                ScrollStrategy::Top,
+                                window,
+                                cx,
+                            );
+                        }
                         cx.notify();
                     });
                 }
@@ -578,6 +594,14 @@ impl LauncherView {
                 {
                     clipboard_state.update(cx, |state, cx| {
                         state.delegate_mut().select_down();
+                        if let Some(idx) = state.delegate().selected_index() {
+                            state.scroll_to_item(
+                                IndexPath::new(idx),
+                                ScrollStrategy::Top,
+                                window,
+                                cx,
+                            );
+                        }
                         cx.notify();
                     });
                 }
@@ -649,6 +673,14 @@ impl LauncherView {
                 {
                     clipboard_state.update(cx, |state, cx| {
                         state.delegate_mut().select_up();
+                        if let Some(idx) = state.delegate().selected_index() {
+                            state.scroll_to_item(
+                                IndexPath::new(idx),
+                                ScrollStrategy::Top,
+                                window,
+                                cx,
+                            );
+                        }
                         cx.notify();
                     });
                 }

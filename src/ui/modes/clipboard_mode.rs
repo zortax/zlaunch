@@ -5,8 +5,9 @@
 //! - Setting up input filtering
 //! - Handling clipboard item selection and pasting
 
-use crate::calculator::copy_to_clipboard;
-use crate::clipboard::{ClipboardContent, data::search_items};
+use crate::clipboard::{
+    ClipboardContent, copy_image_to_clipboard, copy_to_clipboard, data::search_items,
+};
 use crate::ui::delegates::ClipboardListDelegate;
 use gpui::{AppContext, Context, Entity, Subscription, Window};
 use gpui_component::input::{InputEvent, InputState};
@@ -34,21 +35,36 @@ impl ClipboardModeHandler {
 
         // Set up confirm callback (copy item and hide)
         delegate.set_on_confirm(move |item| {
-            let text = match &item.content {
-                ClipboardContent::Text(t) => t.clone(),
-                ClipboardContent::Image { .. } => return, // Can't paste images yet
+            match &item.content {
+                ClipboardContent::Text(t) => {
+                    if let Err(e) = copy_to_clipboard(t) {
+                        tracing::warn!(%e, "Failed to copy text to clipboard");
+                    }
+                }
+                ClipboardContent::Image {
+                    width,
+                    height,
+                    rgba_bytes,
+                } => {
+                    if let Err(e) = copy_image_to_clipboard(*width, *height, rgba_bytes) {
+                        tracing::warn!(%e, "Failed to copy image to clipboard");
+                    }
+                }
                 ClipboardContent::FilePaths(paths) => {
-                    // Paste file paths as text
-                    paths
+                    let text = paths
                         .iter()
                         .filter_map(|p| p.to_str())
                         .collect::<Vec<_>>()
-                        .join("\n")
+                        .join("\n");
+                    if let Err(e) = copy_to_clipboard(&text) {
+                        tracing::warn!(%e, "Failed to copy file paths to clipboard");
+                    }
                 }
-                ClipboardContent::RichText { plain, .. } => plain.clone(),
-            };
-            if let Err(e) = copy_to_clipboard(&text) {
-                tracing::warn!(%e, "Failed to copy to clipboard");
+                ClipboardContent::RichText { plain, .. } => {
+                    if let Err(e) = copy_to_clipboard(plain) {
+                        tracing::warn!(%e, "Failed to copy rich text to clipboard");
+                    }
+                }
             }
             on_hide();
         });

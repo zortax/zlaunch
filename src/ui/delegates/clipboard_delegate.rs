@@ -137,14 +137,20 @@ impl ListDelegate for ClipboardListDelegate {
         &mut self,
         ix: IndexPath,
         _window: &mut Window,
-        _cx: &mut Context<'_, ListState<Self>>,
+        cx: &mut Context<'_, ListState<Self>>,
     ) -> Option<Self::Item> {
         let item = self.base.get_filtered_item(ix.row)?;
         let is_selected = self.base.selected_index() == Some(ix.row);
+        let row = ix.row;
 
-        let element = render_clipboard_item(item, is_selected, ix.row);
+        let element = render_clipboard_item(item, is_selected, row).on_click(cx.listener(
+            move |state, _, _window, _cx| {
+                state.delegate_mut().set_selected(row);
+                state.delegate().do_confirm();
+            },
+        ));
 
-        Some(GpuiListItem::new(("clipboard-item", ix.row)).child(element))
+        Some(GpuiListItem::new(("clipboard-item", row)).child(element))
     }
 
     fn set_selected_index(
