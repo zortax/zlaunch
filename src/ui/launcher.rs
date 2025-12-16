@@ -960,8 +960,8 @@ impl gpui::Render for LauncherView {
                     .rounded(theme.window_border_radius)
                     .overflow_hidden()
                     // Stop click propagation to backdrop
-                    .on_mouse_down(gpui::MouseButton::Left, |_event, _window, _cx| {
-                        // Do nothing - just stop propagation
+                    .on_mouse_down(gpui::MouseButton::Left, |_event, _window, cx| {
+                        cx.stop_propagation();
                     })
                     // Input section
                     .child(
