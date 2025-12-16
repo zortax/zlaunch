@@ -71,6 +71,15 @@ pub fn run() -> Result<()> {
     // Detect compositor for window switching support
     let compositor: Arc<dyn Compositor> = Arc::from(detect_compositor());
 
+    // Apply Hyprland blur layer rules if enabled
+    if crate::config::config().hyprland_auto_blur {
+        match crate::compositor::hyprland::apply_blur_layer_rules() {
+            Ok(true) => info!("Applied Hyprland blur layer rules"),
+            Ok(false) => {} // Not on Hyprland, silently skip
+            Err(e) => error!("Failed to apply Hyprland blur rules: {}", e),
+        }
+    }
+
     // Load applications and convert to ApplicationItems
     let entries = load_applications();
     let applications: Vec<ApplicationItem> = entries.into_iter().map(Into::into).collect();

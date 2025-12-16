@@ -5,7 +5,7 @@
 //! are provided for Hyprland (IPC socket) and KDE/KWin (DBus).
 
 mod detect;
-mod hyprland;
+pub mod hyprland;
 mod kwin;
 mod noop;
 

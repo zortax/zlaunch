@@ -25,6 +25,8 @@ pub struct AppConfig {
     pub window_width: f32,
     /// Window height in pixels
     pub window_height: f32,
+    /// Automatically apply blur layer rules on Hyprland
+    pub hyprland_auto_blur: bool,
 }
 
 impl AppConfig {
@@ -34,6 +36,7 @@ impl AppConfig {
             theme: String::new(),
             window_width: 600.0,
             window_height: 400.0,
+            hyprland_auto_blur: true,
         }
     }
 }
@@ -44,6 +47,7 @@ impl Default for AppConfig {
             theme: "default".to_string(),
             window_width: 600.0,
             window_height: 400.0,
+            hyprland_auto_blur: true,
         }
     }
 }

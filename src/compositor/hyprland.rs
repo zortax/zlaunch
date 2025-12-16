@@ -131,3 +131,28 @@ impl HyprlandClient {
 struct HyprlandWorkspace {
     id: i32,
 }
+
+/// Apply blur layer rules for zlaunch on Hyprland.
+///
+/// This sets up transparency and blur effects via Hyprland IPC.
+/// Returns `Ok(true)` if rules were applied, `Ok(false)` if not on Hyprland.
+pub fn apply_blur_layer_rules() -> Result<bool> {
+    // Check if we're on Hyprland
+    let Some(compositor) = HyprlandCompositor::new() else {
+        return Ok(false);
+    };
+
+    let rules = [
+        "blur,zlaunch",
+        "ignorezero,zlaunch",
+        "blurpopups,zlaunch",
+        "ignorealpha 0.35,zlaunch",
+    ];
+
+    for rule in rules {
+        let cmd = format!("keyword layerrule {}", rule);
+        compositor.send_command(&cmd)?;
+    }
+
+    Ok(true)
+}
