@@ -1,6 +1,6 @@
 [package]
 name = "zlaunch"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "A fast application launcher for Linux wayland desktops built with GPUI."
 repository = "https://github.com/zortax/zlaunch"
@@ -14,7 +14,7 @@ gpui-component-assets = "0.5.0"
 rust-embed = "8"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
-freedesktop-desktop-entry = "0.7"
+freedesktop-desktop-entry = "0.8"
 freedesktop-icons = "0.4"
 dirs = "6"
 flume = "0.12"
