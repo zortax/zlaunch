@@ -1,4 +1,4 @@
-use crate::calculator::{evaluate_expression, looks_like_expression};
+use crate::calculator::evaluate_expression;
 use crate::items::{ActionItem, AiItem, CalculatorItem, ListItem, SearchItem, SubmenuItem};
 use crate::search::{SearchDetection, detect_search, get_providers};
 use crate::ui::delegates::BaseDelegate;
@@ -143,23 +143,14 @@ impl ItemListDelegate {
     /// Process the query to detect special items (calculator, AI, search)
     fn process_query(&mut self, query: &str) {
         // Check for calculator expression
-        if looks_like_expression(query)
-            && let Some(result) = evaluate_expression(query)
+        if query.chars().any(|c| c.is_numeric())
+            && let Ok(result) = evaluate_expression(query)
         {
-            self.calculator_item = Some(CalculatorItem::from_calc_result(result));
-
-            // When calculator matches, ONLY show calculator - no other items
-            self.ai_item = None;
-            self.search_items.clear();
-            // Clear base items by applying empty filtered indices
-            self.base.apply_filtered_indices(Vec::new());
+            self.calculator_item = Some(result);
             self.update_section_info();
-
-            // Ensure calculator item is selected
-            self.base.set_selected_unchecked(0);
-            return;
+        } else {
+            self.calculator_item = None;
         }
-        self.calculator_item = None;
 
         // Filter the base items first
         self.filter_items();

@@ -1896,12 +1896,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fasteval"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f4cdac9e4065d7c48e30770f8665b8cef9a3a73a63a4056a33a5f395bc7cf75"
-
-[[package]]
 name = "fastrand"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1958,6 +1952,12 @@ checksum = "1e6853b52649d4ac5c0bd02320cddc5ba956bdb407c4b75a2c6b75bf51500f8c"
 dependencies = [
  "simd-adler32",
 ]
+
+[[package]]
+name = "fend-core"
+version = "1.5.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f775cab5068a34b942b110dcb11f42c96d376b681c45e604884da6059cb9d2c"
 
 [[package]]
 name = "filedescriptor"
@@ -8699,7 +8699,7 @@ dependencies = [
  "clap",
  "dirs 6.0.0",
  "emojis",
- "fasteval",
+ "fend-core",
  "flume 0.12.0",
  "freedesktop-desktop-entry",
  "freedesktop-icons",
