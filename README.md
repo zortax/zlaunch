@@ -115,8 +115,8 @@ hyprland_auto_blur = false
 
 ## AI Mode
 
-To enable AI mode, run the daemon with the `GEMINI_API_KEY` env var set to an
-appropriate key.
+To enable AI mode, run the daemon with the `GEMINI_API_KEY` `OPENAI_API_KEY` or `OPENROUTER_API_KEY` env var set to an
+appropriate key. Model can be chosen for OpenRouter with the `OPENROUTER_MODEL` env var.
 
 ## License
 

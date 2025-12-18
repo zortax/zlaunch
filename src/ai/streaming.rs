@@ -8,7 +8,7 @@
 //! The UI layer just receives tokens through a channel without dealing
 //! with async complexity.
 
-use super::GeminiClient;
+use super::LLMClient;
 use flume::Receiver;
 
 /// Spawn an AI streaming task and return a channel receiver for tokens.
@@ -27,8 +27,8 @@ use flume::Receiver;
 /// - `Ok("")` when streaming completes successfully
 /// - `Err(error)` if an error occurs
 pub fn spawn_stream(query: String) -> Option<Receiver<Result<String, String>>> {
-    // Create Gemini client
-    let client = GeminiClient::new()?;
+    // Create LLM client
+    let client = LLMClient::new()?;
 
     // Create channel for communication between Tokio thread and caller
     let (tx, rx) = flume::unbounded::<Result<String, String>>();

@@ -1,8 +1,7 @@
+use super::traits::{Categorizable, DisplayItem, IconProvider};
 use crate::assets::PhosphorIcon;
 
-use super::traits::{Categorizable, DisplayItem, IconProvider};
-
-/// An AI item representing a query to be answered by Gemini.
+/// An AI item representing a query to be answered by the LLM.
 #[derive(Clone, Debug)]
 pub struct AiItem {
     /// Unique identifier for this item
@@ -17,7 +16,7 @@ impl AiItem {
     /// Create a new AI item for a query.
     pub fn new(query: String) -> Self {
         let id = format!("ai-{}", query.replace(' ', "-").to_lowercase());
-        let name = "Ask Gemini".to_string();
+        let name = "Ask AI".to_string();
         Self { id, name, query }
     }
 
@@ -37,7 +36,7 @@ impl DisplayItem for AiItem {
     }
 
     fn description(&self) -> Option<&str> {
-        Some("Use Gemini to answer your question")
+        Some("Use an LLM to answer your question")
     }
 
     fn action_label(&self) -> &'static str {
