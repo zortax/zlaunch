@@ -16,11 +16,12 @@ pub fn evaluate_expression(input: &str) -> Result<CalculatorItem, String> {
     match fend_core::evaluate(&expression, &mut context) {
         Ok(value) => {
             let value = value.get_main_result();
+            let calc_value = value.trim_start_matches("approx. ");
             Ok(CalculatorItem {
                 id: "calculator-result".to_string(),
                 expression,
                 display_result: format_display(value),
-                clipboard_result: Some(value.to_string()),
+                clipboard_result: Some(calc_value.to_string()),
                 is_error: false,
             })
         }
