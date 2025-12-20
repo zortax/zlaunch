@@ -48,13 +48,11 @@ impl LLMClient {
     /// Returns a stream of tokens (strings).
     pub async fn stream_query(
         &self,
-        query: &str,
+        messages: &[ChatMessage],
     ) -> Result<Pin<Box<dyn Stream<Item = Result<String>> + Send>>> {
-        let messages = vec![ChatMessage::user().content(query).build()];
-
         let stream = self
             .llm
-            .chat_stream(&messages)
+            .chat_stream(messages)
             .await
             .context("Failed to initiate streaming chat")?;
 

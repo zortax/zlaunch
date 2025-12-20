@@ -4,6 +4,10 @@
 //! mathematical expressions and formatting results.
 
 use crate::items::CalculatorItem;
+use fend_core::Context;
+use std::sync::{Mutex, OnceLock};
+
+static CONTEXT: OnceLock<Mutex<Context>> = OnceLock::new();
 
 /// Evaluate a mathematical expression.
 ///
@@ -12,7 +16,10 @@ use crate::items::CalculatorItem;
 pub fn evaluate_expression(input: &str) -> Result<CalculatorItem, String> {
     let expression = input.trim().to_string();
 
-    let mut context = fend_core::Context::new();
+    let mut context = CONTEXT
+        .get_or_init(|| Mutex::new(Context::new()))
+        .lock()
+        .unwrap();
     match fend_core::evaluate(&expression, &mut context) {
         Ok(value) => {
             let value = value.get_main_result();
