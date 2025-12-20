@@ -156,6 +156,7 @@ pub fn run() -> Result<()> {
                         }
 
                         DaemonEvent::Toggle { response_tx } => {
+                            debug!("Processing Toggle event, visible={}", visible);
                             let result = if visible {
                                 let _ = cx.update(|cx| {
                                     if let Some(ref lw) = launcher_window {

@@ -26,7 +26,6 @@ pub fn create_and_show_window(
 ) -> anyhow::Result<LauncherWindow> {
     // Fetch open windows from compositor
     let windows = fetch_windows(compositor.as_ref());
-
     // Combine windows and applications into items list
     // Built-in actions and submenus are added by the delegate
     // Order doesn't matter here - sort_priority in delegate handles display order
@@ -41,7 +40,7 @@ pub fn create_and_show_window(
     //    .map(|d| d.bounds().size)
     //    .or_else(|| cx.primary_display().map(|d| d.bounds().size))
     //    .unwrap_or_else(|| size(px(7680.0), px(4320.0))); // 8K fallback - will be clamped
-    let display_size = size(px(7680.0), px(4320.0));
+    let display_size = size(px(1920.0), px(1080.0));
 
     let fullscreen_bounds = Bounds {
         origin: point(px(0.0), px(0.0)),
