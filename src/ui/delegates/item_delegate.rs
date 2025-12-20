@@ -1,4 +1,5 @@
 use crate::calculator::evaluate_expression;
+use crate::config::{ConfigModule, config};
 use crate::items::{ActionItem, AiItem, CalculatorItem, ListItem, SearchItem, SubmenuItem};
 use crate::search::{SearchDetection, detect_search, get_providers};
 use crate::ui::delegates::BaseDelegate;
@@ -48,22 +49,30 @@ pub struct ItemListDelegate {
 impl ItemListDelegate {
     /// Create a new item list delegate
     pub fn new(mut items: Vec<ListItem>) -> Self {
+        let disabled_modules = config().disabled_modules.unwrap_or_default();
+
         // Add built-in submenu items
-        items.push(ListItem::Submenu(
-            SubmenuItem::grid("submenu-emojis", "Emojis", 8)
-                .with_description("Search and copy emojis")
-                .with_icon("smiley"),
-        ));
-        items.push(ListItem::Submenu(
-            SubmenuItem::list("submenu-clipboard", "Clipboard History")
-                .with_description("View and paste clipboard history")
-                .with_icon("clipboard"),
-        ));
-        items.push(ListItem::Submenu(
-            SubmenuItem::list("submenu-themes", "Themes")
-                .with_description("Browse and apply themes")
-                .with_icon("palette"),
-        ));
+        if !disabled_modules.contains(&ConfigModule::Emojis) {
+            items.push(ListItem::Submenu(
+                SubmenuItem::grid("submenu-emojis", "Emojis", 8)
+                    .with_description("Search and copy emojis")
+                    .with_icon("smiley"),
+            ));
+        }
+        if !disabled_modules.contains(&ConfigModule::Clipboard) {
+            items.push(ListItem::Submenu(
+                SubmenuItem::list("submenu-clipboard", "Clipboard History")
+                    .with_description("View and paste clipboard history")
+                    .with_icon("clipboard"),
+            ));
+        }
+        if !disabled_modules.contains(&ConfigModule::Themes) {
+            items.push(ListItem::Submenu(
+                SubmenuItem::list("submenu-themes", "Themes")
+                    .with_description("Browse and apply themes")
+                    .with_icon("palette"),
+            ));
+        }
 
         // Add built-in action items
         for action in ActionItem::builtins() {
@@ -142,8 +151,12 @@ impl ItemListDelegate {
 
     /// Process the query to detect special items (calculator, AI, search)
     fn process_query(&mut self, query: &str) {
+        // Get the config disabled modules
+        let disabled_modules = config().disabled_modules.unwrap_or_default();
+
         // Check for calculator expression
-        if query.chars().any(|c| c.is_numeric())
+        if !disabled_modules.contains(&ConfigModule::Calculator)
+            && query.chars().any(|c| c.is_numeric())
             && let Ok(result) = evaluate_expression(query)
         {
             self.calculator_item = Some(result);
@@ -170,13 +183,13 @@ impl ItemListDelegate {
         // 2. Else if search trigger (!g, !ddg, etc.) → only show that search provider
         // 3. Else if query not empty → always show AI item + all search providers at bottom
 
-        if has_ai_trigger {
+        if !disabled_modules.contains(&ConfigModule::Ai) && has_ai_trigger {
             // Only show AI item when !ai trigger is used
             let ai_query = trimmed.strip_prefix("!ai").unwrap().trim();
             if !ai_query.is_empty() {
                 self.ai_item = Some(AiItem::new(ai_query.to_string()));
             }
-        } else if has_search_trigger {
+        } else if !disabled_modules.contains(&ConfigModule::Search) && has_search_trigger {
             // Only show the triggered search provider
             if let SearchDetection::Triggered { provider, query } = search_detection {
                 self.search_items.push(SearchItem::new(provider, query));
@@ -184,8 +197,12 @@ impl ItemListDelegate {
         } else if !trimmed.is_empty() {
             // Always show AI item and all search providers when query is not empty
             // These appear at the bottom in "Search and AI" section
-            self.ai_item = Some(AiItem::new(trimmed.to_string()));
-            if let SearchDetection::Fallback { query } = search_detection {
+            if !disabled_modules.contains(&ConfigModule::Ai) {
+                self.ai_item = Some(AiItem::new(trimmed.to_string()));
+            }
+            if !disabled_modules.contains(&ConfigModule::Search)
+                && let SearchDetection::Fallback { query } = search_detection
+            {
                 for provider in get_providers() {
                     self.search_items
                         .push(SearchItem::new(provider, query.clone()));

@@ -986,7 +986,11 @@ impl gpui::Render for LauncherView {
                     .h(px(config.window_height))
                     .flex()
                     .flex_col()
-                    .bg(theme.window_background)
+                    .bg(if config.enable_transparency {
+                        theme.window_background
+                    } else {
+                        theme.window_background.alpha(1.0)
+                    })
                     .border_1()
                     .border_color(theme.window_border)
                     .rounded(theme.window_border_radius)
