@@ -32,12 +32,9 @@ empty_state_height = 200.0
 empty_state_color = "#9ca0b0"        # Overlay0
 
 [calculator]
-padding_multiplier = 1.5
-content_height_multiplier = 1.25
 icon_background = "#1e66f533"        # Blue
 icon_color = "#1e66f5"               # Blue
 error_color = "#d20f39"              # Red
-content_gap = 2.0
 
 [action_indicator]
 width = 64.0

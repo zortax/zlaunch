@@ -1,108 +1,52 @@
-//! Expression evaluation using fasteval.
+//! Expression evaluation using fend.
 //!
-//! Wraps fasteval to provide a simple interface for evaluating
+//! Wraps fend to provide a simple interface for evaluating
 //! mathematical expressions and formatting results.
 
-use std::collections::BTreeMap;
-
-/// Result of evaluating a calculator expression.
-#[derive(Clone, Debug)]
-pub enum CalcResult {
-    /// Successful calculation with a valid numeric result.
-    Success {
-        /// The original expression.
-        expression: String,
-        /// The numeric value.
-        value: f64,
-        /// Formatted for display (with thousand separators).
-        display_result: String,
-        /// Formatted for clipboard (raw number).
-        clipboard_result: String,
-    },
-    /// Expression evaluated but result is not a valid number.
-    Error {
-        /// The original expression.
-        expression: String,
-        /// Error message to display.
-        message: String,
-    },
-}
-
-impl CalcResult {
-    /// Get the expression that was evaluated.
-    pub fn expression(&self) -> &str {
-        match self {
-            Self::Success { expression, .. } => expression,
-            Self::Error { expression, .. } => expression,
-        }
-    }
-
-    /// Check if this is a successful result.
-    pub fn is_success(&self) -> bool {
-        matches!(self, Self::Success { .. })
-    }
-
-    /// Get the display string (result or error message).
-    pub fn display(&self) -> &str {
-        match self {
-            Self::Success { display_result, .. } => display_result,
-            Self::Error { message, .. } => message,
-        }
-    }
-
-    /// Get the clipboard string (only for successful results).
-    pub fn clipboard(&self) -> Option<&str> {
-        match self {
-            Self::Success {
-                clipboard_result, ..
-            } => Some(clipboard_result),
-            Self::Error { .. } => None,
-        }
-    }
-}
+use crate::items::CalculatorItem;
 
 /// Evaluate a mathematical expression.
 ///
-/// Returns `Some(CalcResult)` if the expression can be parsed,
+/// Returns `Ok(CalculatorItem)` if the expression can be parsed,
 /// or `None` if parsing fails entirely.
-pub fn evaluate_expression(input: &str) -> Option<CalcResult> {
+pub fn evaluate_expression(input: &str) -> Result<CalculatorItem, String> {
     let expression = input.trim().to_string();
 
-    // Use an empty namespace (no custom variables)
-    let mut namespace = BTreeMap::<String, f64>::new();
-
-    match fasteval::ez_eval(&expression, &mut namespace) {
+    let mut context = fend_core::Context::new();
+    match fend_core::evaluate(&expression, &mut context) {
         Ok(value) => {
-            if value.is_nan() {
-                Some(CalcResult::Error {
+            let value = value.get_main_result();
+            let calc_value = value.trim_start_matches("approx. ");
+            Ok(CalculatorItem {
+                id: "calculator-result".to_string(),
+                expression,
+                display_result: format_display(value),
+                clipboard_result: Some(calc_value.to_string()),
+                is_error: false,
+            })
+        }
+        Err(err) => {
+            if err == "division by zero" {
+                Ok(CalculatorItem {
+                    id: "calculator-result".to_string(),
                     expression,
-                    message: "Not a Number".to_string(),
-                })
-            } else if value.is_infinite() {
-                let msg = if value.is_sign_positive() {
-                    "Infinity"
-                } else {
-                    "-Infinity"
-                };
-                Some(CalcResult::Error {
-                    expression,
-                    message: msg.to_string(),
+                    display_result: "Infinity".to_string(),
+                    clipboard_result: None,
+                    is_error: true,
                 })
             } else {
-                Some(CalcResult::Success {
-                    expression,
-                    display_result: format_display(value),
-                    clipboard_result: format_clipboard(value),
-                    value,
-                })
+                Err(err.to_string())
             }
         }
-        Err(_) => None, // Parse error - silently fail
     }
 }
 
 /// Format a number for display with thousand separators.
-fn format_display(value: f64) -> String {
+fn format_display(value: &str) -> String {
+    // Convert to f64, else return the original string
+    let Ok(value) = value.parse::<f64>() else {
+        return value.to_string();
+    };
     if value.fract() == 0.0 && value.abs() < 1e15 {
         // Integer display with thousand separators
         format_with_separators(value as i64)
@@ -145,73 +89,54 @@ fn format_with_separators(value: i64) -> String {
     }
 }
 
-/// Format a number for clipboard (raw number, no separators).
-fn format_clipboard(value: f64) -> String {
-    if value.fract() == 0.0 && value.abs() < 1e15 {
-        format!("{}", value as i64)
-    } else {
-        let formatted = format!("{:.10}", value);
-        formatted
-            .trim_end_matches('0')
-            .trim_end_matches('.')
-            .to_string()
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::evaluate_expression;
 
     #[test]
     fn test_basic_evaluation() {
         let result = evaluate_expression("2 + 2").unwrap();
-        assert!(result.is_success());
-        assert_eq!(result.display(), "4");
-        assert_eq!(result.clipboard(), Some("4"));
+        assert_eq!(result.display_result, "4");
+        assert_eq!(result.text_for_clipboard(), "4");
     }
 
     #[test]
     fn test_thousand_separators() {
         let result = evaluate_expression("1000 * 1000").unwrap();
-        assert!(result.is_success());
-        assert_eq!(result.display(), "1,000,000");
-        assert_eq!(result.clipboard(), Some("1000000"));
+        assert_eq!(result.display_result, "1,000,000");
+        assert_eq!(result.text_for_clipboard(), "1000000");
     }
 
     #[test]
     fn test_decimal_result() {
         let result = evaluate_expression("1 / 3").unwrap();
-        assert!(result.is_success());
         // Should have decimal places, no trailing zeros
-        assert!(result.display().starts_with("0.333"));
+        assert!(result.display_result.starts_with("approx. 0.333"));
     }
 
     #[test]
     fn test_division_by_zero() {
         let result = evaluate_expression("1 / 0").unwrap();
-        assert!(!result.is_success());
-        assert_eq!(result.display(), "Infinity");
+        assert_eq!(result.display_result, "Infinity");
     }
 
     #[test]
     fn test_invalid_expression() {
         // Truly invalid expressions that fasteval cannot parse
         let result = evaluate_expression("2 +* 2");
-        assert!(result.is_none());
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_functions() {
         // Use exponentiation for square root since sqrt is not built-in
         let result = evaluate_expression("16^0.5").unwrap();
-        assert!(result.is_success());
-        assert_eq!(result.display(), "4");
+        assert_eq!(result.display_result, "4");
     }
 
     #[test]
     fn test_trig_functions() {
         let result = evaluate_expression("sin(0)").unwrap();
-        assert!(result.is_success());
-        assert_eq!(result.display(), "0");
+        assert_eq!(result.display_result, "0");
     }
 }

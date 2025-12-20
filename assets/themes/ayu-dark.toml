@@ -32,12 +32,9 @@ empty_state_height = 200.0
 empty_state_color = "#4d5566"        # Comment
 
 [calculator]
-padding_multiplier = 1.5
-content_height_multiplier = 1.25
 icon_background = "#39bae626"        # Blue
 icon_color = "#39bae6"               # Blue
 error_color = "#f07178"              # Red
-content_gap = 2.0
 
 [action_indicator]
 width = 64.0

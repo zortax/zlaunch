@@ -32,12 +32,9 @@ empty_state_height = 240.0
 empty_state_color = "#848bbd"
 
 [calculator]
-padding_multiplier = 1.75
-content_height_multiplier = 1.4
 icon_background = "#ff7edb4d"        # Neon pink
 icon_color = "#ff7edb"
 error_color = "#fe4450"              # Neon red
-content_gap = 4.0
 
 [action_indicator]
 width = 80.0

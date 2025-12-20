@@ -118,15 +118,12 @@ fn render_calculator(
         theme.item_background
     };
 
-    // Use calculator padding multiplier for bigger item
-    let padding_y = theme.item_padding_y * theme.calculator.padding_multiplier;
-
     let mut container = div()
         .id(ElementId::NamedInteger("calc-item".into(), row as u64))
         .mx(theme.item_margin_x)
         .my(theme.item_margin_y)
         .px(theme.item_padding_x)
-        .py(padding_y)
+        .py(theme.item_padding_y)
         .bg(bg_color)
         .rounded(theme.item_border_radius)
         .overflow_hidden()
@@ -177,54 +174,36 @@ fn render_calculator_icon() -> Div {
         )
 }
 
-/// Render the calculator text content (expression + result).
+/// Render the calculator text content (result only).
 fn render_calculator_content(calc: &crate::items::CalculatorItem, selected: bool) -> Div {
     let theme = theme();
 
-    // Expression as muted smaller text
-    let expression_element = div()
-        .w_full()
-        .text_xs()
-        .text_color(theme.item_description_color)
-        .whitespace_nowrap()
-        .overflow_hidden()
-        .text_ellipsis()
-        .child(SharedString::from(calc.expression.clone()));
-
-    // Result with "= " prefix, larger text
     let result_color = if calc.is_error {
-        // Use theme error color for calculator errors
         theme.calculator.error_color
     } else {
         theme.item_title_color
     };
 
-    let result_text = format!("= {}", calc.display_result);
-    let result_element = div()
-        .w_full()
-        .text_base() // Slightly larger than normal text_sm
-        .font_weight(gpui::FontWeight::MEDIUM)
-        .text_color(result_color)
-        .whitespace_nowrap()
-        .overflow_hidden()
-        .text_ellipsis()
-        .child(SharedString::from(result_text));
-
     let max_width = theme.max_text_width(px(crate::config::window_width()), selected);
 
-    // Use calculator content height multiplier to accommodate larger result text
-    let content_height = theme.item_content_height * theme.calculator.content_height_multiplier;
-
     div()
-        .h(content_height)
+        .h(theme.item_content_height)
         .max_w(max_width)
         .flex()
         .flex_col()
         .justify_center()
         .overflow_hidden()
-        .gap(theme.calculator.content_gap)
-        .child(expression_element)
-        .child(result_element)
+        .child(
+            div()
+                .w_full()
+                .text_sm()
+                .line_height(theme.item_title_line_height)
+                .text_color(result_color)
+                .whitespace_nowrap()
+                .overflow_hidden()
+                .text_ellipsis()
+                .child(SharedString::from(calc.display_result.clone())),
+        )
 }
 
 /// Render a search item.

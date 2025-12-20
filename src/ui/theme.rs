@@ -195,10 +195,6 @@ mod pixels_serde {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct CalculatorTheme {
-    /// Multiplier for padding_y (default item padding * this value)
-    pub padding_multiplier: f32,
-    /// Multiplier for content height (default item height * this value)
-    pub content_height_multiplier: f32,
     /// Background color for the calculator icon
     #[serde(with = "hsla_serde")]
     pub icon_background: Hsla,
@@ -208,9 +204,6 @@ pub struct CalculatorTheme {
     /// Color for calculator error messages
     #[serde(with = "hsla_serde")]
     pub error_color: Hsla,
-    /// Gap between expression and result in calculator display
-    #[serde(with = "pixels_serde")]
-    pub content_gap: Pixels,
 }
 
 /// Action indicator styling (shown on the right side of selected items).
@@ -438,12 +431,9 @@ pub struct LauncherTheme {
 impl Default for CalculatorTheme {
     fn default() -> Self {
         Self {
-            padding_multiplier: 1.5,
-            content_height_multiplier: 1.25,
             icon_background: hsla(210.0 / 360.0, 0.6, 0.5, 0.15),
             icon_color: hsla(210.0 / 360.0, 0.7, 0.7, 1.0),
             error_color: hsla(15.0 / 360.0, 0.7, 0.6, 1.0),
-            content_gap: px(2.0),
         }
     }
 }

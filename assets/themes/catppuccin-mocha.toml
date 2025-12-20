@@ -32,12 +32,9 @@ empty_state_height = 200.0
 empty_state_color = "#6c7086"        # Overlay0
 
 [calculator]
-padding_multiplier = 1.5
-content_height_multiplier = 1.25
 icon_background = "#89b4fa26"        # Sapphire
 icon_color = "#89b4fa"               # Sapphire
 error_color = "#f38ba8"              # Red
-content_gap = 2.0
 
 [action_indicator]
 width = 64.0

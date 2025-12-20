@@ -1,5 +1,3 @@
-use crate::calculator::CalcResult;
-
 use super::traits::{Categorizable, DisplayItem, Executable, IconProvider, Previewable};
 
 /// A calculator item representing a calculation result.
@@ -19,34 +17,6 @@ pub struct CalculatorItem {
 }
 
 impl CalculatorItem {
-    /// Create a new calculator item from a CalcResult.
-    pub fn from_calc_result(result: CalcResult) -> Self {
-        match result {
-            CalcResult::Success {
-                expression,
-                display_result,
-                clipboard_result,
-                ..
-            } => Self {
-                id: "calculator-result".to_string(),
-                expression,
-                display_result,
-                clipboard_result: Some(clipboard_result),
-                is_error: false,
-            },
-            CalcResult::Error {
-                expression,
-                message,
-            } => Self {
-                id: "calculator-result".to_string(),
-                expression,
-                display_result: message,
-                clipboard_result: None,
-                is_error: true,
-            },
-        }
-    }
-
     /// Get the text to copy to clipboard.
     pub fn text_for_clipboard(&self) -> &str {
         self.clipboard_result

@@ -24,7 +24,7 @@ serde_json = "1"
 lazy_static = "1.4"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-fasteval = "0.2"
+fend-core = "1.5"
 arboard = { version = "3", features = ["wayland-data-control"] }
 regex = "1"
 emojis = "0.8"

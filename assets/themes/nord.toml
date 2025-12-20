@@ -32,12 +32,9 @@ empty_state_height = 200.0
 empty_state_color = "#4c566a"        # Polar Night 3
 
 [calculator]
-padding_multiplier = 1.5
-content_height_multiplier = 1.25
 icon_background = "#88c0d026"        # Frost 2
 icon_color = "#88c0d0"               # Frost 2
 error_color = "#bf616a"              # Aurora Red
-content_gap = 2.0
 
 [action_indicator]
 width = 64.0

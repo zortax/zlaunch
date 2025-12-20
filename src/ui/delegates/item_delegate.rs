@@ -1,4 +1,4 @@
-use crate::calculator::{evaluate_expression, looks_like_expression};
+use crate::calculator::evaluate_expression;
 use crate::items::{ActionItem, AiItem, CalculatorItem, ListItem, SearchItem, SubmenuItem};
 use crate::search::{SearchDetection, detect_search, get_providers};
 use crate::ui::delegates::BaseDelegate;
@@ -143,23 +143,14 @@ impl ItemListDelegate {
     /// Process the query to detect special items (calculator, AI, search)
     fn process_query(&mut self, query: &str) {
         // Check for calculator expression
-        if looks_like_expression(query)
-            && let Some(result) = evaluate_expression(query)
+        if query.chars().any(|c| c.is_numeric())
+            && let Ok(result) = evaluate_expression(query)
         {
-            self.calculator_item = Some(CalculatorItem::from_calc_result(result));
-
-            // When calculator matches, ONLY show calculator - no other items
-            self.ai_item = None;
-            self.search_items.clear();
-            // Clear base items by applying empty filtered indices
-            self.base.apply_filtered_indices(Vec::new());
+            self.calculator_item = Some(result);
             self.update_section_info();
-
-            // Ensure calculator item is selected
-            self.base.set_selected_unchecked(0);
-            return;
+        } else {
+            self.calculator_item = None;
         }
-        self.calculator_item = None;
 
         // Filter the base items first
         self.filter_items();
@@ -595,7 +586,8 @@ impl ListDelegate for ItemListDelegate {
         // Show "Search and AI" header when we have regular items above
         let has_regular_items = self.section_info.window_count > 0
             || self.section_info.command_count > 0
-            || self.section_info.app_count > 0;
+            || self.section_info.app_count > 0
+            || self.calculator_item.is_some();
 
         if section_type == SectionType::SearchAndAi && has_regular_items {
             let theme = theme();
@@ -612,8 +604,8 @@ impl ListDelegate for ItemListDelegate {
             );
         }
 
-        // Calculator and SearchAndAi (without regular items) have no header
-        if section_type == SectionType::Calculator || section_type == SectionType::SearchAndAi {
+        // SearchAndAi (without regular items) has no header
+        if section_type == SectionType::SearchAndAi {
             return None;
         }
 
@@ -633,7 +625,7 @@ impl ListDelegate for ItemListDelegate {
 
         let theme = theme();
         let title = match section_type {
-            SectionType::Calculator => return None,
+            SectionType::Calculator => "Calculator",
             SectionType::SearchAndAi => return None,
             SectionType::Windows => "Windows",
             SectionType::Commands => "Commands",

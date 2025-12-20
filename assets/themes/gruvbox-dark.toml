@@ -32,12 +32,9 @@ empty_state_height = 200.0
 empty_state_color = "#928374"        # gray
 
 [calculator]
-padding_multiplier = 1.5
-content_height_multiplier = 1.25
 icon_background = "#83a59826"        # Aqua
 icon_color = "#83a598"               # Aqua
 error_color = "#fb4934"              # Red
-content_gap = 2.0
 
 [action_indicator]
 width = 64.0
