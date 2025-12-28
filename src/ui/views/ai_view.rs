@@ -1,8 +1,8 @@
 //! AI response view for displaying streaming responses.
 
-use crate::ui::markdown::render_markdown;
+use crate::ui::markdown::render_markdown_with_id;
 use crate::ui::theme::theme;
-use gpui::{App, Div, SharedString, Window, div, prelude::*};
+use gpui::{App, Div, ElementId, SharedString, Window, div, prelude::*};
 use gpui_component::scroll::ScrollableElement;
 use llm::chat::ChatMessage;
 
@@ -73,81 +73,156 @@ impl AiResponseView {
     pub fn render(&self, window: &mut Window, cx: &mut App) -> Div {
         let t = theme();
 
-        let container = div().w_full().h_full().flex().flex_col().gap_3().p_0();
+        let mut container = div().w_full().h_full().flex().flex_col().gap_3().p_0();
 
         // Show response or error
-        let content = if let Some(error) = &self.error {
-            div()
-                .id("ai-error-scroll")
-                .flex_1()
-                .w_full()
-                .p_4()
-                .overflow_y_scrollbar()
-                .child(
-                    div()
-                        .flex()
-                        .flex_col()
-                        .gap_2()
-                        .p_3()
-                        .bg(t.ai.error_background)
-                        .rounded_md()
-                        .child(
-                            div()
-                                .text_sm()
-                                .font_weight(gpui::FontWeight::SEMIBOLD)
-                                .text_color(t.ai.error_title_color)
-                                .child(SharedString::from("Error")),
-                        )
-                        .child(
-                            div()
-                                .text_sm()
-                                .text_color(t.ai.error_message_color)
-                                .child(SharedString::from(error.clone())),
-                        ),
-                )
-        } else {
-            // Show response text with markdown rendering (scrollable)
-            let mut full_content = String::new();
-
-            for (i, msg) in self.messages.iter().enumerate() {
-                if i > 0 {
-                    full_content.push_str("\n\n");
-                }
-
-                let role_prefix = match msg.role {
-                    llm::chat::ChatRole::User => "**User:** ",
-                    llm::chat::ChatRole::Assistant => "**Assistant:** ",
-                };
-
-                full_content.push_str(role_prefix);
-
-                let is_last = i == self.messages.len() - 1;
-                if is_last && self.is_streaming && msg.content.is_empty() {
-                    full_content.push_str("_Thinking..._");
-                } else {
-                    full_content.push_str(&msg.content);
-
-                    // Add cursor if streaming and this is the last message
-                    if self.is_streaming && is_last {
-                        full_content.push_str(" ▌");
-                    }
-                }
-            }
-
-            let response_content =
+        if let Some(error) = &self.error {
+            container = container.child(
                 div()
+                    .id("ai-error-scroll")
+                    .flex_1()
                     .w_full()
                     .p_4()
-                    .child(render_markdown(&full_content, window, cx));
+                    .overflow_y_scrollbar()
+                    .child(
+                        div()
+                            .flex()
+                            .flex_col()
+                            .gap_2()
+                            .p_3()
+                            .bg(t.ai.error_background)
+                            .rounded_md()
+                            .child(
+                                div()
+                                    .text_sm()
+                                    .font_weight(gpui::FontWeight::SEMIBOLD)
+                                    .text_color(t.ai.error_title_color)
+                                    .child(SharedString::from("Error")),
+                            )
+                            .child(
+                                div()
+                                    .text_sm()
+                                    .text_color(t.ai.error_message_color)
+                                    .child(SharedString::from(error.clone())),
+                            ),
+                    ),
+            );
+        } else {
+            container = container.child(self.render_chat_messages(window, cx, &t));
+        }
 
-            div()
-                .id("ai-response-scroll")
-                .flex_1()
-                .w_full()
-                .overflow_y_scrollbar()
-                .child(response_content)
-        };
+        container
+    }
 
-        container.child(content)
+    /// Render all chat messages with user bubbles and plain assistant text.
+    fn render_chat_messages(
+        &self,
+        window: &mut Window,
+        cx: &mut App,
+        t: &crate::ui::theme::LauncherTheme,
+    ) -> impl IntoElement {
+        let mut messages_container = div().flex().flex_col().gap(t.ai.message_gap).w_full().p_4();
+
+        for (i, msg) in self.messages.iter().enumerate() {
+            let is_last = i == self.messages.len() - 1;
+            let is_streaming_msg = is_last && self.is_streaming;
+
+            match msg.role {
+                llm::chat::ChatRole::User => {
+                    messages_container =
+                        messages_container.child(self.render_user_bubble(i, &msg.content, t));
+                }
+                llm::chat::ChatRole::Assistant => {
+                    messages_container = messages_container.child(self.render_assistant_message(
+                        i,
+                        &msg.content,
+                        is_streaming_msg,
+                        window,
+                        cx,
+                        t,
+                    ));
+                }
+            }
+        }
+
+        div()
+            .id("ai-response-scroll")
+            .flex_1()
+            .w_full()
+            .overflow_y_scrollbar()
+            .child(messages_container)
+    }
+
+    /// Render a user message as a right-aligned bubble.
+    fn render_user_bubble(
+        &self,
+        index: usize,
+        content: &str,
+        t: &crate::ui::theme::LauncherTheme,
+    ) -> impl IntoElement {
+        // Use a flex-shrink-0 wrapper to prevent layout shifts
+        div()
+            .id(ElementId::Name(format!("user-msg-{}", index).into()))
+            .w_full()
+            .flex_shrink_0()
+            .flex()
+            .flex_row()
+            .justify_start()
+            .overflow_hidden()
+            .child(
+                div()
+                    .max_w_full()
+                    .px(t.ai.user_bubble_padding_x)
+                    .py(t.ai.user_bubble_padding_y)
+                    .bg(t.item_background_selected) // Use selection color
+                    .rounded(t.ai.user_bubble_border_radius)
+                    .text_sm()
+                    .text_color(t.item_title_color) // Use title color
+                    .whitespace_normal()
+                    .child(SharedString::from(content.to_string())),
+            )
+    }
+
+    /// Render an assistant message as plain markdown.
+    fn render_assistant_message(
+        &self,
+        index: usize,
+        content: &str,
+        is_streaming: bool,
+        window: &mut Window,
+        cx: &mut App,
+        t: &crate::ui::theme::LauncherTheme,
+    ) -> impl IntoElement {
+        // Use a consistent wrapper to prevent layout shifts
+        let wrapper = div()
+            .id(ElementId::Name(format!("assistant-msg-{}", index).into()))
+            .w_full()
+            .flex_shrink_0();
+
+        if content.is_empty() && is_streaming {
+            // Show "Thinking..." placeholder
+            wrapper.child(
+                div()
+                    .text_sm()
+                    .italic()
+                    .text_color(t.item_description_color)
+                    .child(SharedString::from("Thinking...")),
+            )
+        } else {
+            // Render markdown content with optional streaming cursor
+            let display_content = if is_streaming {
+                format!("{} \u{258C}", content) // Add cursor character
+            } else {
+                content.to_string()
+            };
+
+            let markdown_id = format!("ai-markdown-{}", index);
+            wrapper.child(render_markdown_with_id(
+                markdown_id,
+                &display_content,
+                window,
+                cx,
+            ))
+        }
     }
 }

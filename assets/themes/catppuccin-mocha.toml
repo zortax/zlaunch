@@ -62,6 +62,12 @@ cell_gap = 2.0
 error_background = "#f38ba8"         # Red
 error_title_color = "#1e1e2e"        # Base
 error_message_color = "#181825"      # Mantle
+user_bubble_background = "#89b4fa33"  # Sapphire with 20% opacity
+user_bubble_text_color = "#cdd6f4"   # Text
+user_bubble_padding_x = 12.0
+user_bubble_padding_y = 8.0
+user_bubble_border_radius = 12.0
+message_gap = 16.0
 
 [markdown]
 paragraph_line_height = 20.0

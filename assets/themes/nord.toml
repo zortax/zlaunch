@@ -62,6 +62,12 @@ cell_gap = 2.0
 error_background = "#bf616a"         # Aurora Red
 error_title_color = "#2e3440"        # Polar Night 0
 error_message_color = "#242933"      # Darker
+user_bubble_background = "#88c0d033"  # Frost 2 with 20% opacity
+user_bubble_text_color = "#eceff4"   # Snow Storm 2
+user_bubble_padding_x = 12.0
+user_bubble_padding_y = 8.0
+user_bubble_border_radius = 12.0
+message_gap = 16.0
 
 [markdown]
 paragraph_line_height = 20.0
