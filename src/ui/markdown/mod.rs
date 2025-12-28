@@ -26,6 +26,16 @@ use crate::ui::theme::theme;
 /// - Ordered/unordered lists (nested)
 /// - Blockquotes, tables, horizontal rules
 pub fn render_markdown(text: &str, window: &mut Window, cx: &mut App) -> impl IntoElement {
+    render_markdown_with_id("ai-response-markdown", text, window, cx)
+}
+
+/// Render markdown text with a custom element ID.
+pub fn render_markdown_with_id(
+    id: impl Into<SharedString>,
+    text: &str,
+    window: &mut Window,
+    cx: &mut App,
+) -> impl IntoElement {
     let t = theme();
 
     // Determine if dark theme based on background lightness
@@ -57,11 +67,12 @@ pub fn render_markdown(text: &str, window: &mut Window, cx: &mut App) -> impl In
         is_dark,
     };
 
+    let id: SharedString = id.into();
     let text: SharedString = text.to_string().into();
 
     // Wrap in a container with text_sm for consistent small font size
     div().text_sm().child(
-        TextView::markdown("ai-response-markdown", text, window, cx)
+        TextView::markdown(id, text, window, cx)
             .style(style)
             .selectable(true),
     )

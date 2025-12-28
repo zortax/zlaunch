@@ -62,6 +62,12 @@ cell_gap = 4.0
 error_background = "#e06c75"
 error_title_color = "#282c34"
 error_message_color = "#1e2127"
+user_bubble_background = "#61afef33"  # Blue with 20% opacity
+user_bubble_text_color = "#abb2bf"   # Foreground
+user_bubble_padding_x = 14.0
+user_bubble_padding_y = 10.0
+user_bubble_border_radius = 16.0
+message_gap = 20.0
 
 [markdown]
 paragraph_line_height = 24.0

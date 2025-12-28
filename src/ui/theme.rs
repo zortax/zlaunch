@@ -284,6 +284,25 @@ pub struct AiTheme {
     /// Text color for error messages
     #[serde(with = "hsla_serde")]
     pub error_message_color: Hsla,
+
+    /// Background color for user message bubbles
+    #[serde(with = "hsla_serde")]
+    pub user_bubble_background: Hsla,
+    /// Text color for user message bubbles
+    #[serde(with = "hsla_serde")]
+    pub user_bubble_text_color: Hsla,
+    /// Horizontal padding for user bubbles
+    #[serde(with = "pixels_serde")]
+    pub user_bubble_padding_x: Pixels,
+    /// Vertical padding for user bubbles
+    #[serde(with = "pixels_serde")]
+    pub user_bubble_padding_y: Pixels,
+    /// Border radius for user bubbles
+    #[serde(with = "pixels_serde")]
+    pub user_bubble_border_radius: Pixels,
+    /// Vertical gap between messages
+    #[serde(with = "pixels_serde")]
+    pub message_gap: Pixels,
 }
 
 /// Markdown rendering styling.
@@ -476,6 +495,14 @@ impl Default for AiTheme {
             error_background: hsla(0.0, 0.7, 0.3, 1.0),
             error_title_color: hsla(0.0, 1.0, 0.7, 1.0),
             error_message_color: hsla(0.0, 1.0, 0.83, 1.0),
+
+            // User bubble: subtle blue accent with 20% opacity
+            user_bubble_background: hsla(210.0 / 360.0, 0.6, 0.5, 0.2),
+            user_bubble_text_color: hsla(0.0, 0.0, 0.9, 1.0),
+            user_bubble_padding_x: px(12.0),
+            user_bubble_padding_y: px(8.0),
+            user_bubble_border_radius: px(12.0),
+            message_gap: px(16.0),
         }
     }
 }

@@ -10,6 +10,10 @@
 
 use super::LLMClient;
 use flume::Receiver;
+use llm::chat::ChatMessage;
+use tokio::sync::OnceCell;
+
+static CLIENT: OnceCell<LLMClient> = OnceCell::const_new();
 
 /// Spawn an AI streaming task and return a channel receiver for tokens.
 ///
@@ -26,10 +30,7 @@ use flume::Receiver;
 /// - `Ok(token)` for each token received
 /// - `Ok("")` when streaming completes successfully
 /// - `Err(error)` if an error occurs
-pub fn spawn_stream(query: String) -> Option<Receiver<Result<String, String>>> {
-    // Create LLM client
-    let client = LLMClient::new()?;
-
+pub fn spawn_stream(messages: Vec<ChatMessage>) -> Option<Receiver<Result<String, String>>> {
     // Create channel for communication between Tokio thread and caller
     let (tx, rx) = flume::unbounded::<Result<String, String>>();
 
@@ -42,8 +43,13 @@ pub fn spawn_stream(query: String) -> Option<Receiver<Result<String, String>>> {
             .unwrap();
 
         rt.block_on(async move {
+            // Create LLM client if it doesn't exist
+            let client = CLIENT
+                .get_or_init(async || LLMClient::new().expect("Failed to create LLM client"))
+                .await;
+
             // Start streaming
-            let stream_result = client.stream_query(&query).await;
+            let stream_result = client.stream_query(&messages).await;
 
             match stream_result {
                 Ok(mut stream) => {

@@ -306,14 +306,41 @@ impl LauncherView {
         if let Some(handler) = handler {
             self.ai_mode_handler = Some(handler);
 
-            // Update input to show just the query
+            // Update the input
             self.input_state.update(cx, |input, cx| {
-                AiModeHandler::update_input(&query, input, window, cx);
+                AiModeHandler::setup_input(input, window, cx);
             });
 
             // Switch to AI response mode
             self.view_mode = ViewMode::AiResponse;
             cx.notify();
+        }
+    }
+
+    /// Update AI response mode with a new prompt
+    fn update_ai_mode(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        // Get the AI query from the selected item
+        let selected_item = self.list_state.read(cx).delegate().get_item_at(
+            self.list_state
+                .read(cx)
+                .delegate()
+                .selected_index()
+                .unwrap_or(0),
+        );
+        let query = if let Some(ListItem::Ai(ai_item)) = selected_item {
+            ai_item.query.clone()
+        } else {
+            return;
+        };
+
+        // Clean the input
+        self.input_state.update(cx, |input, cx| {
+            AiModeHandler::clear_input(input, window, cx);
+        });
+
+        // Send a new prompt to the AI mode handler
+        if let Some(handler) = &mut self.ai_mode_handler {
+            handler.send_message(query, cx.weak_entity(), cx);
         }
     }
 
@@ -326,7 +353,7 @@ impl LauncherView {
 
         // Clear search and reset placeholder
         self.input_state.update(cx, |input, cx| {
-            AiModeHandler::clear_input(input, window, cx);
+            AiModeHandler::restore_input(input, window, cx);
         });
         self.list_state.update(cx, |list_state, _cx| {
             list_state.delegate_mut().clear_query();
@@ -775,7 +802,8 @@ impl LauncherView {
                 self.exit_theme_mode(window, cx);
             }
             ViewMode::AiResponse => {
-                // No confirmation in AI response mode
+                // If already in AI mode, then send a new prompt
+                self.update_ai_mode(window, cx);
             }
         }
     }
