@@ -1,5 +1,6 @@
 use rust_embed::RustEmbed;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::RwLock;
 
@@ -27,6 +28,22 @@ pub struct AppConfig {
     pub window_height: f32,
     /// Automatically apply blur layer rules on Hyprland
     pub hyprland_auto_blur: bool,
+    /// Modules that are disabled
+    pub disabled_modules: Option<HashSet<ConfigModule>>,
+    /// Enable transparency of the window
+    pub enable_transparency: bool,
+}
+
+/// Modules enum
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ConfigModule {
+    Ai,
+    Emojis,
+    Calculator,
+    Clipboard,
+    Search,
+    Themes,
 }
 
 impl AppConfig {
@@ -37,6 +54,8 @@ impl AppConfig {
             window_width: 600.0,
             window_height: 400.0,
             hyprland_auto_blur: true,
+            disabled_modules: None,
+            enable_transparency: true,
         }
     }
 }
@@ -48,6 +67,8 @@ impl Default for AppConfig {
             window_width: 600.0,
             window_height: 400.0,
             hyprland_auto_blur: true,
+            disabled_modules: None,
+            enable_transparency: true,
         }
     }
 }

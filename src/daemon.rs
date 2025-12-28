@@ -8,6 +8,7 @@ use crate::app::window::LauncherWindow;
 use crate::app::{DaemonEvent, WindowEvent, create_daemon_channel, window};
 use crate::assets::CombinedAssets;
 use crate::compositor::{Compositor, detect_compositor};
+use crate::config::{ConfigModule, config};
 use crate::desktop::cache::load_applications;
 use crate::desktop::capture_session_environment;
 use crate::ipc::client;
@@ -61,12 +62,17 @@ pub fn run() -> Result<()> {
     // This ensures launched applications get proper theming variables.
     capture_session_environment();
 
-    // Initialize clipboard history
-    crate::clipboard::data::init();
-    info!("Initialized clipboard history");
+    // Get the config disabled modules
+    let disabled_modules = config().disabled_modules.unwrap_or_default();
 
     // Start clipboard monitor
-    let _clipboard_monitor_handle = crate::clipboard::monitor::start_monitor();
+    if !disabled_modules.contains(&ConfigModule::Clipboard) {
+        // Initialize clipboard history
+        crate::clipboard::data::init();
+        info!("Initialized clipboard history");
+
+        let _clipboard_monitor_handle = crate::clipboard::monitor::start_monitor();
+    }
 
     // Detect compositor for window switching support
     let compositor: Arc<dyn Compositor> = Arc::from(detect_compositor());
