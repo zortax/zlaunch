@@ -98,12 +98,20 @@ See bundled themes in `assets/themes/` for examples.
 ### Background Blur
 
 As a wlr layer shell window is being used, the window blur does not work on
-most compositors. On Hyprland, zlaunch automatically applies `layerrule`s via
+most compositors. ~On Hyprland, zlaunch automatically applies `layerrule`s via
 the Hyprland IPC socket to enable blur. To disable this, set the following in
-your config:
+your config:~ _currently broken (WIP)_
 
 ```toml
 hyprland_auto_blur = false
+```
+
+Set rules manually for blur support:
+
+```
+layerrule = blur on,match:class zlaunch
+layerrule = blur_popups on,match:class zlaunch
+layerrule = ignore_alpha 0.35,match:class zlaunch
 ```
 
 ## Compositor Support
