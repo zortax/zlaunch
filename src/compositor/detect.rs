@@ -1,9 +1,9 @@
 //! Compositor detection logic.
 
 use super::Compositor;
-use super::niri::NiriCompositor;
 use super::hyprland::HyprlandCompositor;
 use super::kwin::KwinCompositor;
+use super::niri::NiriCompositor;
 use super::noop::NoopCompositor;
 use tracing::{info, warn};
 

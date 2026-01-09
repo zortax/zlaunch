@@ -1,9 +1,9 @@
-use std::path::PathBuf;
+use super::{Compositor, WindowInfo};
+use anyhow::{Context, Result, anyhow, bail};
 use serde::Deserialize;
-use anyhow::{anyhow, bail, Context, Result};
 use std::io::{BufRead, Write};
 use std::os::unix::net::UnixStream;
-use super::{Compositor, WindowInfo};
+use std::path::PathBuf;
 
 pub struct NiriCompositor {
     socket_path: PathBuf,
@@ -17,9 +17,8 @@ impl NiriCompositor {
     }
 
     fn send_command(&self, cmd: &str) -> Result<String> {
-        let mut stream = UnixStream::connect(&self.socket_path).with_context(|| {
-            format!("Failed to connect to Niri socket: {:?}", self.socket_path)
-        })?;
+        let mut stream = UnixStream::connect(&self.socket_path)
+            .with_context(|| format!("Failed to connect to Niri socket: {:?}", self.socket_path))?;
 
         stream
             .write_all(cmd.as_bytes())
@@ -51,9 +50,8 @@ impl Compositor for NiriCompositor {
     fn list_windows(&self) -> Result<Vec<WindowInfo>> {
         let json_string = self.send_command("\"Windows\"\n")?;
 
-        let niri_result: std::result::Result<NiriWindowReply, serde_json::Value>
-            = serde_json::from_str(&json_string)
-            .context("Failed to parse Niri clients JSON")?;
+        let niri_result: std::result::Result<NiriWindowReply, serde_json::Value> =
+            serde_json::from_str(&json_string).context("Failed to parse Niri clients JSON")?;
 
         let Ok(niri_reply) = niri_result else {
             bail!("Niri returned an error to Windows request");
@@ -67,7 +65,11 @@ impl Compositor for NiriCompositor {
 
             window_info.push(WindowInfo {
                 address: format!("{}", window.id),
-                title: if window.title.is_empty() { window.app_id.clone() } else { window.title },
+                title: if window.title.is_empty() {
+                    window.app_id.clone()
+                } else {
+                    window.title
+                },
                 class: window.app_id,
                 workspace: window.workspace_id as i32,
                 focused: window.is_focused,
@@ -78,18 +80,11 @@ impl Compositor for NiriCompositor {
     }
 }
 
-
-
-
-
-
-
 #[derive(Debug, Deserialize)]
 struct NiriWindowReply {
-    #[serde(rename="Windows")]
+    #[serde(rename = "Windows")]
     windows: Vec<NiriWindow>,
 }
-
 
 #[derive(Debug, Deserialize)]
 struct NiriWindow {
