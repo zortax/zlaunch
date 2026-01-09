@@ -108,7 +108,7 @@ hyprland_auto_blur = false
 
 ## Compositor Support
 
-- **Hyprland** - Window switching via IPC socket, clipboard fully supported
+- **Hyprland, Niri** - Window switching via IPC socket, clipboard fully supported
 - **wlr based compositors** - untested, should work with clipboard history, windows switching not implemented
 - **KDE/KWin** - WIP, window creation buggy, blur not supported, clipboard not working
 - other compositors will probably not work, Gnome support not planned

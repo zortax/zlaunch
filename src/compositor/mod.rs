@@ -7,6 +7,7 @@
 mod detect;
 pub mod hyprland;
 mod kwin;
+mod niri;
 mod noop;
 
 pub use detect::detect_compositor;
