@@ -9,36 +9,40 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    name: Build ${{ matrix.target }}
+  build-x86_64:
+    name: Build x86_64
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-gnu
-            arch: x86_64
-          - target: aarch64-unknown-linux-gnu
-            arch: aarch64
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libwayland-dev \
+            wayland-protocols \
+            libfreetype-dev \
+            libfontconfig1-dev \
+            libssl-dev \
+            libxkbcommon-dev \
+            libvulkan-dev
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
-
       - name: Build release binary
-        run: cross build --release --target ${{ matrix.target }}
+        run: cargo build --release
 
       - name: Prepare release artifacts
         run: |
           VERSION="${GITHUB_REF_NAME}"
-          ARTIFACT_NAME="zlaunch-${VERSION}-${{ matrix.arch }}-linux"
+          ARTIFACT_NAME="zlaunch-${VERSION}-x86_64-linux"
 
           mkdir -p "${ARTIFACT_NAME}"
-          cp "target/${{ matrix.target }}/release/zlaunch" "${ARTIFACT_NAME}/"
+          cp "target/release/zlaunch" "${ARTIFACT_NAME}/"
           cp LICENSE "${ARTIFACT_NAME}/"
           cp README.md "${ARTIFACT_NAME}/"
 
@@ -49,7 +53,7 @@ jobs:
           pkgver=VERSION_PLACEHOLDER
           pkgrel=1
           pkgdesc='A fast application launcher for Linux wayland desktops built with GPUI'
-          arch=('ARCH_PLACEHOLDER')
+          arch=('x86_64')
           url='https://github.com/zortax/zlaunch'
           license=('MIT')
           depends=(
@@ -76,19 +80,97 @@ jobs:
           # Remove leading whitespace and substitute placeholders
           sed -i 's/^          //' "${ARTIFACT_NAME}/PKGBUILD"
           sed -i "s/VERSION_PLACEHOLDER/${VERSION}/" "${ARTIFACT_NAME}/PKGBUILD"
-          sed -i "s/ARCH_PLACEHOLDER/${{ matrix.arch }}/" "${ARTIFACT_NAME}/PKGBUILD"
 
           tar -czvf "${ARTIFACT_NAME}.tar.gz" "${ARTIFACT_NAME}"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ matrix.arch }}
-          path: zlaunch-*-${{ matrix.arch }}-linux.tar.gz
+          name: release-x86_64
+          path: zlaunch-*-x86_64-linux.tar.gz
+
+  build-aarch64:
+    name: Build aarch64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Create Cross.toml
+        run: |
+          cat > Cross.toml << 'EOF'
+          [target.aarch64-unknown-linux-gnu]
+          image = "ghcr.io/cross-rs/aarch64-unknown-linux-gnu:main"
+          EOF
+          sed -i 's/^          //' Cross.toml
+
+      - name: Build release binary
+        run: cross build --release --target aarch64-unknown-linux-gnu
+
+      - name: Prepare release artifacts
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          ARTIFACT_NAME="zlaunch-${VERSION}-aarch64-linux"
+
+          mkdir -p "${ARTIFACT_NAME}"
+          cp "target/aarch64-unknown-linux-gnu/release/zlaunch" "${ARTIFACT_NAME}/"
+          cp LICENSE "${ARTIFACT_NAME}/"
+          cp README.md "${ARTIFACT_NAME}/"
+
+          # Generate PKGBUILD for local installation (included in tarball)
+          cat > "${ARTIFACT_NAME}/PKGBUILD" << 'PKGBUILD_EOF'
+          # Maintainer: Leonard Seibold <git@zrtx.de>
+          pkgname=zlaunch-bin
+          pkgver=VERSION_PLACEHOLDER
+          pkgrel=1
+          pkgdesc='A fast application launcher for Linux wayland desktops built with GPUI'
+          arch=('aarch64')
+          url='https://github.com/zortax/zlaunch'
+          license=('MIT')
+          depends=(
+              'wayland'
+              'freetype2'
+              'fontconfig'
+              'openssl'
+              'libxkbcommon'
+              'vulkan-icd-loader'
+          )
+          provides=('zlaunch')
+          conflicts=('zlaunch')
+          source=()
+          sha256sums=()
+
+          package() {
+              cd "${srcdir}/.."
+              install -Dm755 zlaunch "${pkgdir}/usr/bin/zlaunch"
+              install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+              install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+          }
+          PKGBUILD_EOF
+
+          # Remove leading whitespace and substitute placeholders
+          sed -i 's/^          //' "${ARTIFACT_NAME}/PKGBUILD"
+          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/" "${ARTIFACT_NAME}/PKGBUILD"
+
+          tar -czvf "${ARTIFACT_NAME}.tar.gz" "${ARTIFACT_NAME}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-aarch64
+          path: zlaunch-*-aarch64-linux.tar.gz
 
   release:
     name: Create Release
-    needs: build
+    needs: [build-x86_64, build-aarch64]
     runs-on: ubuntu-latest
     permissions:
       contents: write
