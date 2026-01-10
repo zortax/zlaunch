@@ -1,4 +1,7 @@
 # zlaunch
+![GitHub License](https://img.shields.io/github/license/zortax/zlaunch)
+![GitHub Release](https://img.shields.io/github/v/release/zortax/zlaunch)
+![AUR Version](https://img.shields.io/aur/version/zlaunch-bin)
 
 A fast application launcher and window switcher for Linux Wayland, built with
 [GPUI](https://github.com/zed-industries/zed).
