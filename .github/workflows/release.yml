@@ -28,6 +28,11 @@ jobs:
             libfontconfig1-dev \
             libssl-dev \
             libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libxcb1-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
             libvulkan-dev
 
       - name: Setup Rust
@@ -108,6 +113,11 @@ jobs:
             libfontconfig1-dev \
             libssl-dev \
             libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libxcb1-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
             libvulkan-dev
 
       - name: Setup Rust
