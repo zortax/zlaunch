@@ -19,7 +19,13 @@ A fast application launcher and window switcher for Linux Wayland, built with
 - **Theming** - 15 bundled themes plus custom theme support
 - **Daemon architecture** - Runs in background for instant response
 
-## Building
+## Installation
+
+### Arch Linux
+
+Available on the AUR as [zlaunch-bin](https://aur.archlinux.org/packages/zlaunch-bin) or [zlaunch-git](https://aur.archlinux.org/packages/zlaunch-git).
+
+### Building from source
 
 ```bash
 cargo build --release
