@@ -91,29 +91,30 @@ jobs:
 
   build-aarch64:
     name: Build aarch64
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libwayland-dev \
+            wayland-protocols \
+            libfreetype-dev \
+            libfontconfig1-dev \
+            libssl-dev \
+            libxkbcommon-dev \
+            libvulkan-dev
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-unknown-linux-gnu
-
-      - name: Install cross
-        run: cargo install cross --git https://github.com/cross-rs/cross
-
-      - name: Create Cross.toml
-        run: |
-          cat > Cross.toml << 'EOF'
-          [target.aarch64-unknown-linux-gnu]
-          image = "ghcr.io/cross-rs/aarch64-unknown-linux-gnu:main"
-          EOF
-          sed -i 's/^          //' Cross.toml
 
       - name: Build release binary
-        run: cross build --release --target aarch64-unknown-linux-gnu
+        run: cargo build --release
 
       - name: Prepare release artifacts
         run: |
@@ -121,7 +122,7 @@ jobs:
           ARTIFACT_NAME="zlaunch-${VERSION}-aarch64-linux"
 
           mkdir -p "${ARTIFACT_NAME}"
-          cp "target/aarch64-unknown-linux-gnu/release/zlaunch" "${ARTIFACT_NAME}/"
+          cp "target/release/zlaunch" "${ARTIFACT_NAME}/"
           cp LICENSE "${ARTIFACT_NAME}/"
           cp README.md "${ARTIFACT_NAME}/"
 
