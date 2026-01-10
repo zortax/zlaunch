@@ -45,3 +45,9 @@ zbus = { version = "5", default-features = false, features = ["blocking-api"] }
 
 [patch.crates-io]
 gpui = { git = "https://github.com/zed-industries/zed", rev = "7c724c0f1049e610c541c2f4f6a8739f91865e02" }
+zbus = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
+zbus_macros = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
+zbus_names = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
+zvariant = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
+zvariant_derive = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
+zvariant_utils = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
