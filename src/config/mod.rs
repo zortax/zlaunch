@@ -32,6 +32,8 @@ pub struct AppConfig {
     pub disabled_modules: Option<HashSet<ConfigModule>>,
     /// Enable transparency of the window
     pub enable_transparency: bool,
+    /// List of search providers
+    pub search_providers: Option<Vec<ConfigSearchProvider>>,
 }
 
 /// Modules enum
@@ -48,6 +50,17 @@ pub enum ConfigModule {
     Windows,
 }
 
+/// Search providers config
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ConfigSearchProvider {
+    /// Provider name
+    pub name: String,
+    /// Trigger (e.g. "!br")
+    pub trigger: String,
+    /// Url containing {query}
+    pub url: String,
+}
+
 impl AppConfig {
     /// Const default for static initialization
     const fn default_const() -> Self {
@@ -58,6 +71,7 @@ impl AppConfig {
             hyprland_auto_blur: true,
             disabled_modules: None,
             enable_transparency: true,
+            search_providers: None,
         }
     }
 }
@@ -71,6 +85,7 @@ impl Default for AppConfig {
             hyprland_auto_blur: true,
             disabled_modules: None,
             enable_transparency: true,
+            search_providers: None,
         }
     }
 }

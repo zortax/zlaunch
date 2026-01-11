@@ -4,16 +4,17 @@
 //! with their triggers, URL templates, and icons.
 
 use crate::assets::PhosphorIcon;
+use crate::config::config;
 
 /// A search provider configuration.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SearchProvider {
     /// The provider name (e.g., "Google", "DuckDuckGo")
-    pub name: &'static str,
+    pub name: String,
     /// The trigger string (e.g., "!g", "!d", "!wiki")
-    pub trigger: &'static str,
+    pub trigger: String,
     /// The URL template with {query} placeholder
-    pub url_template: &'static str,
+    pub url_template: String,
     /// The Phosphor icon to use
     pub icon: PhosphorIcon,
 }
@@ -26,34 +27,54 @@ impl SearchProvider {
     }
 }
 
-/// Get all available search providers.
-pub fn get_providers() -> Vec<SearchProvider> {
+/// Get all build in search providers.
+fn builtin_providers() -> Vec<SearchProvider> {
     vec![
         SearchProvider {
-            name: "Google",
-            trigger: "!g",
-            url_template: "https://www.google.com/search?q={query}",
+            name: "Google".to_string(),
+            trigger: "!g".to_string(),
+            url_template: "https://www.google.com/search?q={query}".to_string(),
             icon: PhosphorIcon::MagnifyingGlass,
         },
         SearchProvider {
-            name: "DuckDuckGo",
-            trigger: "!d",
-            url_template: "https://duckduckgo.com/?q={query}",
+            name: "DuckDuckGo".to_string(),
+            trigger: "!d".to_string(),
+            url_template: "https://duckduckgo.com/?q={query}".to_string(),
             icon: PhosphorIcon::Globe,
         },
         SearchProvider {
-            name: "Wikipedia",
-            trigger: "!wiki",
-            url_template: "https://en.wikipedia.org/wiki/Special:Search?search={query}",
+            name: "Wikipedia".to_string(),
+            trigger: "!wiki".to_string(),
+            url_template: "https://en.wikipedia.org/wiki/Special:Search?search={query}".to_string(),
             icon: PhosphorIcon::BookOpen,
         },
         SearchProvider {
-            name: "YouTube",
-            trigger: "!yt",
-            url_template: "https://www.youtube.com/results?search_query={query}",
+            name: "YouTube".to_string(),
+            trigger: "!yt".to_string(),
+            url_template: "https://www.youtube.com/results?search_query={query}".to_string(),
             icon: PhosphorIcon::YoutubeLogo,
         },
     ]
+}
+
+/// Get all available search providers
+pub fn get_providers() -> Vec<SearchProvider> {
+    let mut providers = builtin_providers();
+
+    if let Some(custom) = config().search_providers {
+        for provider in custom {
+            providers.push(SearchProvider {
+                name: provider.name,
+                trigger: provider.trigger,
+                url_template: provider.url,
+
+                // Magnifying glass icon for custom providers
+                icon: PhosphorIcon::MagnifyingGlass,
+            });
+        }
+    }
+
+    providers
 }
 
 /// Find a provider by its trigger.
