@@ -34,7 +34,7 @@ pub fn detect_search(input: &str) -> SearchDetection {
 
     // Check if input starts with a trigger
     for provider in get_providers() {
-        if let Some(stripped) = trimmed.strip_prefix(provider.trigger) {
+        if let Some(stripped) = trimmed.strip_prefix(provider.trigger.as_str()) {
             // Extract the query after the trigger
             let query = stripped.trim();
 
