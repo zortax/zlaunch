@@ -13,7 +13,14 @@ use zbus::zvariant::OwnedValue;
 
 /// Type alias for KRunner match results from WindowsRunner.Match D-Bus call.
 /// Tuple: (match_id, text, subtext, type, relevance, properties)
-type KRunnerMatch = (String, String, String, i32, f64, HashMap<String, OwnedValue>);
+type KRunnerMatch = (
+    String,
+    String,
+    String,
+    i32,
+    f64,
+    HashMap<String, OwnedValue>,
+);
 
 /// KWin compositor client using D-Bus WindowsRunner API.
 pub struct KwinCompositor {
@@ -61,30 +68,28 @@ impl KwinCompositor {
 
         let windows: Vec<WindowInfo> = result
             .into_iter()
-            .map(|(match_id, title, _subtext, _type_id, _relevance, _props)| {
-                // match_id format: "0_{uuid}" - extract the window ID
-                // The "0_" prefix indicates action index (0 = activate)
-                let window_id = match_id
-                    .strip_prefix("0_")
-                    .map(|s| s.to_string())
-                    .unwrap_or_else(|| match_id.clone());
+            .map(
+                |(match_id, title, _subtext, _type_id, _relevance, _props)| {
+                    // match_id format: "0_{uuid}" - extract the window ID
+                    // The "0_" prefix indicates action index (0 = activate)
+                    let window_id = match_id
+                        .strip_prefix("0_")
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|| match_id.clone());
 
-                // Try to extract app class from the title (often "Title - AppName")
-                // This is a heuristic - the actual class isn't directly available
-                let class = title
-                    .rsplit(" - ")
-                    .next()
-                    .unwrap_or(&title)
-                    .to_string();
+                    // Try to extract app class from the title (often "Title - AppName")
+                    // This is a heuristic - the actual class isn't directly available
+                    let class = title.rsplit(" - ").next().unwrap_or(&title).to_string();
 
-                WindowInfo {
-                    address: window_id,
-                    title: title.clone(),
-                    class,
-                    workspace: 1, // WindowsRunner doesn't expose workspace info
-                    focused: false, // We can't easily determine this from krunner
-                }
-            })
+                    WindowInfo {
+                        address: window_id,
+                        title: title.clone(),
+                        class,
+                        workspace: 1,   // WindowsRunner doesn't expose workspace info
+                        focused: false, // We can't easily determine this from krunner
+                    }
+                },
+            )
             .collect();
 
         Ok(windows)

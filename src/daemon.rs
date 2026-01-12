@@ -129,24 +129,25 @@ pub fn run() -> Result<()> {
                             DaemonEvent::Show { response_tx } => {
                                 let result = if !visible {
                                     // Fetch windows (if not disabled) in a background thread
-                                    let windows = if disabled_modules_clone.contains(&ConfigModule::Windows) {
+                                    let windows = if disabled_modules_clone
+                                        .contains(&ConfigModule::Windows)
+                                    {
                                         Vec::new()
                                     } else {
                                         let comp = compositor_clone.clone();
-                                        let handle = std::thread::spawn(move || {
-                                            match comp.list_windows() {
+                                        let handle =
+                                            std::thread::spawn(move || match comp.list_windows() {
                                                 Ok(w) => w,
                                                 Err(e) => {
                                                     tracing::warn!(%e, "Failed to list windows");
                                                     Vec::new()
                                                 }
-                                            }
-                                        });
+                                            });
                                         handle.join().unwrap_or_default()
                                     };
 
-                                    cx.update(|cx| {
-                                        match window::create_and_show_window_with_windows(
+                                    cx.update(
+                                        |cx| match window::create_and_show_window_with_windows(
                                             applications_clone.clone(),
                                             compositor_clone.clone(),
                                             windows,
@@ -162,8 +163,8 @@ pub fn run() -> Result<()> {
                                                 error!(%e, "Failed to create window");
                                                 Err(format!("Failed to create window: {}", e))
                                             }
-                                        }
-                                    })
+                                        },
+                                    )
                                     .unwrap_or(Err("Failed to update app".to_string()))
                                 } else {
                                     Ok(()) // Already visible
@@ -197,19 +198,20 @@ pub fn run() -> Result<()> {
                                     Ok(())
                                 } else {
                                     // Fetch windows (if not disabled) in a background thread
-                                    let windows = if disabled_modules_clone.contains(&ConfigModule::Windows) {
+                                    let windows = if disabled_modules_clone
+                                        .contains(&ConfigModule::Windows)
+                                    {
                                         Vec::new()
                                     } else {
                                         let comp = compositor_clone.clone();
-                                        let handle = std::thread::spawn(move || {
-                                            match comp.list_windows() {
+                                        let handle =
+                                            std::thread::spawn(move || match comp.list_windows() {
                                                 Ok(w) => w,
                                                 Err(e) => {
                                                     tracing::warn!(%e, "Failed to list windows");
                                                     Vec::new()
                                                 }
-                                            }
-                                        });
+                                            });
                                         match handle.join() {
                                             Ok(w) => w,
                                             Err(_) => {
@@ -219,8 +221,8 @@ pub fn run() -> Result<()> {
                                         }
                                     };
 
-                                    cx.update(|cx| {
-                                        match window::create_and_show_window_with_windows(
+                                    cx.update(
+                                        |cx| match window::create_and_show_window_with_windows(
                                             applications_clone.clone(),
                                             compositor_clone.clone(),
                                             windows,
@@ -236,8 +238,8 @@ pub fn run() -> Result<()> {
                                                 error!(%e, "Failed to create window");
                                                 Err(format!("Failed to create window: {}", e))
                                             }
-                                        }
-                                    })
+                                        },
+                                    )
                                     .unwrap_or(Err("Failed to update app".to_string()))
                                 };
                                 let _ = response_tx.send(result);
