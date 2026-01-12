@@ -64,15 +64,18 @@ fn create_and_show_window_impl(
     let mut items: Vec<ListItem> = Vec::with_capacity(windows.len() + applications.len());
     items.extend(windows.into_iter().map(ListItem::Window));
     items.extend(applications.into_iter().map(ListItem::Application));
-    // Get display size - try displays() first, then primary_display(), then use huge fallback
-    // The layer shell will clamp to actual screen size, so overshooting is fine
-    //let display_size = cx
-    //    .displays()
-    //    .first()
-    //    .map(|d| d.bounds().size)
-    //    .or_else(|| cx.primary_display().map(|d| d.bounds().size))
-    //    .unwrap_or_else(|| size(px(7680.0), px(4320.0))); // 8K fallback - will be clamped
-    let display_size = size(px(7680.0), px(4320.0));
+    // Get display size based on compositor
+    let display_size = if compositor.name() == "KWin" {
+        // KDE/KWin has issues with display detection, use fixed 1920x1080
+        size(px(1920.0), px(1080.0))
+    } else {
+        // For other compositors, use primary display size with 8K fallback
+        cx.displays()
+            .first()
+            .map(|d| d.bounds().size)
+            .or_else(|| cx.primary_display().map(|d| d.bounds().size))
+            .unwrap_or_else(|| size(px(7680.0), px(4320.0)))
+    };
 
     let fullscreen_bounds = Bounds {
         origin: point(px(0.0), px(0.0)),
