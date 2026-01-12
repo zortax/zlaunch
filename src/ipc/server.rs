@@ -84,6 +84,16 @@ impl ZlaunchService for ZlaunchServer {
             .unwrap_or(Err("Response channel closed".to_string()))
     }
 
+    async fn reload(self, _: Context) -> Result<(), String> {
+        let (response_tx, response_rx) = oneshot::channel();
+        self.event_tx
+            .send(DaemonEvent::Reload { response_tx })
+            .map_err(|_| "Daemon channel closed".to_string())?;
+        response_rx
+            .await
+            .unwrap_or(Err("Response channel closed".to_string()))
+    }
+
     async fn list_themes(self, _: Context) -> Vec<ThemeInfo> {
         // Read-only operation - can be answered directly
         crate::config::list_all_themes_with_source()

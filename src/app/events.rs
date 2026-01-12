@@ -42,6 +42,11 @@ pub enum DaemonEvent {
         name: String,
         response_tx: oneshot::Sender<IpcResponse>,
     },
+
+    /// Reload the daemon (restart the process)
+    Reload {
+        response_tx: oneshot::Sender<IpcResponse>,
+    },
 }
 
 impl From<WindowEvent> for DaemonEvent {

@@ -21,6 +21,8 @@ pub enum Commands {
     Toggle,
     /// Quit the daemon
     Quit,
+    /// Reload the daemon (fully restart the process)
+    Reload,
     /// Theme management
     Theme {
         #[command(subcommand)]
@@ -57,6 +59,10 @@ pub fn handle_client_command(cmd: Commands) -> Result<()> {
         }
         Commands::Quit => {
             client::quit()?;
+        }
+        Commands::Reload => {
+            client::reload()?;
+            println!("Daemon is reloading...");
         }
         Commands::Theme { action } => match action {
             None => {

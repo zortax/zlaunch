@@ -1,8 +1,22 @@
-use anyhow::Result;
+use anyhow::{Context as _, Result};
 use gpui::{Application, QuitMode, hsla};
 use gpui_component::theme::{Theme, ThemeMode};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tracing::{debug, error, info};
+
+/// Flag to signal that the daemon should reload (exec) after GPUI exits.
+static RELOAD_REQUESTED: AtomicBool = AtomicBool::new(false);
+
+/// Set whether a reload is requested.
+fn set_reload_requested(value: bool) {
+    RELOAD_REQUESTED.store(value, Ordering::SeqCst);
+}
+
+/// Check if a reload is requested.
+fn is_reload_requested() -> bool {
+    RELOAD_REQUESTED.load(Ordering::SeqCst)
+}
 
 use crate::app::window::LauncherWindow;
 use crate::app::{DaemonEvent, WindowEvent, create_daemon_channel, window};
@@ -218,6 +232,27 @@ pub fn run() -> Result<()> {
                             let _ = response_tx.send(result);
                         }
 
+                        DaemonEvent::Reload { response_tx } => {
+                            // Send response FIRST so client sees success before we exit
+                            let _ = response_tx.send(Ok(()));
+
+                            // Close window if visible
+                            if visible {
+                                let _ = cx.update(|cx| {
+                                    if let Some(ref lw) = launcher_window {
+                                        window::close_window(&lw.handle, cx);
+                                    }
+                                });
+                            }
+
+                            // Signal reload and quit GPUI
+                            set_reload_requested(true);
+                            let _ = cx.update(|cx| {
+                                cx.quit();
+                            });
+                            return;
+                        }
+
                         _ => {}
                     }
                 }
@@ -225,7 +260,35 @@ pub fn run() -> Result<()> {
             .detach();
         });
 
+    // After GPUI exits, check if we should reload
+    if is_reload_requested() {
+        exec_reload()?;
+    }
+
     Ok(())
+}
+
+/// Execute a reload by replacing the current process with a fresh daemon.
+fn exec_reload() -> Result<()> {
+    use std::os::unix::process::CommandExt;
+
+    info!("Executing daemon reload...");
+
+    // Get the path to the current executable
+    let exe = std::env::current_exe().context("Failed to get current executable path")?;
+
+    // Ensure socket is removed (IpcServerHandle should have dropped, but be safe)
+    let socket_path = crate::ipc::get_socket_path();
+    if socket_path.exists() {
+        let _ = std::fs::remove_file(&socket_path);
+    }
+
+    // exec() replaces the current process - this never returns on success
+    // zlaunch daemon starts with no arguments
+    let err = std::process::Command::new(&exe).exec();
+
+    // If we get here, exec failed
+    Err(anyhow::anyhow!("Failed to exec: {}", err))
 }
 
 /// Handle the SetTheme IPC command.

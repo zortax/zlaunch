@@ -26,6 +26,9 @@ pub trait ZlaunchService {
     /// Quit the daemon.
     async fn quit() -> Result<(), String>;
 
+    /// Reload the daemon (fully restart the process).
+    async fn reload() -> Result<(), String>;
+
     /// List all available themes.
     async fn list_themes() -> Vec<ThemeInfo>;
 

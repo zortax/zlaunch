@@ -70,6 +70,17 @@ pub fn quit() -> anyhow::Result<()> {
     })
 }
 
+/// Reload the daemon (fully restart the process).
+pub fn reload() -> anyhow::Result<()> {
+    run_async(async {
+        let client = connect().await?;
+        client
+            .reload(context::current())
+            .await?
+            .map_err(|e| anyhow::anyhow!(e))
+    })
+}
+
 /// List all available themes.
 pub fn list_themes() -> anyhow::Result<Vec<ThemeInfo>> {
     run_async(async {
