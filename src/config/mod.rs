@@ -59,6 +59,9 @@ pub struct ConfigSearchProvider {
     pub trigger: String,
     /// Url containing {query}
     pub url: String,
+    /// Optional icon name (defaults to MagnifyingGlass)
+    #[serde(default)]
+    pub icon: Option<String>,
 }
 
 impl AppConfig {

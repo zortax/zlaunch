@@ -5,6 +5,7 @@
 
 use crate::assets::PhosphorIcon;
 use crate::config::config;
+use tracing::warn;
 
 /// A search provider configuration.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -57,19 +58,36 @@ fn builtin_providers() -> Vec<SearchProvider> {
     ]
 }
 
+fn provider_icon(provider_name: &str, icon_name: Option<&String>) -> PhosphorIcon {
+    if let Some(icon_name) = icon_name {
+        let normalized = icon_name.trim().to_ascii_lowercase();
+
+        if let Some(icon) = PhosphorIcon::from_name(&normalized) {
+            return icon;
+        }
+
+        warn!(
+            "Unknown icon '{}' for search provider '{}', using magnifying-glass",
+            icon_name, provider_name
+        );
+    }
+
+    PhosphorIcon::MagnifyingGlass
+}
+
 /// Get all available search providers
 pub fn get_providers() -> Vec<SearchProvider> {
     let mut providers = builtin_providers();
 
     if let Some(custom) = config().search_providers {
         for provider in custom {
+            let icon = provider_icon(&provider.name, provider.icon.as_ref());
+
             providers.push(SearchProvider {
                 name: provider.name,
                 trigger: provider.trigger,
                 url_template: provider.url,
-
-                // Magnifying glass icon for custom providers
-                icon: PhosphorIcon::MagnifyingGlass,
+                icon,
             });
         }
     }
