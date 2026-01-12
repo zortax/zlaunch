@@ -49,6 +49,7 @@ zlaunch toggle  # Toggle visibility
 zlaunch show    # Show launcher
 zlaunch hide    # Hide launcher
 zlaunch quit    # Stop daemon
+zlaunch reload  # Restart daemon (useful after updates)
 ```
 
 Theme management:
