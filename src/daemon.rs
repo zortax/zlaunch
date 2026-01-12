@@ -104,7 +104,6 @@ pub fn run() -> Result<()> {
 
             let applications_clone = applications.clone();
             let compositor_clone = compositor.clone();
-            let disabled_modules_clone = disabled_modules.clone();
             let mut launcher_window: Option<LauncherWindow> = None;
             let mut visible = false;
 
@@ -124,24 +123,10 @@ pub fn run() -> Result<()> {
 
                         DaemonEvent::Show { response_tx } => {
                             let result = if !visible {
-                                let windows =
-                                    if disabled_modules_clone.contains(&ConfigModule::Windows) {
-                                        Vec::new()
-                                    } else {
-                                        match compositor_clone.list_windows() {
-                                            Ok(w) => w,
-                                            Err(e) => {
-                                                tracing::warn!(%e, "Failed to list windows");
-                                                Vec::new()
-                                            }
-                                        }
-                                    };
-
                                 cx.update(|cx| {
-                                    match window::create_and_show_window_with_windows(
+                                    match window::create_and_show_window(
                                         applications_clone.clone(),
                                         compositor_clone.clone(),
-                                        windows,
                                         event_tx.clone(),
                                         cx,
                                     ) {
@@ -188,24 +173,10 @@ pub fn run() -> Result<()> {
                                 visible = false;
                                 Ok(())
                             } else {
-                                let windows =
-                                    if disabled_modules_clone.contains(&ConfigModule::Windows) {
-                                        Vec::new()
-                                    } else {
-                                        match compositor_clone.list_windows() {
-                                            Ok(w) => w,
-                                            Err(e) => {
-                                                tracing::warn!(%e, "Failed to list windows");
-                                                Vec::new()
-                                            }
-                                        }
-                                    };
-
                                 cx.update(|cx| {
-                                    match window::create_and_show_window_with_windows(
+                                    match window::create_and_show_window(
                                         applications_clone.clone(),
                                         compositor_clone.clone(),
-                                        windows,
                                         event_tx.clone(),
                                         cx,
                                     ) {
