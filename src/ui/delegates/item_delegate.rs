@@ -255,9 +255,10 @@ impl ItemListDelegate {
             .iter()
             .enumerate()
             .filter_map(|(idx, item)| {
-                matcher
-                    .fuzzy_match(item.name(), query)
-                    .map(|score| (idx, score))
+                let score_name = matcher.fuzzy_match(item.name(), query);
+                let score_desc = matcher.fuzzy_match(item.description().unwrap_or(""), query);
+
+                score_name.or(score_desc).map(|score| (idx, score))
             })
             .collect();
 
