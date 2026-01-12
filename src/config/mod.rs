@@ -61,7 +61,7 @@ pub struct ConfigSearchProvider {
     pub url: String,
     /// Optional icon name (defaults to MagnifyingGlass)
     #[serde(default)]
-    pub icon: Option<String>,
+    pub icon: String,
 }
 
 impl AppConfig {
@@ -88,7 +88,32 @@ impl Default for AppConfig {
             hyprland_auto_blur: true,
             disabled_modules: None,
             enable_transparency: true,
-            search_providers: None,
+            search_providers: Some(vec![
+                ConfigSearchProvider {
+                    name: "Google".to_string(),
+                    trigger: "!g".to_string(),
+                    url: "https://www.google.com/search?q={query}".to_string(),
+                    icon: "magnifying-glass".to_string(),
+                },
+                ConfigSearchProvider {
+                    name: "DuckDuckGo".to_string(),
+                    trigger: "!d".to_string(),
+                    url: "https://duckduckgo.com/?q={query}".to_string(),
+                    icon: "globe".to_string(),
+                },
+                ConfigSearchProvider {
+                    name: "Wikipedia".to_string(),
+                    trigger: "!wiki".to_string(),
+                    url: "https://en.wikipedia.org/wiki/Special:Search?search={query}".to_string(),
+                    icon: "book-open".to_string(),
+                },
+                ConfigSearchProvider {
+                    name: "YouTube".to_string(),
+                    trigger: "!yt".to_string(),
+                    url: "https://www.youtube.com/results?search_query={query}".to_string(),
+                    icon: "youtube-logo".to_string(),
+                },
+            ]),
         }
     }
 }

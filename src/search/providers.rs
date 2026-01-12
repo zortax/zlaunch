@@ -28,48 +28,20 @@ impl SearchProvider {
     }
 }
 
-/// Get all build in search providers.
-fn builtin_providers() -> Vec<SearchProvider> {
-    vec![
-        SearchProvider {
-            name: "Google".to_string(),
-            trigger: "!g".to_string(),
-            url_template: "https://www.google.com/search?q={query}".to_string(),
-            icon: PhosphorIcon::MagnifyingGlass,
-        },
-        SearchProvider {
-            name: "DuckDuckGo".to_string(),
-            trigger: "!d".to_string(),
-            url_template: "https://duckduckgo.com/?q={query}".to_string(),
-            icon: PhosphorIcon::Globe,
-        },
-        SearchProvider {
-            name: "Wikipedia".to_string(),
-            trigger: "!wiki".to_string(),
-            url_template: "https://en.wikipedia.org/wiki/Special:Search?search={query}".to_string(),
-            icon: PhosphorIcon::BookOpen,
-        },
-        SearchProvider {
-            name: "YouTube".to_string(),
-            trigger: "!yt".to_string(),
-            url_template: "https://www.youtube.com/results?search_query={query}".to_string(),
-            icon: PhosphorIcon::YoutubeLogo,
-        },
-    ]
-}
-
 fn provider_icon(provider_name: &str, icon_name: Option<&String>) -> PhosphorIcon {
     if let Some(icon_name) = icon_name {
         let normalized = icon_name.trim().to_ascii_lowercase();
 
-        if let Some(icon) = PhosphorIcon::from_name(&normalized) {
-            return icon;
-        }
+        if !normalized.is_empty() {
+            if let Some(icon) = PhosphorIcon::from_name(&normalized) {
+                return icon;
+            }
 
-        warn!(
-            "Unknown icon '{}' for search provider '{}', using magnifying-glass",
-            icon_name, provider_name
-        );
+            warn!(
+                "Unknown icon '{}' for search provider '{}', using MagnifyingGlass",
+                icon_name, provider_name
+            );
+        }
     }
 
     PhosphorIcon::MagnifyingGlass
@@ -77,11 +49,11 @@ fn provider_icon(provider_name: &str, icon_name: Option<&String>) -> PhosphorIco
 
 /// Get all available search providers
 pub fn get_providers() -> Vec<SearchProvider> {
-    let mut providers = builtin_providers();
+    let mut providers = vec![];
 
     if let Some(custom) = config().search_providers {
         for provider in custom {
-            let icon = provider_icon(&provider.name, provider.icon.as_ref());
+            let icon = provider_icon(&provider.name, Some(&provider.icon));
 
             providers.push(SearchProvider {
                 name: provider.name,
