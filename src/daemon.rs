@@ -2,7 +2,7 @@ use anyhow::Result;
 use gpui::{Application, QuitMode, hsla};
 use gpui_component::theme::{Theme, ThemeMode};
 use std::sync::Arc;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use crate::app::window::LauncherWindow;
 use crate::app::{DaemonEvent, WindowEvent, create_daemon_channel, window};
@@ -162,6 +162,7 @@ pub fn run() -> Result<()> {
                         }
 
                         DaemonEvent::Toggle { response_tx } => {
+                            debug!("Processing Toggle event, visible={}", visible);
                             let result = if visible {
                                 let _ = cx.update(|cx| {
                                     if let Some(ref lw) = launcher_window {
@@ -200,6 +201,7 @@ pub fn run() -> Result<()> {
                             let _ = cx.update(|cx| {
                                 cx.quit();
                             });
+                            return;
                         }
 
                         DaemonEvent::SetTheme { name, response_tx } => {

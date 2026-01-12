@@ -1,7 +1,6 @@
+use super::traits::{Categorizable, DisplayItem, Executable, IconProvider};
 use crate::compositor::WindowInfo;
 use std::path::PathBuf;
-
-use super::traits::{Categorizable, DisplayItem, Executable, IconProvider};
 
 /// A window item representing an open window for window switching.
 #[derive(Clone, Debug)]

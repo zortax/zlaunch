@@ -32,22 +32,30 @@ pub fn create_and_show_window(
     } else {
         fetch_windows(compositor.as_ref())
     };
+    create_and_show_window_impl(applications, compositor, windows, event_tx, cx)
+}
 
+fn create_and_show_window_impl(
+    applications: Vec<ApplicationItem>,
+    compositor: Arc<dyn Compositor>,
+    windows: Vec<WindowItem>,
+    event_tx: DaemonEventSender,
+    cx: &mut App,
+) -> anyhow::Result<LauncherWindow> {
     // Combine windows and applications into items list
     // Built-in actions and submenus are added by the delegate
     // Order doesn't matter here - sort_priority in delegate handles display order
     let mut items: Vec<ListItem> = Vec::with_capacity(windows.len() + applications.len());
     items.extend(windows.into_iter().map(ListItem::Window));
     items.extend(applications.into_iter().map(ListItem::Application));
-    // Get display size - try displays() first, then primary_display(), then use huge fallback
-    // The layer shell will clamp to actual screen size, so overshooting is fine
-    //let display_size = cx
-    //    .displays()
-    //    .first()
-    //    .map(|d| d.bounds().size)
-    //    .or_else(|| cx.primary_display().map(|d| d.bounds().size))
-    //    .unwrap_or_else(|| size(px(7680.0), px(4320.0))); // 8K fallback - will be clamped
-    let display_size = size(px(7680.0), px(4320.0));
+    // Get display size based on compositor
+    let display_size = if compositor.name() == "KWin" {
+        // For KDE/KWin, use fixed 1920x1080
+        size(px(1920.0), px(1080.0))
+    } else {
+        // For other compositors, 8K and hope for the best
+        size(px(7680.0), px(4320.0))
+    };
 
     let fullscreen_bounds = Bounds {
         origin: point(px(0.0), px(0.0)),
