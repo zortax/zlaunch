@@ -74,9 +74,11 @@ impl ItemListDelegate {
             ));
         }
 
-        // Add built-in action items
-        for action in ActionItem::builtins() {
-            items.push(ListItem::Action(action));
+        // Add built-in action items (shutdown, reboot, etc.)
+        if !disabled_modules.contains(&ConfigModule::Actions) {
+            for action in ActionItem::builtins() {
+                items.push(ListItem::Action(action));
+            }
         }
 
         // Sort items by priority to ensure correct section order

@@ -42,8 +42,10 @@ pub enum ConfigModule {
     Emojis,
     Calculator,
     Clipboard,
+    Actions,
     Search,
     Themes,
+    Windows,
 }
 
 impl AppConfig {

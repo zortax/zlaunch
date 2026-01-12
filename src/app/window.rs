@@ -1,5 +1,6 @@
 use crate::app::{DaemonEvent, DaemonEventSender, WindowEvent};
 use crate::compositor::Compositor;
+use crate::config::{config, ConfigModule};
 use crate::items::{ApplicationItem, ListItem, WindowItem};
 use crate::ui::LauncherView;
 use gpui::{
@@ -24,8 +25,14 @@ pub fn create_and_show_window(
     event_tx: DaemonEventSender,
     cx: &mut App,
 ) -> anyhow::Result<LauncherWindow> {
-    // Fetch open windows from compositor
-    let windows = fetch_windows(compositor.as_ref());
+    // Fetch open windows from compositor (if not disabled)
+    let disabled_modules = config().disabled_modules.unwrap_or_default();
+    let windows = if disabled_modules.contains(&ConfigModule::Windows) {
+        Vec::new()
+    } else {
+        fetch_windows(compositor.as_ref())
+    };
+
     // Combine windows and applications into items list
     // Built-in actions and submenus are added by the delegate
     // Order doesn't matter here - sort_priority in delegate handles display order
