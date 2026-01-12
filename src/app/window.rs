@@ -25,7 +25,13 @@ pub fn create_and_show_window(
     event_tx: DaemonEventSender,
     cx: &mut App,
 ) -> anyhow::Result<LauncherWindow> {
-    let windows = fetch_windows(compositor.as_ref());
+    // Fetch open windows from compositor (if not disabled)
+    let disabled_modules = config().disabled_modules.unwrap_or_default();
+    let windows = if disabled_modules.contains(&ConfigModule::Windows) {
+        Vec::new()
+    } else {
+        fetch_windows(compositor.as_ref())
+    };
     create_and_show_window_impl(applications, compositor, windows, event_tx, cx)
 }
 
