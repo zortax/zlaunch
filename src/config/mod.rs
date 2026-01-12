@@ -32,6 +32,8 @@ pub struct AppConfig {
     pub disabled_modules: Option<HashSet<ConfigModule>>,
     /// Enable transparency of the window
     pub enable_transparency: bool,
+    /// List of search providers
+    pub search_providers: Option<Vec<ConfigSearchProvider>>,
 }
 
 /// Modules enum
@@ -48,6 +50,20 @@ pub enum ConfigModule {
     Windows,
 }
 
+/// Search providers config
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ConfigSearchProvider {
+    /// Provider name
+    pub name: String,
+    /// Trigger (e.g. "!br")
+    pub trigger: String,
+    /// Url containing {query}
+    pub url: String,
+    /// Optional icon name (defaults to MagnifyingGlass)
+    #[serde(default)]
+    pub icon: String,
+}
+
 impl AppConfig {
     /// Const default for static initialization
     const fn default_const() -> Self {
@@ -58,6 +74,7 @@ impl AppConfig {
             hyprland_auto_blur: true,
             disabled_modules: None,
             enable_transparency: true,
+            search_providers: None,
         }
     }
 }
@@ -71,6 +88,32 @@ impl Default for AppConfig {
             hyprland_auto_blur: true,
             disabled_modules: None,
             enable_transparency: true,
+            search_providers: Some(vec![
+                ConfigSearchProvider {
+                    name: "Google".to_string(),
+                    trigger: "!g".to_string(),
+                    url: "https://www.google.com/search?q={query}".to_string(),
+                    icon: "magnifying-glass".to_string(),
+                },
+                ConfigSearchProvider {
+                    name: "DuckDuckGo".to_string(),
+                    trigger: "!d".to_string(),
+                    url: "https://duckduckgo.com/?q={query}".to_string(),
+                    icon: "globe".to_string(),
+                },
+                ConfigSearchProvider {
+                    name: "Wikipedia".to_string(),
+                    trigger: "!wiki".to_string(),
+                    url: "https://en.wikipedia.org/wiki/Special:Search?search={query}".to_string(),
+                    icon: "book-open".to_string(),
+                },
+                ConfigSearchProvider {
+                    name: "YouTube".to_string(),
+                    trigger: "!yt".to_string(),
+                    url: "https://www.youtube.com/results?search_query={query}".to_string(),
+                    icon: "youtube-logo".to_string(),
+                },
+            ]),
         }
     }
 }

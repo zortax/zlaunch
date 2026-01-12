@@ -1,6 +1,6 @@
 use crate::app::{DaemonEvent, DaemonEventSender, WindowEvent};
 use crate::compositor::Compositor;
-use crate::config::{config, ConfigModule};
+use crate::config::{ConfigModule, config};
 use crate::items::{ApplicationItem, ListItem, WindowItem};
 use crate::ui::LauncherView;
 use gpui::{

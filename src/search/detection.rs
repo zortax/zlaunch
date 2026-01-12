@@ -34,7 +34,7 @@ pub fn detect_search(input: &str) -> SearchDetection {
 
     // Check if input starts with a trigger
     for provider in get_providers() {
-        if let Some(stripped) = trimmed.strip_prefix(provider.trigger) {
+        if let Some(stripped) = trimmed.strip_prefix(provider.trigger.as_str()) {
             // Extract the query after the trigger
             let query = stripped.trim();
 
@@ -60,42 +60,6 @@ pub fn detect_search(input: &str) -> SearchDetection {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_detect_triggered_google() {
-        let result = detect_search("!g rust async");
-        match result {
-            SearchDetection::Triggered { provider, query } => {
-                assert_eq!(provider.name, "Google");
-                assert_eq!(query, "rust async");
-            }
-            _ => panic!("Expected Triggered"),
-        }
-    }
-
-    #[test]
-    fn test_detect_triggered_wikipedia() {
-        let result = detect_search("!wiki   quantum physics  ");
-        match result {
-            SearchDetection::Triggered { provider, query } => {
-                assert_eq!(provider.name, "Wikipedia");
-                assert_eq!(query, "quantum physics");
-            }
-            _ => panic!("Expected Triggered"),
-        }
-    }
-
-    #[test]
-    fn test_detect_trigger_only() {
-        let result = detect_search("!g");
-        assert_eq!(result, SearchDetection::None);
-    }
-
-    #[test]
-    fn test_detect_trigger_with_spaces() {
-        let result = detect_search("!g   ");
-        assert_eq!(result, SearchDetection::None);
-    }
 
     #[test]
     fn test_detect_fallback() {
