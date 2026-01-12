@@ -2,6 +2,7 @@ use anyhow::Result;
 use gpui::{Application, QuitMode, hsla};
 use gpui_component::theme::{Theme, ThemeMode};
 use std::sync::Arc;
+use std::time::Duration;
 use tracing::{debug, error, info};
 
 use crate::app::window::LauncherWindow;
@@ -108,7 +109,6 @@ pub fn run() -> Result<()> {
             let mut launcher_window: Option<LauncherWindow> = None;
             let mut visible = false;
 
-            // Main event loop - async wait on channel, no polling needed
             cx.spawn(async move |cx: &mut gpui::AsyncApp| {
                 while let Ok(event) = event_rx.recv_async().await {
                     match event {
@@ -124,28 +124,10 @@ pub fn run() -> Result<()> {
 
                         DaemonEvent::Show { response_tx } => {
                             let result = if !visible {
-                                // Fetch windows (if not disabled) in a background thread
-                                let windows = if disabled_modules_clone.contains(&ConfigModule::Windows) {
-                                    Vec::new()
-                                } else {
-                                    let comp = compositor_clone.clone();
-                                    let handle = std::thread::spawn(move || {
-                                        match comp.list_windows() {
-                                            Ok(w) => w,
-                                            Err(e) => {
-                                                tracing::warn!(%e, "Failed to list windows");
-                                                Vec::new()
-                                            }
-                                        }
-                                    });
-                                    handle.join().unwrap_or_default()
-                                };
-
                                 cx.update(|cx| {
-                                    match window::create_and_show_window_with_windows(
+                                    match window::create_and_show_window(
                                         applications_clone.clone(),
                                         compositor_clone.clone(),
-                                        windows,
                                         event_tx.clone(),
                                         cx,
                                     ) {
@@ -181,7 +163,6 @@ pub fn run() -> Result<()> {
                         }
 
                         DaemonEvent::Toggle { response_tx } => {
-                            debug!("Processing Toggle event, visible={}", visible);
                             let result = if visible {
                                 let _ = cx.update(|cx| {
                                     if let Some(ref lw) = launcher_window {
@@ -192,34 +173,10 @@ pub fn run() -> Result<()> {
                                 visible = false;
                                 Ok(())
                             } else {
-                                // Fetch windows (if not disabled) in a background thread
-                                let windows = if disabled_modules_clone.contains(&ConfigModule::Windows) {
-                                    Vec::new()
-                                } else {
-                                    let comp = compositor_clone.clone();
-                                    let handle = std::thread::spawn(move || {
-                                        match comp.list_windows() {
-                                            Ok(w) => w,
-                                            Err(e) => {
-                                                tracing::warn!(%e, "Failed to list windows");
-                                                Vec::new()
-                                            }
-                                        }
-                                    });
-                                    match handle.join() {
-                                        Ok(w) => w,
-                                        Err(_) => {
-                                            error!("Window fetch thread panicked");
-                                            Vec::new()
-                                        }
-                                    }
-                                };
-
                                 cx.update(|cx| {
-                                    match window::create_and_show_window_with_windows(
+                                    match window::create_and_show_window(
                                         applications_clone.clone(),
                                         compositor_clone.clone(),
-                                        windows,
                                         event_tx.clone(),
                                         cx,
                                     ) {
