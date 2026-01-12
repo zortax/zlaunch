@@ -124,21 +124,17 @@ pub fn run() -> Result<()> {
 
                         DaemonEvent::Show { response_tx } => {
                             let result = if !visible {
-                                // Fetch windows (if not disabled) in a background thread
                                 let windows =
                                     if disabled_modules_clone.contains(&ConfigModule::Windows) {
                                         Vec::new()
                                     } else {
-                                        let comp = compositor_clone.clone();
-                                        let handle =
-                                            std::thread::spawn(move || match comp.list_windows() {
-                                                Ok(w) => w,
-                                                Err(e) => {
-                                                    tracing::warn!(%e, "Failed to list windows");
-                                                    Vec::new()
-                                                }
-                                            });
-                                        handle.join().unwrap_or_default()
+                                        match compositor_clone.list_windows() {
+                                            Ok(w) => w,
+                                            Err(e) => {
+                                                tracing::warn!(%e, "Failed to list windows");
+                                                Vec::new()
+                                            }
+                                        }
                                     };
 
                                 cx.update(|cx| {
@@ -192,24 +188,14 @@ pub fn run() -> Result<()> {
                                 visible = false;
                                 Ok(())
                             } else {
-                                // Fetch windows (if not disabled) in a background thread
                                 let windows =
                                     if disabled_modules_clone.contains(&ConfigModule::Windows) {
                                         Vec::new()
                                     } else {
-                                        let comp = compositor_clone.clone();
-                                        let handle =
-                                            std::thread::spawn(move || match comp.list_windows() {
-                                                Ok(w) => w,
-                                                Err(e) => {
-                                                    tracing::warn!(%e, "Failed to list windows");
-                                                    Vec::new()
-                                                }
-                                            });
-                                        match handle.join() {
+                                        match compositor_clone.list_windows() {
                                             Ok(w) => w,
-                                            Err(_) => {
-                                                error!("Window fetch thread panicked");
+                                            Err(e) => {
+                                                tracing::warn!(%e, "Failed to list windows");
                                                 Vec::new()
                                             }
                                         }
