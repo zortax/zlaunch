@@ -72,15 +72,11 @@ fn create_and_show_window_impl(
     items.extend(applications.into_iter().map(ListItem::Application));
     // Get display size based on compositor
     let display_size = if compositor.name() == "KWin" {
-        // KDE/KWin has issues with display detection, use fixed 1920x1080
+        // For KDE/KWin, use fixed 1920x1080
         size(px(1920.0), px(1080.0))
     } else {
-        // For other compositors, use primary display size with 8K fallback
-        cx.displays()
-            .first()
-            .map(|d| d.bounds().size)
-            .or_else(|| cx.primary_display().map(|d| d.bounds().size))
-            .unwrap_or_else(|| size(px(7680.0), px(4320.0)))
+        // For other compositors, 8K and hope for the best
+        size(px(7680.0), px(4320.0))
     };
 
     let fullscreen_bounds = Bounds {
