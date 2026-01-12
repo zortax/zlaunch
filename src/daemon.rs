@@ -104,7 +104,6 @@ pub fn run() -> Result<()> {
 
             let applications_clone = applications.clone();
             let compositor_clone = compositor.clone();
-            let disabled_modules_clone = disabled_modules.clone();
             let mut launcher_window: Option<LauncherWindow> = None;
             let mut visible = false;
 

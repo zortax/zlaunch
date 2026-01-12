@@ -1,6 +1,5 @@
 use crate::app::{DaemonEvent, DaemonEventSender, WindowEvent};
-
-use crate::compositor::{Compositor, WindowInfo};
+use crate::compositor::Compositor;
 use crate::config::{ConfigModule, config};
 use crate::items::{ApplicationItem, ListItem, WindowItem};
 use crate::ui::LauncherView;
