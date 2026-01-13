@@ -43,11 +43,7 @@ impl ClipboardItem {
         match &self.content {
             ClipboardContent::Text(text) => {
                 let first_line = text.lines().next().unwrap_or("");
-                if first_line.len() > MAX_LENGTH {
-                    format!("{}...", &first_line[..MAX_LENGTH])
-                } else {
-                    first_line.to_string()
-                }
+                truncate_preview_line(first_line, MAX_LENGTH)
             }
             ClipboardContent::Image { .. } => "[Image]".to_string(),
             ClipboardContent::FilePaths(paths) => {
@@ -63,11 +59,7 @@ impl ClipboardItem {
             }
             ClipboardContent::RichText { plain, .. } => {
                 let first_line = plain.lines().next().unwrap_or("");
-                if first_line.len() > MAX_LENGTH {
-                    format!("{}...", &first_line[..MAX_LENGTH])
-                } else {
-                    first_line.to_string()
-                }
+                truncate_preview_line(first_line, MAX_LENGTH)
             }
         }
     }
@@ -110,5 +102,16 @@ impl ClipboardItem {
             );
         }
         false
+    }
+}
+
+/// Truncate wihtout splitting emojis
+fn truncate_preview_line(line: &str, max: usize) -> String {
+    let truncated: String = line.chars().take(max).collect();
+
+    if truncated.len() < line.len() {
+        format!("{}...", truncated)
+    } else {
+        truncated
     }
 }
