@@ -9,6 +9,21 @@ use llm::chat::ChatMessage;
 use std::env;
 use std::pin::Pin;
 
+fn get_keys() -> Option<(String, LLMBackend)> {
+    [
+        ("OLLAMA_URL", LLMBackend::Ollama),
+        ("GEMINI_API_KEY", LLMBackend::Google),
+        ("OPENAI_API_KEY", LLMBackend::OpenAI),
+        ("OPENROUTER_API_KEY", LLMBackend::OpenRouter),
+    ]
+    .iter()
+    .find_map(|(var_name, backend)| {
+        env::var(var_name)
+            .ok()
+            .map(|value| (value, backend.clone()))
+    })
+}
+
 /// LLM client for AI queries.
 pub struct LLMClient {
     llm: Box<dyn LLMProvider>,
@@ -19,24 +34,7 @@ impl LLMClient {
     /// Create a new LLM client.
     /// Returns None if no valid API_KEY environment variable is set.
     pub fn new() -> Option<Self> {
-        // Find the first available environment variable
-        let (api_key, backend) = [
-            ("OLLAMA_URL", LLMBackend::Ollama),
-            ("GEMINI_API_KEY", LLMBackend::Google),
-            ("OPENAI_API_KEY", LLMBackend::OpenAI),
-            ("OPENROUTER_API_KEY", LLMBackend::OpenRouter),
-        ]
-        .iter()
-        .find_map(|(var_name, backend)| {
-            if *backend == LLMBackend::Ollama {
-                Some((
-                    env::var("OLLAMA_URL").unwrap_or_else(|_| "http://127.0.0.1:11434".to_string()),
-                    backend,
-                ))
-            } else {
-                env::var(var_name).ok().map(|key| (key, backend))
-            }
-        })?;
+        let (api_key, backend) = get_keys()?;
 
         let mut builder = LLMBuilder::new().backend(backend.clone());
 
@@ -65,6 +63,11 @@ impl LLMClient {
             llm,
             backend: backend.clone(),
         })
+    }
+
+    /// Return true if any LLM is configured.
+    pub fn is_configured() -> bool {
+        get_keys().is_some()
     }
 
     /// Stream a response for the given query.
@@ -118,7 +121,7 @@ impl LLMClient {
 impl Default for LLMClient {
     fn default() -> Self {
         Self::new().expect(
-            "GEMINI_API_KEY, OPENAI_API_KEY or OPENROUTER_API_KEY environment variable not set",
+            "GEMINI_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY or OLLAMA_URL environment variable not set",
         )
     }
 }

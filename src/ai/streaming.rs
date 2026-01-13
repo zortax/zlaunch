@@ -31,6 +31,10 @@ static CLIENT: OnceCell<LLMClient> = OnceCell::const_new();
 /// - `Ok("")` when streaming completes successfully
 /// - `Err(error)` if an error occurs
 pub fn spawn_stream(messages: Vec<ChatMessage>) -> Option<Receiver<Result<String, String>>> {
+    if !LLMClient::is_configured() {
+        return None;
+    }
+
     // Create channel for communication between Tokio thread and caller
     let (tx, rx) = flume::unbounded::<Result<String, String>>();
 

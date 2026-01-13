@@ -1,3 +1,4 @@
+use crate::ai::LLMClient;
 use crate::calculator::evaluate_expression;
 use crate::config::{ConfigModule, config};
 use crate::items::{ActionItem, AiItem, CalculatorItem, ListItem, SearchItem, SubmenuItem};
@@ -155,6 +156,8 @@ impl ItemListDelegate {
     fn process_query(&mut self, query: &str) {
         // Get the config disabled modules
         let disabled_modules = config().disabled_modules.unwrap_or_default();
+        let ai_enabled =
+            !disabled_modules.contains(&ConfigModule::Ai) && LLMClient::is_configured();
 
         // Check for calculator expression
         if !disabled_modules.contains(&ConfigModule::Calculator)
@@ -185,7 +188,7 @@ impl ItemListDelegate {
         // 2. Else if search trigger (!g, !ddg, etc.) → only show that search provider
         // 3. Else if query not empty → always show AI item + all search providers at bottom
 
-        if !disabled_modules.contains(&ConfigModule::Ai) && has_ai_trigger {
+        if ai_enabled && has_ai_trigger {
             // Only show AI item when !ai trigger is used
             let ai_query = trimmed.strip_prefix("!ai").unwrap().trim();
             if !ai_query.is_empty() {
@@ -199,7 +202,7 @@ impl ItemListDelegate {
         } else if !trimmed.is_empty() {
             // Always show AI item and all search providers when query is not empty
             // These appear at the bottom in "Search and AI" section
-            if !disabled_modules.contains(&ConfigModule::Ai) {
+            if ai_enabled {
                 self.ai_item = Some(AiItem::new(trimmed.to_string()));
             }
             if !disabled_modules.contains(&ConfigModule::Search)
