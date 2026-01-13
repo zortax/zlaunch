@@ -137,8 +137,9 @@ pub fn run() -> Result<()> {
 
                         DaemonEvent::Show { response_tx } => {
                             let result = if !visible {
+                                let mut inner_result = Err("Failed to update app".to_string());
                                 cx.update(|cx| {
-                                    match window::create_and_show_window(
+                                    inner_result = match window::create_and_show_window(
                                         applications_clone.clone(),
                                         compositor_clone.clone(),
                                         event_tx.clone(),
@@ -153,9 +154,9 @@ pub fn run() -> Result<()> {
                                             error!(%e, "Failed to create window");
                                             Err(format!("Failed to create window: {}", e))
                                         }
-                                    }
-                                })
-                                .unwrap_or(Err("Failed to update app".to_string()))
+                                    };
+                                });
+                                inner_result
                             } else {
                                 Ok(()) // Already visible
                             };
@@ -187,8 +188,9 @@ pub fn run() -> Result<()> {
                                 visible = false;
                                 Ok(())
                             } else {
+                                let mut inner_result = Err("Failed to update app".to_string());
                                 cx.update(|cx| {
-                                    match window::create_and_show_window(
+                                    inner_result = match window::create_and_show_window(
                                         applications_clone.clone(),
                                         compositor_clone.clone(),
                                         event_tx.clone(),
@@ -203,9 +205,9 @@ pub fn run() -> Result<()> {
                                             error!(%e, "Failed to create window");
                                             Err(format!("Failed to create window: {}", e))
                                         }
-                                    }
-                                })
-                                .unwrap_or(Err("Failed to update app".to_string()))
+                                    };
+                                });
+                                inner_result
                             };
                             let _ = response_tx.send(result);
                         }
