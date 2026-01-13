@@ -1,8 +1,8 @@
 //! LLM API client for streaming AI responses.
 
-use anyhow::{Context, Result};
+use anyhow::{Result, anyhow};
 use futures::Stream;
-use futures::stream::StreamExt;
+use futures::stream::{StreamExt, once};
 use llm::LLMProvider;
 use llm::builder::{LLMBackend, LLMBuilder};
 use llm::chat::ChatMessage;
@@ -12,6 +12,7 @@ use std::pin::Pin;
 /// LLM client for AI queries.
 pub struct LLMClient {
     llm: Box<dyn LLMProvider>,
+    backend: LLMBackend,
 }
 
 impl LLMClient {
@@ -20,17 +21,35 @@ impl LLMClient {
     pub fn new() -> Option<Self> {
         // Find the first available environment variable
         let (api_key, backend) = [
+            ("OLLAMA_URL", LLMBackend::Ollama),
             ("GEMINI_API_KEY", LLMBackend::Google),
             ("OPENAI_API_KEY", LLMBackend::OpenAI),
             ("OPENROUTER_API_KEY", LLMBackend::OpenRouter),
         ]
         .iter()
-        .find_map(|(var_name, backend)| env::var(var_name).ok().map(|key| (key, backend)))?;
+        .find_map(|(var_name, backend)| {
+            if *backend == LLMBackend::Ollama {
+                Some((
+                    env::var("OLLAMA_URL").unwrap_or_else(|_| "http://127.0.0.1:11434".to_string()),
+                    backend,
+                ))
+            } else {
+                env::var(var_name).ok().map(|key| (key, backend))
+            }
+        })?;
 
-        LLMBuilder::new()
-            .backend(backend.clone())
-            .api_key(&api_key)
+        let mut builder = LLMBuilder::new().backend(backend.clone());
+
+        builder = match backend {
+            LLMBackend::Ollama => builder.base_url(&api_key),
+            _ => builder.api_key(&api_key),
+        };
+
+        let llm = builder
             .model(match backend {
+                LLMBackend::Ollama => {
+                    env::var("OLLAMA_MODEL").unwrap_or_else(|_| "llama3.2:latest".to_string())
+                }
                 LLMBackend::Google => "gemini-flash-latest".to_string(),
                 LLMBackend::OpenAI => "gpt-5-mini".to_string(),
                 LLMBackend::OpenRouter => env::var("OPENROUTER_MODEL")
@@ -40,28 +59,60 @@ impl LLMClient {
             .max_tokens(2000)
             .temperature(0.7)
             .build()
-            .ok()
-            .map(|llm| Self { llm })
+            .ok()?;
+
+        Some(Self {
+            llm,
+            backend: backend.clone(),
+        })
     }
 
     /// Stream a response for the given query.
     /// Returns a stream of tokens (strings).
+    /// Ollama doesnt support streaming for some reason so it uses normal chat().
     pub async fn stream_query(
         &self,
         messages: &[ChatMessage],
     ) -> Result<Pin<Box<dyn Stream<Item = Result<String>> + Send>>> {
-        let stream = self
-            .llm
-            .chat_stream(messages)
-            .await
-            .context("Failed to initiate streaming chat")?;
+        if self.backend == LLMBackend::Ollama {
+            let response = self.llm.chat(messages).await?;
 
-        // Convert LLMError to anyhow::Error
-        let result_stream =
-            stream.map(|result| result.map_err(|e| anyhow::Error::msg(e.to_string())));
+            let text = response
+                .text()
+                .ok_or_else(|| anyhow!("LLM response missing text"))?;
 
-        Ok(Box::pin(result_stream))
+            let result = once(async move { Ok(text) });
+
+            Ok(Box::pin(result))
+        } else {
+            let stream = self.llm.chat_stream(messages).await?;
+
+            // Convert LLMError to anyhow::Error
+            let result_stream =
+                stream.map(|result| result.map_err(|e| anyhow::Error::msg(e.to_string())));
+
+            Ok(Box::pin(result_stream))
+        }
     }
+
+    // Keeping this here bc if llm crate adds streaming for ollama we can probably just uncomment this and remove above code.
+
+    // pub async fn stream_query(
+    //     &self,
+    //     messages: &[ChatMessage],
+    // ) -> Result<Pin<Box<dyn Stream<Item = Result<String>> + Send>>> {
+    //     let stream = self
+    //         .llm
+    //         .chat_stream(messages)
+    //         .await
+    //         .context("Failed to initiate streaming chat")?;
+
+    //     // Convert LLMError to anyhow::Error
+    //     let result_stream =
+    //         stream.map(|result| result.map_err(|e| anyhow::Error::msg(e.to_string())));
+
+    //     Ok(Box::pin(result_stream))
+    // }
 }
 
 impl Default for LLMClient {
