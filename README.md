@@ -138,7 +138,9 @@ To enable AI mode with Ollama, set the `OLLAMA_URL` and `OLLAMA_MODEL` environme
 - `OLLAMA_MODEL`: The model to use (`llama3.2:latest`).
 
 Example usage:
-    OLLAMA_URL="http://127.0.0.1:11434" OLLAMA_MODEL="llama3.2:latest" zlaunch
+```bash
+OLLAMA_URL="http://127.0.0.1:11434" OLLAMA_MODEL="llama3.2:latest" zlaunch
+```
 
 To enable AI mode with cloud models, run the daemon with the `GEMINI_API_KEY` `OPENAI_API_KEY` or `OPENROUTER_API_KEY` env var set to an
 appropriate key. Model can be chosen for OpenRouter with the `OPENROUTER_MODEL` env var.
