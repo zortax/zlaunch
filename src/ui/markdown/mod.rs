@@ -33,8 +33,8 @@ pub fn render_markdown(text: &str, window: &mut Window, cx: &mut App) -> impl In
 pub fn render_markdown_with_id(
     id: impl Into<SharedString>,
     text: &str,
-    window: &mut Window,
-    cx: &mut App,
+    _window: &mut Window,
+    _cx: &mut App,
 ) -> impl IntoElement {
     let t = theme();
 
@@ -72,7 +72,7 @@ pub fn render_markdown_with_id(
 
     // Wrap in a container with text_sm for consistent small font size
     div().text_sm().child(
-        TextView::markdown(id, text, window, cx)
+        TextView::markdown(id, text)
             .style(style)
             .selectable(true),
     )
