@@ -74,7 +74,7 @@ fn create_and_show_window_impl(
         size(px(1920.0), px(1080.0))
     } else {
         // For other compositors, 8K and hope for the best
-        size(px(7680.0), px(4320.0))
+        size(px(5680.0), px(4320.0))
     };
 
     let fullscreen_bounds = Bounds {
