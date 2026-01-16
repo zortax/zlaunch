@@ -1,4 +1,5 @@
 # zlaunch
+
 ![GitHub License](https://img.shields.io/github/license/zortax/zlaunch)
 ![GitHub Release](https://img.shields.io/github/v/release/zortax/zlaunch)
 ![AUR Version](https://img.shields.io/aur/version/zlaunch-bin)
@@ -12,21 +13,31 @@ A fast application launcher and window switcher for Linux Wayland, built with
 
 ## Features
 
-- **Application launching** - Fuzzy search through desktop entries with icons
-- **Window switching** - Switch between open windows (Hyprland)
-- **Calculator** - Evaluate math expressions, copies result to clipboard
-- **Web search** - Search Google, DuckDuckGo, Wikipedia, YouTube, and more
-- **Emoji picker** - Searchable emoji grid
-- **Clipboard history** - Browse and paste from clipboard history
-- **AI mode** - Query Gemini API with streaming responses
-- **Theming** - 15 bundled themes plus custom theme support
-- **Daemon architecture** - Runs in background for instant response
+- **Application launching** — Fuzzy search through desktop entries with icons
+- **Window switching** — Switch between open windows (Hyprland)
+- **Calculator** — Evaluate math expressions and copy the result to clipboard
+- **Web search** — Search Google, DuckDuckGo, Wikipedia, YouTube, and more
+- **Emoji picker** — Searchable emoji grid
+- **Clipboard history** — Browse and paste from clipboard history
+- **AI mode** — Query local or cloud LLMs with streaming responses
+- **Theming** — 15 bundled themes plus custom theme support
+- **Daemon architecture** — Runs in the background for instant response
+
+## Compositor Support
+
+- **Hyprland, Niri** — Window switching via IPC socket, clipboard fully supported
+- **Other wlr-based compositors** — Untested, should work with clipboard history, windows switching not implemented
+- **KDE / KWin** — WIP, window creation buggy, blur not supported, clipboard not working
+- **GNOME** — Not supported (and not planned)
 
 ## Installation
 
 ### Arch Linux
 
-Available on the AUR as [zlaunch-bin](https://aur.archlinux.org/packages/zlaunch-bin) or [zlaunch-git](https://aur.archlinux.org/packages/zlaunch-git).
+Available on the AUR as
+
+- [`zlaunch-bin`](https://aur.archlinux.org/packages/zlaunch-bin)
+- [`zlaunch-git`](https://aur.archlinux.org/packages/zlaunch-git)
 
 ### Building from source
 
@@ -34,27 +45,41 @@ Available on the AUR as [zlaunch-bin](https://aur.archlinux.org/packages/zlaunch
 cargo build --release
 ```
 
-The binary will be at `target/release/zlaunch`.
+The binary will be located at:
 
-## Usage
+```
+./target/release/zlaunch
+```
+
+## Quick Start
 
 Start the daemon:
+
 ```bash
 zlaunch
 ```
 
-Control via CLI (use these commands in you key binds):
+Toggle the launcher (bind this to a key):
+
+```bash
+zlaunch toggle
+```
+
+## Usage
+
+Control the daemon via CLI (use these commands in your key bindings):
+
 ```bash
 zlaunch toggle  # Toggle visibility
 zlaunch show    # Show launcher
 zlaunch hide    # Hide launcher
 zlaunch quit    # Stop daemon
-zlaunch reload  # Restart daemon (useful after updates)
+zlaunch reload  # Restart daemon (useful after config updates)
 ```
 
-Theme management:
+### Theme management
 
-Use the theme selector in the UI, or the CLI/IPC interface:
+Use the built-in theme selector in the UI, or via CLI:
 
 ```bash
 zlaunch theme           # Show current theme
@@ -64,59 +89,160 @@ zlaunch theme set NAME  # Set theme by name
 
 ## Keybindings
 
-| Key | Action |
-|-----|--------|
-| `↑` / `↓` | Navigate items |
-| `Tab` / `Shift+Tab` | Navigate in grid |
-| `Enter` | Execute selected item |
-| `Escape` | Back / Hide launcher |
+| Key                 | Action                |
+| ------------------- | --------------------- |
+| `↑` / `↓`           | Navigate items        |
+| `Tab` / `Shift+Tab` | Navigate grid         |
+| `Enter`             | Execute selected item |
+| `Escape`            | Back / Hide launcher  |
 
 ## Configuration
 
-Config file: `~/.config/zlaunch/config.toml`
+Config file location:
 
-By default, zlaunch will not persist changes in the UI (theme) or auto-create
-the config file. Create the config file manually, after that in-UI theme
-changes will be persisted.
+```
+~/.config/zlaunch/config.toml
+```
+
+By default, zlaunch will not persist changes in the UI (theme) or auto-create the config file. Create the config file manually, after that in-UI theme changes will be persisted.
+
+### Example configuration
 
 ```toml
-theme = "dracula"
-window_width = 600.0
-window_height = 400.0
+theme = "one-dark"
+window_width = 800.0
+window_height = 500.0
+hyprland_auto_blur = false
+enable_transparency = false
+
+disabled_modules = ["clipboard", "ai"]
+
+[[search_providers]]
+name = "Brave"
+trigger = "!br"
+url = "https://search.brave.com/search?q={query}"
+
+[[search_providers]]
+name = "YouTube"
+trigger = "!yt"
+url = "https://youtube.com/search?q={query}"
+icon = "YoutubeLogo"
+```
+
+### Configuration options
+
+- `theme` — Theme name (`default`, a bundled theme, or a custom theme file)
+- `window_width` / `window_height` — Launcher window size
+- `enable_transparency` — Defaults to `true`. Set to `false` to force an opaque background
+- `hyprland_auto_blur` — Defaults to `true`. Attempts to apply Hyprland blur rules (WIP)
+- `disabled_modules` — List of modules to hide entirely
+- `search_providers` — Custom web search providers
+
+#### Available modules
+
+- `actions`
+- `ai`
+- `calculator`
+- `clipboard`
+- `emojis`
+- `search`
+- `themes`
+- `windows`
+
+### Search providers
+
+Each provider supports the following fields:
+
+- `name` — Display name
+- `trigger` — Search trigger (e.g. `!g`, `!ddg`)
+- `url` — URL template containing `{query}`
+- `icon` — Optional icon name; defaults to `magnifying-glass` if the field is missing, empty, or invalid
+
+The `icon` field accepts the following kebab-case names that map to the embedded Phosphor icons:
+
+- `power`
+- `reboot`
+- `moon`
+- `lock`
+- `sign-out`
+- `smiley`
+- `terminal`
+- `clipboard`
+- `clipboard-text`
+- `file`
+- `file-text`
+- `file-image`
+- `image`
+- `magnifying-glass`
+- `globe`
+- `book-open`
+- `youtube-logo`
+- `brain`
+- `palette`
+
+Example:
+
+```toml
+[[search_providers]]
+name = "YouTube"
+trigger = "!yt"
+url = "https://youtube.com/search?q={query}"
+icon = "youtube-logo"
 ```
 
 ## Theming
 
 ### Bundled Themes
 
-ayu-dark, catppuccin-latte, catppuccin-mocha, dracula, everforest,
-gruvbox-dark, kanagawa, material, monokai, nord, one-dark, rose-pine,
-solarized-dark, synthwave, tokyo-night
+- `ayu-dark`
+- `catppuccin-latte`
+- `catppuccin-mocha`
+- `dracula`
+- `everforest`
+- `gruvbox-dark`
+- `kanagawa`
+- `material`
+- `monokai`
+- `nord`
+- `one-dark`
+- `rose-pine`
+- `solarized-dark`
+- `synthwave`
+- `tokyo-night`
 
 ### Custom Themes
 
-Place custom theme files in `~/.config/zlaunch/themes/`. Theme files are TOML
-format.
+Place custom themes in:
 
-Colors can be specified as:
+```
+~/.config/zlaunch/themes/
+```
+
+Theme files use TOML format.
+
+Supported color formats:
+
 - Hex: `"#3fc3aa"` or `"#3fc3aa80"`
 - RGBA: `{ r = 255, g = 128, b = 64, a = 255 }`
 - HSLA: `{ h = 0.5, s = 0.8, l = 0.6, a = 1.0 }`
 
-See bundled themes in `assets/themes/` for examples.
+See [`assets/themes/`](https://github.com/zortax/zlaunch/tree/main/assets/themes) for examples.
 
 ### Background Blur
 
-As a wlr layer shell window is being used, the window blur does not work on
-most compositors. ~On Hyprland, zlaunch automatically applies `layerrule`s via
-the Hyprland IPC socket to enable blur. To disable this, set the following in
-your config:~ _currently broken (WIP)_
+Because zlaunch uses a wlr layer-shell window, blur is not supported on most
+compositors.
+
+On **Hyprland**, zlaunch attempts to apply blur automatically via IPC (WIP).
+This may fail on some systems.
+
+Disable auto-blur:
 
 ```toml
 hyprland_auto_blur = false
 ```
 
-Set rules manually for blur support:
+Manual Hyprland rules:
 
 ```
 layerrule = blur on,match:class zlaunch
@@ -124,26 +250,36 @@ layerrule = blur_popups on,match:class zlaunch
 layerrule = ignore_alpha 0.35,match:class zlaunch
 ```
 
-## Compositor Support
-
-- **Hyprland, Niri** - Window switching via IPC socket, clipboard fully supported
-- **wlr based compositors** - untested, should work with clipboard history, windows switching not implemented
-- **KDE/KWin** - WIP, window creation buggy, blur not supported, clipboard not working
-- other compositors will probably not work, Gnome support not planned
-
 ## AI Mode
 
-To enable AI mode with Ollama, set the `OLLAMA_URL` and `OLLAMA_MODEL` environment variables.
-- `OLLAMA_URL`: The url of your Ollama server (`http://127.0.0.1:11434`).
-- `OLLAMA_MODEL`: The model to use (`llama3.2:latest`).
+### Local models (Ollama)
 
-Example usage:
+Set the following environment variables:
+
+- `OLLAMA_URL` — e.g. `http://127.0.0.1:11434`
+- `OLLAMA_MODEL` — e.g. `llama3.2:latest`
+
+Example:
+
 ```bash
-OLLAMA_URL="http://127.0.0.1:11434" OLLAMA_MODEL="llama3.2:latest" zlaunch
+OLLAMA_URL="http://127.0.0.1:11434" \
+OLLAMA_MODEL="llama3.2:latest" \
+zlaunch
 ```
 
-To enable AI mode with cloud models, run the daemon with the `GEMINI_API_KEY` `OPENAI_API_KEY` or `OPENROUTER_API_KEY` env var set to an
-appropriate key. Model can be chosen for OpenRouter with the `OPENROUTER_MODEL` env var.
+### Cloud models
+
+Set one of the following API keys:
+
+- `GEMINI_API_KEY`
+- `OPENAI_API_KEY`
+- `OPENROUTER_API_KEY`
+
+For OpenRouter, you can also set:
+
+```
+OPENROUTER_MODEL
+```
 
 ## License
 
