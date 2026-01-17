@@ -73,12 +73,14 @@
             fontconfig
           ];
 
-          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-            pkgs.wayland
-            pkgs.libxkbcommon
-            pkgs.vulkan-loader
-            pkgs.xorg.libxcb
-          ];
+          env = {
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+              pkgs.wayland
+              pkgs.libxkbcommon
+              pkgs.vulkan-loader
+              pkgs.xorg.libxcb
+            ];
+          };
         };
       }
     );
