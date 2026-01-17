@@ -1,15 +1,13 @@
 use crate::desktop::entry::DesktopEntry;
-use crate::desktop::env::get_session_environment;
-use std::os::unix::process::CommandExt;
-use std::process::Command;
+use crate::process;
 
 pub fn launch_application(entry: &DesktopEntry) -> anyhow::Result<()> {
     let exec = clean_exec_string(&entry.exec);
 
     if entry.terminal {
-        launch_in_terminal(&exec)?;
+        process::launch_in_terminal(&exec)?;
     } else {
-        launch_detached(&exec)?;
+        process::launch_exec(&exec)?;
     }
 
     Ok(())
@@ -25,75 +23,4 @@ fn clean_exec_string(exec: &str) -> String {
     }
 
     result.trim().to_string()
-}
-
-fn launch_detached(exec: &str) -> anyhow::Result<()> {
-    let parts: Vec<&str> = exec.split_whitespace().collect();
-    if parts.is_empty() {
-        anyhow::bail!("Empty exec command");
-    }
-
-    let program = parts[0];
-    let args = &parts[1..];
-
-    // SAFETY: setsid() is async-signal-safe and creates a new session,
-    // detaching the child from the parent's process group so it survives
-    // when the daemon exits.
-    unsafe {
-        Command::new(program)
-            .args(args)
-            .env_clear()
-            .envs(get_session_environment().iter())
-            .stdin(std::process::Stdio::null())
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .pre_exec(|| {
-                libc::setsid();
-                Ok(())
-            })
-            .spawn()?;
-    }
-
-    Ok(())
-}
-
-fn launch_in_terminal(exec: &str) -> anyhow::Result<()> {
-    let terminal = get_terminal()?;
-
-    // SAFETY: setsid() is async-signal-safe and creates a new session,
-    // detaching the child from the parent's process group so it survives
-    // when the daemon exits.
-    unsafe {
-        Command::new(&terminal)
-            .arg("-e")
-            .arg(exec)
-            .env_clear()
-            .envs(get_session_environment().iter())
-            .stdin(std::process::Stdio::null())
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .pre_exec(|| {
-                libc::setsid();
-                Ok(())
-            })
-            .spawn()?;
-    }
-
-    Ok(())
-}
-
-fn get_terminal() -> anyhow::Result<String> {
-    if let Ok(terminal) = std::env::var("TERMINAL") {
-        return Ok(terminal);
-    }
-
-    if Command::new("which")
-        .arg("xterm")
-        .output()
-        .is_ok_and(|o| o.status.success())
-    {
-        return Ok("xterm".to_string());
-    }
-
-    anyhow::bail!("No terminal emulator found. Set $TERMINAL environment variable.")
 }

@@ -87,3 +87,10 @@ impl Categorizable for ThemeItem {
         10
     }
 }
+
+impl From<ThemeItem> for super::ListItem {
+    fn from(item: ThemeItem) -> Self {
+        // Theme is boxed in ListItem due to large size
+        Self::Theme(Box::new(item))
+    }
+}

@@ -1,5 +1,6 @@
 //! Hyprland compositor implementation using IPC socket.
 
+use super::base::{get_display_title, is_launcher_window, CompositorCapabilities};
 use super::{Compositor, WindowInfo};
 use anyhow::{Context, Result};
 use serde::Deserialize;
@@ -63,7 +64,7 @@ impl Compositor for HyprlandCompositor {
                     return false;
                 }
                 // Exclude zlaunch itself
-                if c.class.to_lowercase() == "zlaunch" {
+                if is_launcher_window(&c.class) {
                     return false;
                 }
                 // Exclude windows with empty class (usually special windows)
@@ -77,11 +78,7 @@ impl Compositor for HyprlandCompositor {
                 let workspace = c.workspace.id;
                 WindowInfo {
                     address: c.address,
-                    title: if c.title.is_empty() {
-                        c.class.clone()
-                    } else {
-                        c.title
-                    },
+                    title: get_display_title(&c.title, &c.class),
                     class: c.class,
                     workspace,
                     focused,
@@ -100,6 +97,10 @@ impl Compositor for HyprlandCompositor {
 
     fn name(&self) -> &'static str {
         "Hyprland"
+    }
+
+    fn capabilities(&self) -> CompositorCapabilities {
+        CompositorCapabilities::full()
     }
 }
 

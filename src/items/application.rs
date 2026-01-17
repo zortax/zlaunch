@@ -106,3 +106,9 @@ impl Categorizable for ApplicationItem {
         4
     }
 }
+
+impl From<ApplicationItem> for super::ListItem {
+    fn from(item: ApplicationItem) -> Self {
+        Self::Application(item)
+    }
+}

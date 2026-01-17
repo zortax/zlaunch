@@ -1,28 +1,24 @@
+//! Enhanced delegate for the main item list.
+//!
+//! Composes BaseDelegate with dynamic items (calculator, AI, search)
+//! and section management.
+
 use crate::ai::LLMClient;
-use crate::calculator::evaluate_expression;
-use crate::config::{ConfigModule, config};
-use crate::items::{ActionItem, AiItem, CalculatorItem, ListItem, SearchItem, SubmenuItem};
-use crate::search::{SearchDetection, detect_search, get_providers};
+use crate::config::ConfigModule;
+use crate::items::{ActionItem, ListItem, SubmenuItem};
 use crate::ui::delegates::BaseDelegate;
 use crate::ui::theme::theme;
 use crate::ui::views::render_item;
-use fuzzy_matcher::FuzzyMatcher;
-use fuzzy_matcher::skim::SkimMatcherV2;
-use gpui::{App, Context, SharedString, Task, Window, div, prelude::*};
-use gpui_component::IndexPath;
+use gpui::{div, prelude::*, App, Context, SharedString, Task, Window};
 use gpui_component::list::{ListDelegate, ListItem as GpuiListItem, ListState};
+use gpui_component::IndexPath;
 use std::sync::Arc;
 
-/// Section information for tracking item counts by type
-#[derive(Clone, Debug, Default)]
-struct SectionInfo {
-    search_count: usize,
-    window_count: usize,
-    command_count: usize,
-    app_count: usize,
-}
+use super::dynamic_items::DynamicItems;
+use super::item_filter::ItemFilter;
+use super::section_manager::{SectionManager, SectionType};
 
-/// Type alias for confirm callback
+/// Type alias for confirm callback.
 type ConfirmCallback = Arc<dyn Fn(&ListItem) + Send + Sync>;
 
 /// Enhanced delegate for the main item list.
@@ -33,41 +29,46 @@ type ConfirmCallback = Arc<dyn Fn(&ListItem) + Send + Sync>;
 /// - Web search suggestions
 /// - Section management
 pub struct ItemListDelegate {
-    /// Base delegate handling common behavior
+    /// Base delegate handling common behavior.
     base: BaseDelegate<ListItem>,
-    /// Section counts for organizing items
-    section_info: SectionInfo,
-    /// Calculator result (shown at top when query is math expression)
-    calculator_item: Option<CalculatorItem>,
-    /// AI item (shown when query starts with !ai)
-    ai_item: Option<AiItem>,
-    /// Search items (shown when query triggers search providers)
-    search_items: Vec<SearchItem>,
-    /// Confirm callback (stored here to handle dynamic items)
+    /// Fuzzy filter for items.
+    filter: ItemFilter,
+    /// Dynamic items (calculator, AI, search).
+    dynamic: DynamicItems,
+    /// Section manager for organizing items.
+    sections: SectionManager,
+    /// Confirm callback (stored here to handle dynamic items).
     on_confirm: Option<ConfirmCallback>,
+    /// Modules enabled in combined view (for filtering).
+    combined_modules: Vec<ConfigModule>,
 }
 
 impl ItemListDelegate {
-    /// Create a new item list delegate
-    pub fn new(mut items: Vec<ListItem>) -> Self {
-        let disabled_modules = config().disabled_modules.unwrap_or_default();
+    /// Create a new item list delegate with specified combined modules.
+    pub fn new(mut items: Vec<ListItem>, combined_modules: Vec<ConfigModule>) -> Self {
+        // Filter items based on combined_modules
+        items.retain(|item| match item {
+            ListItem::Application(_) => combined_modules.contains(&ConfigModule::Applications),
+            ListItem::Window(_) => combined_modules.contains(&ConfigModule::Windows),
+            _ => true, // Keep other items for now
+        });
 
-        // Add built-in submenu items
-        if !disabled_modules.contains(&ConfigModule::Emojis) {
+        // Add built-in submenu items (only if module is in combined_modules)
+        if combined_modules.contains(&ConfigModule::Emojis) {
             items.push(ListItem::Submenu(
                 SubmenuItem::grid("submenu-emojis", "Emojis", 8)
                     .with_description("Search and copy emojis")
                     .with_icon("smiley"),
             ));
         }
-        if !disabled_modules.contains(&ConfigModule::Clipboard) {
+        if combined_modules.contains(&ConfigModule::Clipboard) {
             items.push(ListItem::Submenu(
                 SubmenuItem::list("submenu-clipboard", "Clipboard History")
                     .with_description("View and paste clipboard history")
                     .with_icon("clipboard"),
             ));
         }
-        if !disabled_modules.contains(&ConfigModule::Themes) {
+        if combined_modules.contains(&ConfigModule::Themes) {
             items.push(ListItem::Submenu(
                 SubmenuItem::list("submenu-themes", "Themes")
                     .with_description("Browse and apply themes")
@@ -76,274 +77,208 @@ impl ItemListDelegate {
         }
 
         // Add built-in action items (shutdown, reboot, etc.)
-        if !disabled_modules.contains(&ConfigModule::Actions) {
+        if combined_modules.contains(&ConfigModule::Actions) {
             for action in ActionItem::builtins() {
                 items.push(ListItem::Action(action));
             }
         }
 
-        // Sort items by priority to ensure correct section order
-        // (Windows=2, Commands=3, Applications=4)
-        items.sort_by_key(|item| item.sort_priority());
+        // Sort items by their position in combined_modules
+        tracing::debug!(?combined_modules, "Sorting items by combined_modules order");
+        items.sort_by(|a, b| {
+            let a_module = a.config_module();
+            let b_module = b.config_module();
 
-        let section_info =
-            Self::compute_section_info(&items, &(0..items.len()).collect::<Vec<_>>());
+            let a_pos = combined_modules
+                .iter()
+                .position(|m| m == &a_module)
+                .unwrap_or(usize::MAX);
+            let b_pos = combined_modules
+                .iter()
+                .position(|m| m == &b_module)
+                .unwrap_or(usize::MAX);
+
+            a_pos
+                .cmp(&b_pos)
+                .then_with(|| a.sort_priority().cmp(&b.sort_priority()))
+        });
+
+        // Debug: show first few items after sorting
+        for (i, item) in items.iter().take(5).enumerate() {
+            tracing::debug!(i, name = item.name(), module = ?item.config_module(), "Sorted item");
+        }
+
+        let mut sections = SectionManager::new(combined_modules.clone());
+        let filtered_indices: Vec<usize> = (0..items.len()).collect();
+        sections.update(&items, &filtered_indices, false, false, 0);
 
         Self {
             base: BaseDelegate::new(items),
-            section_info,
-            calculator_item: None,
-            ai_item: None,
-            search_items: Vec::new(),
+            filter: ItemFilter::new(),
+            dynamic: DynamicItems::new(),
+            sections,
             on_confirm: None,
+            combined_modules,
         }
     }
 
-    /// Set the confirm callback
+    /// Set the confirm callback.
     pub fn set_on_confirm(&mut self, callback: impl Fn(&ListItem) + Send + Sync + 'static) {
         self.on_confirm = Some(Arc::new(callback));
     }
 
-    /// Set the cancel callback
+    /// Set the cancel callback.
     pub fn set_on_cancel(&mut self, callback: impl Fn() + Send + Sync + 'static) {
         self.base.set_on_cancel(callback);
     }
 
-    /// Get the currently selected index
+    /// Get the currently selected index.
     pub fn selected_index(&self) -> Option<usize> {
         self.base.selected_index()
     }
 
-    /// Set the selected index (override to handle dynamic items)
+    /// Set the selected index (override to handle dynamic items).
     pub fn set_selected(&mut self, index: usize) {
-        // BaseDelegate's set_selected checks against base filtered_count
-        // But we have dynamic items (Calculator, AI, Search), so check against total count
         if index < self.filtered_count() {
-            // Use unchecked method to bypass base's count validation
             self.base.set_selected_unchecked(index);
         }
     }
 
-    /// Get the total count of filtered items (including dynamic items)
+    /// Get the total count of filtered items (including dynamic items).
     pub fn filtered_count(&self) -> usize {
-        let calc_count = if self.calculator_item.is_some() { 1 } else { 0 };
-        let ai_count = if self.ai_item.is_some() { 1 } else { 0 };
-        let search_count = self.search_items.len();
-        self.base.filtered_count() + calc_count + ai_count + search_count
+        self.base.filtered_count() + self.dynamic.count()
     }
 
-    /// Get the current query
+    /// Get the current query.
     pub fn query(&self) -> &str {
         self.base.query()
     }
 
-    /// Clear the query and reset all dynamic items
+    /// Clear the query and reset all dynamic items.
     pub fn clear_query(&mut self) {
-        self.calculator_item = None;
-        self.ai_item = None;
-        self.search_items.clear();
+        self.dynamic.clear();
         self.base.clear_query();
-        self.update_section_info();
+        self.update_sections();
     }
 
-    /// Set the query and trigger filtering
+    /// Set the query and trigger filtering.
     pub fn set_query(&mut self, query: String) {
         self.base.set_query(query.clone());
         self.process_query(&query);
     }
 
-    /// Process the query to detect special items (calculator, AI, search)
+    /// Process the query to detect special items.
     fn process_query(&mut self, query: &str) {
-        // Get the config disabled modules
-        let disabled_modules = config().disabled_modules.unwrap_or_default();
         let ai_enabled =
-            !disabled_modules.contains(&ConfigModule::Ai) && LLMClient::is_configured();
+            self.combined_modules.contains(&ConfigModule::Ai) && LLMClient::is_configured();
+        let calculator_enabled = self.combined_modules.contains(&ConfigModule::Calculator);
+        let search_enabled = self.combined_modules.contains(&ConfigModule::Search);
 
-        // Check for calculator expression
-        if !disabled_modules.contains(&ConfigModule::Calculator)
-            && query.chars().any(|c| c.is_numeric())
-            && let Ok(result) = evaluate_expression(query)
-        {
-            self.calculator_item = Some(result);
-            self.update_section_info();
-        } else {
-            self.calculator_item = None;
-        }
+        // Process dynamic items
+        self.dynamic
+            .process_query(query, calculator_enabled, ai_enabled, search_enabled);
 
-        // Filter the base items first
+        // Filter the base items
         self.filter_items();
-        let trimmed = query.trim();
 
-        // Check for trigger phrases
-        let has_ai_trigger = trimmed.starts_with("!ai");
-        let search_detection = detect_search(query);
-        let has_search_trigger = matches!(search_detection, SearchDetection::Triggered { .. });
-
-        // Clear previous dynamic items
-        self.ai_item = None;
-        self.search_items.clear();
-
-        // Logic:
-        // 1. If !ai trigger → only show AI item
-        // 2. Else if search trigger (!g, !ddg, etc.) → only show that search provider
-        // 3. Else if query not empty → always show AI item + all search providers at bottom
-
-        if ai_enabled && has_ai_trigger {
-            // Only show AI item when !ai trigger is used
-            let ai_query = trimmed.strip_prefix("!ai").unwrap().trim();
-            if !ai_query.is_empty() {
-                self.ai_item = Some(AiItem::new(ai_query.to_string()));
-            }
-        } else if !disabled_modules.contains(&ConfigModule::Search) && has_search_trigger {
-            // Only show the triggered search provider
-            if let SearchDetection::Triggered { provider, query } = search_detection {
-                self.search_items.push(SearchItem::new(provider, query));
-            }
-        } else if !trimmed.is_empty() {
-            // Always show AI item and all search providers when query is not empty
-            // These appear at the bottom in "Search and AI" section
-            if ai_enabled {
-                self.ai_item = Some(AiItem::new(trimmed.to_string()));
-            }
-            if !disabled_modules.contains(&ConfigModule::Search)
-                && let SearchDetection::Fallback { query } = search_detection
-            {
-                for provider in get_providers() {
-                    self.search_items
-                        .push(SearchItem::new(provider, query.clone()));
-                }
-            }
-        }
-
-        // Update section info after adding search items
-        self.update_section_info();
-
-        // Ensure selection is initialized when we have items (base or dynamic)
+        // Ensure selection is initialized when we have items
         if self.base.selected_index().is_none() && self.filtered_count() > 0 {
             self.base.set_selected_unchecked(0);
         }
     }
 
-    /// Filter items based on the current query
+    /// Filter items based on the current query.
     fn filter_items(&mut self) {
         let query = self.base.query();
         let items = self.base.items();
 
-        if query.is_empty() {
-            // Sort by priority even when showing all items
-            // This ensures sections (Windows, Commands, Applications) appear in correct order
-            let mut sorted_indices: Vec<usize> = (0..items.len()).collect();
-            sorted_indices.sort_by_key(|&idx| items[idx].sort_priority());
-            self.base.apply_filtered_indices(sorted_indices);
-        } else {
-            let filtered_indices = Self::filter_items_sync(items, query);
-            self.base.apply_filtered_indices(filtered_indices);
-        }
-        self.update_section_info();
+        let filtered_indices = self
+            .filter
+            .filter_with_modules(items, query, &self.combined_modules);
+        self.base.apply_filtered_indices(filtered_indices);
+        self.update_sections();
 
-        // Ensure selection is initialized when we have dynamic items but no base matches
+        // Ensure selection is initialized
         if self.base.selected_index().is_none() && self.filtered_count() > 0 {
             self.base.set_selected_unchecked(0);
         }
     }
 
-    /// Filter items synchronously using fuzzy matching
-    fn filter_items_sync(items: &[ListItem], query: &str) -> Vec<usize> {
-        if query.is_empty() {
-            return (0..items.len()).collect();
-        }
-
-        let matcher = SkimMatcherV2::default();
-        let mut scored: Vec<(usize, i64)> = items
-            .iter()
-            .enumerate()
-            .filter_map(|(idx, item)| {
-                let score_name = matcher.fuzzy_match(item.name(), query);
-                let score_desc = matcher.fuzzy_match(item.description().unwrap_or(""), query);
-
-                score_name.or(score_desc).map(|score| (idx, score))
-            })
-            .collect();
-
-        // Sort by priority first, then by score
-        scored.sort_by(|a, b| {
-            let priority_a = items[a.0].sort_priority();
-            let priority_b = items[b.0].sort_priority();
-            priority_a.cmp(&priority_b).then_with(|| b.1.cmp(&a.1))
-        });
-
-        scored.into_iter().map(|(idx, _)| idx).collect()
+    /// Update section manager with current state.
+    fn update_sections(&mut self) {
+        self.sections.update(
+            self.base.items(),
+            self.base.filtered_indices(),
+            self.dynamic.has_calculator(),
+            self.dynamic.has_ai(),
+            self.dynamic.search_count(),
+        );
     }
 
-    /// Compute section counts from filtered indices
-    fn compute_section_info(items: &[ListItem], filtered_indices: &[usize]) -> SectionInfo {
-        let mut info = SectionInfo::default();
-
-        for &idx in filtered_indices {
-            if let Some(item) = items.get(idx) {
-                if item.is_window() {
-                    info.window_count += 1;
-                } else if item.is_submenu() || item.is_action() {
-                    info.command_count += 1;
-                } else if item.is_application() {
-                    info.app_count += 1;
-                }
-            }
-        }
-
-        info.search_count = 0; // Will be set by search_items.len()
-        info
-    }
-
-    /// Update section info after filtering
-    fn update_section_info(&mut self) {
-        self.section_info =
-            Self::compute_section_info(self.base.items(), self.base.filtered_indices());
-        self.section_info.search_count = self.search_items.len();
-    }
-
-    /// Get an item at a global index (including dynamic items)
-    /// Order: Calculator, Regular items (Windows/Commands/Apps), AI, Search
+    /// Get an item at a global index (including dynamic items).
     pub fn get_item_at(&self, global_index: usize) -> Option<ListItem> {
-        let calc_offset = if self.calculator_item.is_some() { 1 } else { 0 };
-        let regular_count = self.base.filtered_count();
-        let ai_offset = if self.ai_item.is_some() { 1 } else { 0 };
+        let calc_offset = if self.dynamic.has_calculator() { 1 } else { 0 };
 
         // Calculator item (always first if present)
-        if global_index == 0 && self.calculator_item.is_some() {
-            return self.calculator_item.clone().map(ListItem::Calculator);
-        }
-
-        // Regular filtered items (Windows, Commands, Applications)
-        let regular_start = calc_offset;
-        let regular_end = regular_start + regular_count;
-        if global_index >= regular_start && global_index < regular_end {
-            let filtered_idx = global_index - regular_start;
-            return self.base.get_filtered_item(filtered_idx).cloned();
-        }
-
-        // AI item
-        let ai_start = regular_end;
-        if global_index == ai_start && self.ai_item.is_some() {
-            return self.ai_item.clone().map(ListItem::Ai);
-        }
-
-        // Search items
-        let search_start = ai_start + ai_offset;
-        let search_end = search_start + self.search_items.len();
-        if global_index >= search_start && global_index < search_end {
-            let search_idx = global_index - search_start;
+        if global_index == 0 && self.dynamic.has_calculator() {
             return self
-                .search_items
-                .get(search_idx)
-                .cloned()
-                .map(ListItem::Search);
+                .dynamic
+                .calculator_item
+                .clone()
+                .map(ListItem::Calculator);
+        }
+
+        // Track offset within regular items
+        let mut regular_item_offset = 0;
+        let mut current_start = calc_offset;
+
+        for section_type in self.sections.ordered_section_types() {
+            let section_count = self.sections.section_item_count(section_type);
+            let section_end = current_start + section_count;
+
+            if global_index >= current_start && global_index < section_end {
+                let row = global_index - current_start;
+
+                return match section_type {
+                    SectionType::Calculator => self
+                        .dynamic
+                        .calculator_item
+                        .clone()
+                        .map(ListItem::Calculator),
+                    SectionType::Windows | SectionType::Commands | SectionType::Applications => {
+                        let base_idx = regular_item_offset + row;
+                        self.base.get_filtered_item(base_idx).cloned()
+                    }
+                    SectionType::SearchAndAi => {
+                        let ai_count = if self.dynamic.has_ai() { 1 } else { 0 };
+                        if row == 0 && self.dynamic.has_ai() {
+                            self.dynamic.ai_item.clone().map(ListItem::Ai)
+                        } else {
+                            let search_idx = row - ai_count;
+                            self.dynamic
+                                .search_items
+                                .get(search_idx)
+                                .cloned()
+                                .map(ListItem::Search)
+                        }
+                    }
+                };
+            }
+
+            // Track offset for regular items
+            if matches!(
+                section_type,
+                SectionType::Windows | SectionType::Commands | SectionType::Applications
+            ) {
+                regular_item_offset += section_count;
+            }
+            current_start = section_end;
         }
 
         None
     }
 
-    /// Execute confirm callback for the selected item
+    /// Execute confirm callback for the selected item.
     pub fn do_confirm(&self) {
         if let Some(idx) = self.selected_index()
             && let Some(item) = self.get_item_at(idx)
@@ -353,12 +288,12 @@ impl ItemListDelegate {
         }
     }
 
-    /// Execute cancel callback
+    /// Execute cancel callback.
     pub fn do_cancel(&self) {
         self.base.do_cancel();
     }
 
-    /// Move selection down
+    /// Move selection down.
     pub fn select_down(&mut self) {
         let count = self.filtered_count();
         if count == 0 {
@@ -370,7 +305,7 @@ impl ItemListDelegate {
         self.set_selected(next);
     }
 
-    /// Move selection up
+    /// Move selection up.
     pub fn select_up(&mut self) {
         let count = self.filtered_count();
         if count == 0 {
@@ -382,175 +317,15 @@ impl ItemListDelegate {
         self.set_selected(prev);
     }
 
-    /// Get all items for external access
+    /// Get all items for external access.
     pub fn items(&self) -> Arc<Vec<ListItem>> {
         Arc::new(self.base.items().to_vec())
     }
 
-    /// Determine what type of section is at the given section index.
-    /// Order: Calculator, Windows, Commands, Applications, SearchAndAi
-    fn section_type_at(&self, section: usize) -> SectionType {
-        let has_calc = self.calculator_item.is_some();
-        let has_windows = self.section_info.window_count > 0;
-        let has_commands = self.section_info.command_count > 0;
-        let has_apps = self.section_info.app_count > 0;
-        let has_search_and_ai = self.ai_item.is_some() || !self.search_items.is_empty();
-
-        let mut current_section = 0;
-
-        // Calculator always first
-        if has_calc {
-            if section == current_section {
-                return SectionType::Calculator;
-            }
-            current_section += 1;
-        }
-
-        // Regular items in the middle
-        if has_windows {
-            if section == current_section {
-                return SectionType::Windows;
-            }
-            current_section += 1;
-        }
-
-        if has_commands {
-            if section == current_section {
-                return SectionType::Commands;
-            }
-            current_section += 1;
-        }
-
-        if has_apps {
-            if section == current_section {
-                return SectionType::Applications;
-            }
-            current_section += 1;
-        }
-
-        // SearchAndAi section at the end (combined, no gap)
-        if has_search_and_ai && section == current_section {
-            return SectionType::SearchAndAi;
-        }
-
-        // Default (shouldn't reach here)
-        SectionType::Applications
-    }
-
-    /// Get the starting global index for a given section type.
-    /// Order: Calculator, Windows, Commands, Applications, SearchAndAi
-    fn section_start_index(&self, section_type: SectionType) -> usize {
-        let calc_offset = if self.calculator_item.is_some() { 1 } else { 0 };
-
-        match section_type {
-            SectionType::Calculator => 0,
-            SectionType::Windows => calc_offset,
-            SectionType::Commands => calc_offset + self.section_info.window_count,
-            SectionType::Applications => {
-                calc_offset + self.section_info.window_count + self.section_info.command_count
-            }
-            SectionType::SearchAndAi => {
-                calc_offset
-                    + self.section_info.window_count
-                    + self.section_info.command_count
-                    + self.section_info.app_count
-            }
-        }
-    }
-
-    /// Convert section+row to global index.
-    fn section_row_to_global(&self, section: usize, row: usize) -> usize {
-        let section_type = self.section_type_at(section);
-        self.section_start_index(section_type) + row
-    }
-
     /// Convert global index to section+row IndexPath.
-    /// Order: Calculator, Windows, Commands, Applications, SearchAndAi
     pub fn global_to_index_path(&self, global_idx: usize) -> Option<IndexPath> {
-        let calc_offset = if self.calculator_item.is_some() { 1 } else { 0 };
-        let regular_count = self.base.filtered_count();
-
-        let mut current_section = 0;
-
-        // Calculator section
-        if self.calculator_item.is_some() {
-            if global_idx < calc_offset {
-                return Some(IndexPath::new(global_idx).section(current_section));
-            }
-            current_section += 1;
-        }
-
-        // Regular filtered items (Windows, Commands, Applications)
-        let regular_start = calc_offset;
-        let regular_end = regular_start + regular_count;
-
-        if global_idx >= regular_start && global_idx < regular_end {
-            let regular_idx = global_idx - regular_start;
-
-            // Windows section
-            if self.section_info.window_count > 0 {
-                if regular_idx < self.section_info.window_count {
-                    return Some(IndexPath::new(regular_idx).section(current_section));
-                }
-                current_section += 1;
-            }
-
-            // Commands section
-            if self.section_info.command_count > 0 {
-                let cmd_start = self.section_info.window_count;
-                let cmd_end = cmd_start + self.section_info.command_count;
-                if regular_idx >= cmd_start && regular_idx < cmd_end {
-                    return Some(IndexPath::new(regular_idx - cmd_start).section(current_section));
-                }
-                current_section += 1;
-            }
-
-            // Applications section
-            if self.section_info.app_count > 0 {
-                let app_start = self.section_info.window_count + self.section_info.command_count;
-                if regular_idx >= app_start {
-                    return Some(IndexPath::new(regular_idx - app_start).section(current_section));
-                }
-                current_section += 1;
-            }
-        } else {
-            // Skip past regular sections in section counter
-            if self.section_info.window_count > 0 {
-                current_section += 1;
-            }
-            if self.section_info.command_count > 0 {
-                current_section += 1;
-            }
-            if self.section_info.app_count > 0 {
-                current_section += 1;
-            }
-        }
-
-        // SearchAndAi section (combined AI + Search, no gap)
-        if self.ai_item.is_some() || !self.search_items.is_empty() {
-            let search_and_ai_start = regular_end;
-            let ai_count = if self.ai_item.is_some() { 1 } else { 0 };
-            let search_and_ai_end = search_and_ai_start + ai_count + self.search_items.len();
-
-            if global_idx >= search_and_ai_start && global_idx < search_and_ai_end {
-                return Some(
-                    IndexPath::new(global_idx - search_and_ai_start).section(current_section),
-                );
-            }
-        }
-
-        None
+        self.sections.global_to_index_path(global_idx)
     }
-}
-
-/// Section types for organizing items in the list.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum SectionType {
-    Calculator,
-    Windows,
-    Commands,
-    Applications,
-    SearchAndAi, // Combined AI + Search section (no gap between them)
 }
 
 /// Implement ListDelegate trait for GPUI integration.
@@ -558,44 +333,12 @@ impl ListDelegate for ItemListDelegate {
     type Item = GpuiListItem;
 
     fn sections_count(&self, _cx: &App) -> usize {
-        let has_calc = self.calculator_item.is_some();
-        let has_search_and_ai = self.ai_item.is_some() || !self.search_items.is_empty();
-        let has_windows = self.section_info.window_count > 0;
-        let has_commands = self.section_info.command_count > 0;
-        let has_apps = self.section_info.app_count > 0;
-
-        let mut count = 0;
-        if has_calc {
-            count += 1;
-        }
-        if has_windows {
-            count += 1;
-        }
-        if has_commands {
-            count += 1;
-        }
-        if has_apps {
-            count += 1;
-        }
-        if has_search_and_ai {
-            count += 1; // Combined AI + Search section
-        }
-
-        count
+        self.sections.sections_count()
     }
 
     fn items_count(&self, section: usize, _cx: &App) -> usize {
-        let section_type = self.section_type_at(section);
-        match section_type {
-            SectionType::Calculator => 1,
-            SectionType::Windows => self.section_info.window_count,
-            SectionType::Commands => self.section_info.command_count,
-            SectionType::Applications => self.section_info.app_count,
-            SectionType::SearchAndAi => {
-                let ai_count = if self.ai_item.is_some() { 1 } else { 0 };
-                ai_count + self.search_items.len()
-            }
-        }
+        let section_type = self.sections.section_type_at(section);
+        self.sections.section_item_count(section_type)
     }
 
     fn render_section_header(
@@ -604,56 +347,25 @@ impl ListDelegate for ItemListDelegate {
         _window: &mut Window,
         _cx: &mut Context<'_, ListState<Self>>,
     ) -> Option<impl IntoElement> {
-        let section_type = self.section_type_at(section);
+        let section_type = self.sections.section_type_at(section);
+        let sections = self.sections.ordered_section_types();
+        let section_count = sections.len();
 
-        // Show "Search and AI" header when we have regular items above
-        let has_regular_items = self.section_info.window_count > 0
-            || self.section_info.command_count > 0
-            || self.section_info.app_count > 0
-            || self.calculator_item.is_some();
-
-        if section_type == SectionType::SearchAndAi && has_regular_items {
-            let theme = theme();
-            return Some(
-                div()
-                    .w_full()
-                    .px(theme.item_margin_x + theme.item_padding_x)
-                    .pt(theme.section_header.margin_top)
-                    .pb(theme.section_header.margin_bottom)
-                    .text_xs()
-                    .font_weight(gpui::FontWeight::EXTRA_BOLD)
-                    .text_color(theme.section_header.color)
-                    .child(SharedString::from("Search and AI")),
-            );
+        // Don't show headers if there's only one section
+        if section_count <= 1 {
+            return None;
         }
 
-        // SearchAndAi (without regular items) has no header
+        // SearchAndAi section: show header only when there are other sections
         if section_type == SectionType::SearchAndAi {
-            return None;
-        }
-
-        // Count how many non-special sections we have
-        let has_windows = self.section_info.window_count > 0;
-        let has_commands = self.section_info.command_count > 0;
-        let has_apps = self.section_info.app_count > 0;
-        let non_special_section_count =
-            has_windows as usize + has_commands as usize + has_apps as usize;
-        let has_search_and_ai = self.ai_item.is_some() || !self.search_items.is_empty();
-
-        // Show headers if we have multiple non-special sections
-        // OR if we have SearchAndAi section (to visually separate them from regular items)
-        if non_special_section_count <= 1 && !has_search_and_ai {
-            return None;
+            let has_other_sections = sections.iter().any(|s| *s != SectionType::SearchAndAi);
+            if !has_other_sections {
+                return None;
+            }
         }
 
         let theme = theme();
-        let title = match section_type {
-            SectionType::Calculator => "Calculator",
-            SectionType::SearchAndAi => return None,
-            SectionType::Windows => "Windows",
-            SectionType::Commands => "Commands",
-            SectionType::Applications => "Applications",
-        };
+        let title = section_type.title();
 
         Some(
             div()
@@ -674,13 +386,12 @@ impl ListDelegate for ItemListDelegate {
         _window: &mut Window,
         _cx: &mut Context<'_, ListState<Self>>,
     ) -> Option<Self::Item> {
-        let global_idx = self.section_row_to_global(ix.section, ix.row);
+        let global_idx = self.sections.section_row_to_global(ix.section, ix.row);
         let selected = self.base.selected_index() == Some(global_idx);
 
         let item = self.get_item_at(global_idx)?;
         let item_content = render_item(&item, selected, global_idx);
 
-        // Reset ListItem default padding - we handle all styling ourselves
         Some(
             GpuiListItem::new(("list-item", global_idx))
                 .py_0()
@@ -696,11 +407,9 @@ impl ListDelegate for ItemListDelegate {
         _cx: &mut Context<ListState<Self>>,
     ) {
         let global_idx = ix
-            .map(|i| self.section_row_to_global(i.section, i.row))
+            .map(|i| self.sections.section_row_to_global(i.section, i.row))
             .unwrap_or(0);
 
-        // Use unchecked method to allow selection of dynamic items (AI, Search)
-        // that are beyond the base filtered count
         self.base.set_selected_unchecked(global_idx);
     }
 
@@ -714,12 +423,7 @@ impl ListDelegate for ItemListDelegate {
         Task::ready(())
     }
 
-    fn confirm(
-        &mut self,
-        _secondary: bool,
-        _window: &mut Window,
-        _cx: &mut Context<ListState<Self>>,
-    ) {
+    fn confirm(&mut self, _secondary: bool, _window: &mut Window, _cx: &mut Context<ListState<Self>>) {
         self.do_confirm();
     }
 

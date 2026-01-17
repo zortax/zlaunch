@@ -1,6 +1,6 @@
 use crate::app::{DaemonEvent, DaemonEventSender, WindowEvent};
 use crate::compositor::Compositor;
-use crate::config::{ConfigModule, config};
+use crate::config::{ConfigModule, LauncherMode, get_combined_modules};
 use crate::items::{ApplicationItem, ListItem, WindowItem};
 use crate::ui::LauncherView;
 use gpui::{
@@ -22,23 +22,25 @@ pub struct LauncherWindow {
 pub fn create_and_show_window(
     applications: Vec<ApplicationItem>,
     compositor: Arc<dyn Compositor>,
+    modes: Vec<LauncherMode>,
     event_tx: DaemonEventSender,
     cx: &mut App,
 ) -> anyhow::Result<LauncherWindow> {
     // Fetch open windows from compositor (if not disabled)
-    let disabled_modules = config().disabled_modules.unwrap_or_default();
-    let windows = if disabled_modules.contains(&ConfigModule::Windows) {
-        Vec::new()
-    } else {
+    let combined_modules = get_combined_modules();
+    let windows = if combined_modules.contains(&ConfigModule::Windows) {
         fetch_windows(compositor.as_ref())
+    } else {
+        Vec::new()
     };
-    create_and_show_window_impl(applications, compositor, windows, event_tx, cx)
+    create_and_show_window_impl(applications, compositor, windows, modes, event_tx, cx)
 }
 
 fn create_and_show_window_impl(
     applications: Vec<ApplicationItem>,
     compositor: Arc<dyn Compositor>,
     windows: Vec<WindowItem>,
+    modes: Vec<LauncherMode>,
     event_tx: DaemonEventSender,
     cx: &mut App,
 ) -> anyhow::Result<LauncherWindow> {
@@ -90,7 +92,7 @@ fn create_and_show_window_impl(
         let on_hide = move || {
             let _ = event_tx.send(DaemonEvent::Window(WindowEvent::RequestHide));
         };
-        let view = cx.new(|cx| LauncherView::new(items, compositor.clone(), on_hide, window, cx));
+        let view = cx.new(|cx| LauncherView::new(items, compositor.clone(), modes, on_hide, window, cx));
 
         // Auto-focus the list/search input
         view.update(cx, |launcher: &mut LauncherView, cx| {

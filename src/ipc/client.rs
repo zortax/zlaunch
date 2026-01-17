@@ -1,5 +1,6 @@
 //! tarpc client for communicating with the daemon.
 
+use crate::config::LauncherMode;
 use crate::ipc::commands::{ThemeInfo, ZlaunchServiceClient};
 use crate::ipc::server::get_socket_path;
 use tarpc::client;
@@ -26,14 +27,11 @@ async fn connect() -> anyhow::Result<ZlaunchServiceClient> {
     Ok(client)
 }
 
-/// Show the launcher window.
-pub fn show() -> anyhow::Result<()> {
+/// Show the launcher window with optional modes.
+pub fn show(modes: Option<Vec<LauncherMode>>) -> anyhow::Result<()> {
     run_async(async {
         let client = connect().await?;
-        client
-            .show(context::current())
-            .await?
-            .map_err(|e| anyhow::anyhow!(e))
+        Ok(client.show(context::current(), modes).await??)
     })
 }
 
@@ -41,21 +39,15 @@ pub fn show() -> anyhow::Result<()> {
 pub fn hide() -> anyhow::Result<()> {
     run_async(async {
         let client = connect().await?;
-        client
-            .hide(context::current())
-            .await?
-            .map_err(|e| anyhow::anyhow!(e))
+        Ok(client.hide(context::current()).await??)
     })
 }
 
-/// Toggle the launcher window visibility.
-pub fn toggle() -> anyhow::Result<()> {
+/// Toggle the launcher window visibility with optional modes.
+pub fn toggle(modes: Option<Vec<LauncherMode>>) -> anyhow::Result<()> {
     run_async(async {
         let client = connect().await?;
-        client
-            .toggle(context::current())
-            .await?
-            .map_err(|e| anyhow::anyhow!(e))
+        Ok(client.toggle(context::current(), modes).await??)
     })
 }
 
@@ -63,10 +55,7 @@ pub fn toggle() -> anyhow::Result<()> {
 pub fn quit() -> anyhow::Result<()> {
     run_async(async {
         let client = connect().await?;
-        client
-            .quit(context::current())
-            .await?
-            .map_err(|e| anyhow::anyhow!(e))
+        Ok(client.quit(context::current()).await??)
     })
 }
 
@@ -74,10 +63,7 @@ pub fn quit() -> anyhow::Result<()> {
 pub fn reload() -> anyhow::Result<()> {
     run_async(async {
         let client = connect().await?;
-        client
-            .reload(context::current())
-            .await?
-            .map_err(|e| anyhow::anyhow!(e))
+        Ok(client.reload(context::current()).await??)
     })
 }
 
@@ -102,10 +88,7 @@ pub fn set_theme(name: &str) -> anyhow::Result<()> {
     let name = name.to_string();
     run_async(async {
         let client = connect().await?;
-        client
-            .set_theme(context::current(), name)
-            .await?
-            .map_err(|e| anyhow::anyhow!(e))
+        Ok(client.set_theme(context::current(), name).await??)
     })
 }
 

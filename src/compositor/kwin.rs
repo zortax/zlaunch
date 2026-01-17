@@ -4,6 +4,7 @@
 //! This approach uses the /WindowsRunner D-Bus path which provides direct
 //! window listing without needing to capture script print() signals.
 
+use super::base::CompositorCapabilities;
 use super::{Compositor, WindowInfo};
 use anyhow::{Context, Result};
 use std::collections::HashMap;
@@ -149,5 +150,9 @@ impl Compositor for KwinCompositor {
 
     fn name(&self) -> &'static str {
         "KWin"
+    }
+
+    fn capabilities(&self) -> CompositorCapabilities {
+        CompositorCapabilities::limited()
     }
 }

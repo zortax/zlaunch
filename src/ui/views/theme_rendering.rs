@@ -1,7 +1,8 @@
 use crate::items::ThemeItem;
+use crate::ui::styled::lighten_color;
 use crate::ui::theme::{LauncherTheme, theme};
 use crate::ui::views::{item_container, render_action_indicator, render_text_content};
-use gpui::{Div, Hsla, Stateful, div, prelude::*, px};
+use gpui::{Div, Stateful, div, prelude::*, px};
 
 /// Render a theme item with a dynamic color preview icon.
 pub fn render_theme_item(theme_item: &ThemeItem, selected: bool, row: usize) -> Stateful<Div> {
@@ -92,10 +93,3 @@ pub fn render_theme_icon(theme_item: &LauncherTheme) -> Div {
         )
 }
 
-/// Lighten an HSLA color by increasing its lightness.
-/// This helps make subtle theme colors more visible in the preview.
-fn lighten_color(color: Hsla, amount: f32) -> Hsla {
-    let mut result = color;
-    result.l = (result.l + amount).min(1.0);
-    result
-}

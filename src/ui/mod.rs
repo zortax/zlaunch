@@ -5,6 +5,7 @@ pub mod icon;
 pub mod launcher;
 pub mod markdown;
 pub mod modes;
+pub mod styled;
 pub mod theme;
 pub mod utils;
 pub mod views;

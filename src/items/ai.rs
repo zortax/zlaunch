@@ -57,3 +57,9 @@ impl Categorizable for AiItem {
         1
     }
 }
+
+impl From<AiItem> for super::ListItem {
+    fn from(item: AiItem) -> Self {
+        Self::Ai(item)
+    }
+}

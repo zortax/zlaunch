@@ -1,6 +1,8 @@
 //! tarpc server implementation for the IPC daemon.
 
 use crate::app::DaemonEvent;
+use crate::config::LauncherMode;
+use crate::error::IpcError;
 use crate::ipc::commands::{ThemeInfo, ZlaunchService};
 use crate::items::ThemeSource;
 use futures::prelude::*;
@@ -19,7 +21,9 @@ pub struct IpcServerHandle {
 
 impl Drop for IpcServerHandle {
     fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.socket_path);
+        if let Err(e) = std::fs::remove_file(&self.socket_path) {
+            tracing::warn!("Failed to clean up IPC socket: {}", e);
+        }
     }
 }
 
@@ -44,54 +48,44 @@ struct ZlaunchServer {
 }
 
 impl ZlaunchService for ZlaunchServer {
-    async fn show(self, _: Context) -> Result<(), String> {
+    async fn show(self, _: Context, modes: Option<Vec<LauncherMode>>) -> Result<(), IpcError> {
         let (response_tx, response_rx) = oneshot::channel();
         self.event_tx
-            .send(DaemonEvent::Show { response_tx })
-            .map_err(|_| "Daemon channel closed".to_string())?;
-        response_rx
-            .await
-            .unwrap_or(Err("Response channel closed".to_string()))
+            .send(DaemonEvent::Show { modes, response_tx })
+            .map_err(|_| IpcError::ChannelClosed)?;
+        response_rx.await.unwrap_or(Err(IpcError::ResponseClosed))
     }
 
-    async fn hide(self, _: Context) -> Result<(), String> {
+    async fn hide(self, _: Context) -> Result<(), IpcError> {
         let (response_tx, response_rx) = oneshot::channel();
         self.event_tx
             .send(DaemonEvent::Hide { response_tx })
-            .map_err(|_| "Daemon channel closed".to_string())?;
-        response_rx
-            .await
-            .unwrap_or(Err("Response channel closed".to_string()))
+            .map_err(|_| IpcError::ChannelClosed)?;
+        response_rx.await.unwrap_or(Err(IpcError::ResponseClosed))
     }
 
-    async fn toggle(self, _: Context) -> Result<(), String> {
+    async fn toggle(self, _: Context, modes: Option<Vec<LauncherMode>>) -> Result<(), IpcError> {
         let (response_tx, response_rx) = oneshot::channel();
         self.event_tx
-            .send(DaemonEvent::Toggle { response_tx })
-            .map_err(|_| "Daemon channel closed".to_string())?;
-        response_rx
-            .await
-            .unwrap_or(Err("Response channel closed".to_string()))
+            .send(DaemonEvent::Toggle { modes, response_tx })
+            .map_err(|_| IpcError::ChannelClosed)?;
+        response_rx.await.unwrap_or(Err(IpcError::ResponseClosed))
     }
 
-    async fn quit(self, _: Context) -> Result<(), String> {
+    async fn quit(self, _: Context) -> Result<(), IpcError> {
         let (response_tx, response_rx) = oneshot::channel();
         self.event_tx
             .send(DaemonEvent::Quit { response_tx })
-            .map_err(|_| "Daemon channel closed".to_string())?;
-        response_rx
-            .await
-            .unwrap_or(Err("Response channel closed".to_string()))
+            .map_err(|_| IpcError::ChannelClosed)?;
+        response_rx.await.unwrap_or(Err(IpcError::ResponseClosed))
     }
 
-    async fn reload(self, _: Context) -> Result<(), String> {
+    async fn reload(self, _: Context) -> Result<(), IpcError> {
         let (response_tx, response_rx) = oneshot::channel();
         self.event_tx
             .send(DaemonEvent::Reload { response_tx })
-            .map_err(|_| "Daemon channel closed".to_string())?;
-        response_rx
-            .await
-            .unwrap_or(Err("Response channel closed".to_string()))
+            .map_err(|_| IpcError::ChannelClosed)?;
+        response_rx.await.unwrap_or(Err(IpcError::ResponseClosed))
     }
 
     async fn list_themes(self, _: Context) -> Vec<ThemeInfo> {
@@ -110,14 +104,12 @@ impl ZlaunchService for ZlaunchServer {
         crate::ui::theme::theme().name
     }
 
-    async fn set_theme(self, _: Context, name: String) -> Result<(), String> {
+    async fn set_theme(self, _: Context, name: String) -> Result<(), IpcError> {
         let (response_tx, response_rx) = oneshot::channel();
         self.event_tx
             .send(DaemonEvent::SetTheme { name, response_tx })
-            .map_err(|_| "Daemon channel closed".to_string())?;
-        response_rx
-            .await
-            .unwrap_or(Err("Response channel closed".to_string()))
+            .map_err(|_| IpcError::ChannelClosed)?;
+        response_rx.await.unwrap_or(Err(IpcError::ResponseClosed))
     }
 }
 

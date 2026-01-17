@@ -71,3 +71,9 @@ impl Previewable for CalculatorItem {
         false
     }
 }
+
+impl From<CalculatorItem> for super::ListItem {
+    fn from(item: CalculatorItem) -> Self {
+        Self::Calculator(item)
+    }
+}

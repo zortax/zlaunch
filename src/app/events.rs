@@ -1,9 +1,11 @@
 //! Event types for daemon communication.
 
+use crate::config::LauncherMode;
+use crate::error::IpcError;
 use tokio::sync::oneshot;
 
 /// Response type for IPC operations.
-pub type IpcResponse = Result<(), String>;
+pub type IpcResponse = Result<(), IpcError>;
 
 /// Events that the UI can send to the daemon.
 #[derive(Debug, Clone, Copy)]
@@ -19,6 +21,7 @@ pub enum DaemonEvent {
 
     /// Show the launcher window
     Show {
+        modes: Option<Vec<LauncherMode>>,
         response_tx: oneshot::Sender<IpcResponse>,
     },
 
@@ -29,6 +32,7 @@ pub enum DaemonEvent {
 
     /// Toggle the launcher window visibility
     Toggle {
+        modes: Option<Vec<LauncherMode>>,
         response_tx: oneshot::Sender<IpcResponse>,
     },
 

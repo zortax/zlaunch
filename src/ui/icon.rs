@@ -14,6 +14,15 @@ lazy_static::lazy_static! {
 
 static ICON_THEME: OnceLock<Option<String>> = OnceLock::new();
 
+/// Get the current icon theme name.
+///
+/// Returns the configured theme name, or "hicolor" as fallback.
+pub fn get_current_theme() -> String {
+    get_icon_theme()
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| "hicolor".to_string())
+}
+
 /// Get the configured icon theme from KDE/GTK settings
 fn get_icon_theme() -> Option<&'static str> {
     ICON_THEME
