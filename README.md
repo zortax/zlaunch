@@ -39,9 +39,42 @@ Available on the AUR as
 - [`zlaunch-bin`](https://aur.archlinux.org/packages/zlaunch-bin)
 - [`zlaunch-git`](https://aur.archlinux.org/packages/zlaunch-git)
 
+### Nix / NixOS
+
+A nix flake is available to run zlaunch. You can test it out with,
+
+```sh
+nix shell github:zortax/zlaunch/0.4.0
+zlaunch & bg # Run the daemon
+zlaunch toggle
+```
+
+or add it to your system configuration,
+
+```nix
+{
+  inputs = {
+    zlaunch.url = "github:zortax/zlaunch/0.4.0";
+  };
+}
+```
+
+The package is now available as `zlaunch.packages.${pkgs.system}.default`, and can be added to your system/user packages.
+
 ### Building from source
 
+#### Using Cargo
+
 ```bash
+cargo build --release
+```
+
+#### Using Nix (devshell)
+
+If you have Nix installed, you can enter a preconfigured development shell with all the dependencies and toolchains:
+
+```
+nix develop
 cargo build --release
 ```
 
