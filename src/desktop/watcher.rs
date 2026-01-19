@@ -35,19 +35,17 @@ impl ApplicationWatcher {
     pub fn new() -> anyhow::Result<Self> {
         let (tx, rx) = mpsc::channel();
 
-        let mut watcher = notify::recommended_watcher(move |res: Result<Event, _>| {
-            match res {
-                Ok(event) => {
-                    let watcher_events = Self::convert_event(event);
-                    for evt in watcher_events {
-                        if let Err(e) = tx.send(evt) {
-                            error!("Failed to send watcher event: {}", e);
-                        }
+        let mut watcher = notify::recommended_watcher(move |res: Result<Event, _>| match res {
+            Ok(event) => {
+                let watcher_events = Self::convert_event(event);
+                for evt in watcher_events {
+                    if let Err(e) = tx.send(evt) {
+                        error!("Failed to send watcher event: {}", e);
                     }
                 }
-                Err(e) => {
-                    warn!("File watcher error: {}", e);
-                }
+            }
+            Err(e) => {
+                warn!("File watcher error: {}", e);
             }
         })?;
 
@@ -120,9 +118,7 @@ impl ApplicationWatcher {
 
         for path in event.paths {
             // Only care about .desktop files
-            let is_desktop = path
-                .extension()
-                .is_some_and(|ext| ext == "desktop");
+            let is_desktop = path.extension().is_some_and(|ext| ext == "desktop");
 
             let watcher_event = match event.kind {
                 EventKind::Create(_) if is_desktop => {

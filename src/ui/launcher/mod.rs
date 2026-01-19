@@ -43,12 +43,12 @@ pub use state::{ModeState, ViewMode};
 
 use std::sync::Arc;
 
-use gpui::{actions, App, AppContext, Context, Entity, FocusHandle, Focusable, KeyBinding, Window};
+use gpui::{App, AppContext, Context, Entity, FocusHandle, Focusable, KeyBinding, Window, actions};
 use gpui_component::input::{InputEvent, InputState};
 use gpui_component::list::ListState;
 
 use crate::compositor::Compositor;
-use crate::config::{get_combined_modules, ConfigModule, LauncherMode};
+use crate::config::{ConfigModule, LauncherMode, get_combined_modules};
 use crate::items::ListItem;
 use crate::ui::delegates::ItemListDelegate;
 use crate::ui::modes::{
@@ -154,21 +154,27 @@ impl LauncherView {
 
         // Create input state with placeholder based on initial mode
         let initial_placeholder = Self::placeholder_for_mode(mode_state.current_mode());
-        let input_state =
-            cx.new(|cx| InputState::new(window, cx).placeholder(initial_placeholder));
+        let input_state = cx.new(|cx| InputState::new(window, cx).placeholder(initial_placeholder));
 
         // Subscribe to input changes
         let list_state_for_subscribe = list_state.clone();
-        cx.subscribe(&input_state, move |_this, input: Entity<InputState>, event: &InputEvent, cx: &mut Context<Self>| {
-            if let InputEvent::Change = event {
-                let text = input.read(cx).value().to_string();
-                // Update the delegate's query directly (synchronous filtering)
-                list_state_for_subscribe.update(cx, |state: &mut ListState<ItemListDelegate>, cx: &mut Context<ListState<ItemListDelegate>>| {
-                    state.delegate_mut().set_query(text);
-                    cx.notify();
-                });
-            }
-        })
+        cx.subscribe(
+            &input_state,
+            move |_this, input: Entity<InputState>, event: &InputEvent, cx: &mut Context<Self>| {
+                if let InputEvent::Change = event {
+                    let text = input.read(cx).value().to_string();
+                    // Update the delegate's query directly (synchronous filtering)
+                    list_state_for_subscribe.update(
+                        cx,
+                        |state: &mut ListState<ItemListDelegate>,
+                         cx: &mut Context<ListState<ItemListDelegate>>| {
+                            state.delegate_mut().set_query(text);
+                            cx.notify();
+                        },
+                    );
+                }
+            },
+        )
         .detach();
 
         let focus_handle = cx.focus_handle();

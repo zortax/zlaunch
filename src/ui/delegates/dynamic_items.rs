@@ -5,7 +5,7 @@
 
 use crate::calculator::evaluate_expression;
 use crate::items::{AiItem, CalculatorItem, SearchItem};
-use crate::search::{detect_search, get_providers, SearchDetection};
+use crate::search::{SearchDetection, detect_search, get_providers};
 
 /// Container for dynamically generated items based on user query.
 #[derive(Clone, Default)]
@@ -82,7 +82,8 @@ impl DynamicItems {
             if search_enabled {
                 if let SearchDetection::Fallback { query } = search_detection {
                     for provider in get_providers() {
-                        self.search_items.push(SearchItem::new(provider, query.clone()));
+                        self.search_items
+                            .push(SearchItem::new(provider, query.clone()));
                     }
                 }
             }
@@ -117,7 +118,6 @@ impl DynamicItems {
     pub fn search_count(&self) -> usize {
         self.search_items.len()
     }
-
 }
 
 #[cfg(test)]

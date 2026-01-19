@@ -92,4 +92,3 @@ pub fn render_theme_icon(theme_item: &LauncherTheme) -> Div {
                 ),
         )
 }
-

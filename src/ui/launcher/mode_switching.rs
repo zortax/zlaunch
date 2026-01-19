@@ -9,9 +9,7 @@ use gpui::{Context, IntoElement, Window};
 
 use crate::config::LauncherMode;
 use crate::ui::delegates::ItemListDelegate;
-use crate::ui::modes::{
-    AiModeHandler, ClipboardModeHandler, EmojiModeHandler, ThemeModeHandler,
-};
+use crate::ui::modes::{AiModeHandler, ClipboardModeHandler, EmojiModeHandler, ThemeModeHandler};
 use crate::ui::theme::LauncherTheme;
 use gpui_component::list::ListState;
 

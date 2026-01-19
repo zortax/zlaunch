@@ -1,6 +1,6 @@
-use super::base::{get_display_title, is_launcher_window, CompositorCapabilities};
+use super::base::{CompositorCapabilities, get_display_title, is_launcher_window};
 use super::{Compositor, WindowInfo};
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use serde::Deserialize;
 use std::io::{BufRead, Write};
 use std::os::unix::net::UnixStream;

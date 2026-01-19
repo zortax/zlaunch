@@ -90,7 +90,10 @@ pub fn mock_search_provider(name: &str, trigger: &str) -> ConfigSearchProvider {
     ConfigSearchProvider {
         name: name.to_string(),
         trigger: trigger.to_string(),
-        url: format!("https://{}.example.com/search?q={{query}}", name.to_lowercase()),
+        url: format!(
+            "https://{}.example.com/search?q={{query}}",
+            name.to_lowercase()
+        ),
         icon: "magnifying-glass".to_string(),
     }
 }
@@ -137,10 +140,8 @@ mod tests {
 
     #[test]
     fn test_mock_config_with_modules() {
-        let config = mock_config_with_modules(vec![
-            ConfigModule::Applications,
-            ConfigModule::Calculator,
-        ]);
+        let config =
+            mock_config_with_modules(vec![ConfigModule::Applications, ConfigModule::Calculator]);
         assert_eq!(config.combined_modules.unwrap().len(), 2);
     }
 

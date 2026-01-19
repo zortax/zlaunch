@@ -5,8 +5,8 @@
 
 use crate::config::ConfigModule;
 use crate::items::ListItem;
-use fuzzy_matcher::skim::SkimMatcherV2;
 use fuzzy_matcher::FuzzyMatcher;
+use fuzzy_matcher::skim::SkimMatcherV2;
 
 /// Fuzzy filter for list items.
 pub struct ItemFilter {
@@ -79,7 +79,9 @@ impl ItemFilter {
     /// Returns the higher of the name score or description score.
     fn score_item(&self, item: &ListItem, query: &str) -> Option<i64> {
         let score_name = self.matcher.fuzzy_match(item.name(), query);
-        let score_desc = self.matcher.fuzzy_match(item.description().unwrap_or(""), query);
+        let score_desc = self
+            .matcher
+            .fuzzy_match(item.description().unwrap_or(""), query);
 
         score_name.or(score_desc)
     }

@@ -1,6 +1,6 @@
 //! Hyprland compositor implementation using IPC socket.
 
-use super::base::{get_display_title, is_launcher_window, CompositorCapabilities};
+use super::base::{CompositorCapabilities, get_display_title, is_launcher_window};
 use super::{Compositor, WindowInfo};
 use anyhow::{Context, Result};
 use serde::Deserialize;

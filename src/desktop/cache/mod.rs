@@ -240,7 +240,10 @@ mod hashmap_system_time_serde {
             .iter()
             .map(|(k, v)| {
                 let duration = v.duration_since(UNIX_EPOCH).unwrap_or(Duration::ZERO);
-                (k.to_string_lossy().to_string(), (duration.as_secs(), duration.subsec_nanos()))
+                (
+                    k.to_string_lossy().to_string(),
+                    (duration.as_secs(), duration.subsec_nanos()),
+                )
             })
             .collect();
         converted.serialize(serializer)
@@ -253,9 +256,7 @@ mod hashmap_system_time_serde {
         let converted: HashMap<String, (u64, u32)> = Deserialize::deserialize(deserializer)?;
         Ok(converted
             .into_iter()
-            .map(|(k, (secs, nanos))| {
-                (PathBuf::from(k), UNIX_EPOCH + Duration::new(secs, nanos))
-            })
+            .map(|(k, (secs, nanos))| (PathBuf::from(k), UNIX_EPOCH + Duration::new(secs, nanos)))
             .collect())
     }
 }

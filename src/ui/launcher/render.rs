@@ -1,11 +1,11 @@
 //! Rendering implementation for LauncherView.
 
-use gpui::{div, image_cache, prelude::*, px, retain_all, Context, Length, Window};
+use gpui::{Context, Length, Window, div, image_cache, prelude::*, px, retain_all};
 use gpui_component::list::List;
 use gpui_component::{ActiveTheme, Icon, IconName};
 
-use super::state::ViewMode;
 use super::LauncherView;
+use super::state::ViewMode;
 
 impl gpui::Render for LauncherView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {

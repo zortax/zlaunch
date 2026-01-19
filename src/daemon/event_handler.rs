@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tracing::debug;
 
 use crate::app::window::LauncherWindow;
-use crate::app::{window, DaemonEvent, WindowEvent};
+use crate::app::{DaemonEvent, WindowEvent, window};
 use crate::compositor::Compositor;
 use crate::config::get_default_modes;
 use crate::error::IpcError;
@@ -200,7 +200,10 @@ fn handle_show(
             }
             Err(e) => {
                 tracing::error!(%e, "Failed to create window");
-                Err(IpcError::Internal(format!("Failed to create window: {}", e)))
+                Err(IpcError::Internal(format!(
+                    "Failed to create window: {}",
+                    e
+                )))
             }
         }
     })

@@ -196,9 +196,11 @@ mod tests {
             ..AppConfig::default()
         };
         let warnings = validate_config(&config);
-        assert!(warnings
-            .iter()
-            .any(|w| w.field.contains("BadProvider") && w.message.contains("{query}")));
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field.contains("BadProvider") && w.message.contains("{query}"))
+        );
     }
 
     #[test]
@@ -213,9 +215,11 @@ mod tests {
             ..AppConfig::default()
         };
         let warnings = validate_config(&config);
-        assert!(warnings
-            .iter()
-            .any(|w| w.field.contains("NoProtocol") && w.message.contains("http")));
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field.contains("NoProtocol") && w.message.contains("http"))
+        );
     }
 
     #[test]
@@ -230,9 +234,11 @@ mod tests {
             ..AppConfig::default()
         };
         let warnings = validate_config(&config);
-        assert!(warnings
-            .iter()
-            .any(|w| w.field.contains("WeirdTrigger") && w.message.contains("unconventional")));
+        assert!(
+            warnings
+                .iter()
+                .any(|w| w.field.contains("WeirdTrigger") && w.message.contains("unconventional"))
+        );
     }
 
     #[test]

@@ -9,9 +9,9 @@ use crate::items::{ActionItem, ListItem, SubmenuItem};
 use crate::ui::delegates::BaseDelegate;
 use crate::ui::theme::theme;
 use crate::ui::views::render_item;
-use gpui::{div, prelude::*, App, Context, SharedString, Task, Window};
-use gpui_component::list::{ListDelegate, ListItem as GpuiListItem, ListState};
+use gpui::{App, Context, SharedString, Task, Window, div, prelude::*};
 use gpui_component::IndexPath;
+use gpui_component::list::{ListDelegate, ListItem as GpuiListItem, ListState};
 use std::sync::Arc;
 
 use super::dynamic_items::DynamicItems;
@@ -192,9 +192,9 @@ impl ItemListDelegate {
         let query = self.base.query();
         let items = self.base.items();
 
-        let filtered_indices = self
-            .filter
-            .filter_with_modules(items, query, &self.combined_modules);
+        let filtered_indices =
+            self.filter
+                .filter_with_modules(items, query, &self.combined_modules);
         self.base.apply_filtered_indices(filtered_indices);
         self.update_sections();
 
@@ -423,7 +423,12 @@ impl ListDelegate for ItemListDelegate {
         Task::ready(())
     }
 
-    fn confirm(&mut self, _secondary: bool, _window: &mut Window, _cx: &mut Context<ListState<Self>>) {
+    fn confirm(
+        &mut self,
+        _secondary: bool,
+        _window: &mut Window,
+        _cx: &mut Context<ListState<Self>>,
+    ) {
         self.do_confirm();
     }
 

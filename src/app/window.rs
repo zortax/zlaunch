@@ -92,7 +92,8 @@ fn create_and_show_window_impl(
         let on_hide = move || {
             let _ = event_tx.send(DaemonEvent::Window(WindowEvent::RequestHide));
         };
-        let view = cx.new(|cx| LauncherView::new(items, compositor.clone(), modes, on_hide, window, cx));
+        let view =
+            cx.new(|cx| LauncherView::new(items, compositor.clone(), modes, on_hide, window, cx));
 
         // Auto-focus the list/search input
         view.update(cx, |launcher: &mut LauncherView, cx| {

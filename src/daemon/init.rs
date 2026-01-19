@@ -9,12 +9,12 @@ use tracing::{error, info};
 use crate::compositor::{Compositor, detect_compositor};
 use crate::config::{ConfigModule, get_combined_modules};
 use crate::desktop::cache::load_applications;
-use crate::ipc::{client, start_server, IpcServerHandle};
+use crate::ipc::{IpcServerHandle, client, start_server};
 use crate::items::ApplicationItem;
 
 /// Initialize the tracing subscriber for logging.
 pub fn init_logging() {
-    use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+    use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
     // By default, only log from zlaunch crate at info level
     // Users can override with RUST_LOG environment variable

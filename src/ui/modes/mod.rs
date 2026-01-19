@@ -23,7 +23,7 @@ pub mod emoji_mode;
 pub mod theme_mode;
 
 pub use ai_mode::{AiModeAccess, AiModeHandler};
-pub use base::{clear_input_value, restore_main_input, setup_list_mode_input, DEFAULT_PLACEHOLDER};
+pub use base::{DEFAULT_PLACEHOLDER, clear_input_value, restore_main_input, setup_list_mode_input};
 pub use clipboard_mode::ClipboardModeHandler;
 pub use emoji_mode::EmojiModeHandler;
 pub use theme_mode::ThemeModeHandler;
