@@ -44,7 +44,7 @@ Available on the AUR as
 A nix flake is available to run zlaunch. You can test it out with,
 
 ```sh
-nix shell github:zortax/zlaunch
+nix shell github:zortax/zlaunch/0.4.0
 zlaunch & bg # Run the daemon
 zlaunch toggle
 ```
@@ -54,7 +54,7 @@ or add it to your system configuration,
 ```nix
 {
   inputs = {
-    zlaunch.url = "github:zortax/zlaunch";
+    zlaunch.url = "github:zortax/zlaunch/0.4.0";
   };
 }
 ```
