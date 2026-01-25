@@ -1,5 +1,7 @@
 //! tarpc service definition for IPC communication.
 
+use crate::config::LauncherMode;
+use crate::error::IpcError;
 use serde::{Deserialize, Serialize};
 
 /// Theme information returned by the IPC service.
@@ -14,20 +16,20 @@ pub struct ThemeInfo {
 /// The zlaunch RPC service definition.
 #[tarpc::service]
 pub trait ZlaunchService {
-    /// Show the launcher window.
-    async fn show() -> Result<(), String>;
+    /// Show the launcher window with optional modes.
+    async fn show(modes: Option<Vec<LauncherMode>>) -> Result<(), IpcError>;
 
     /// Hide the launcher window.
-    async fn hide() -> Result<(), String>;
+    async fn hide() -> Result<(), IpcError>;
 
-    /// Toggle the launcher window visibility.
-    async fn toggle() -> Result<(), String>;
+    /// Toggle the launcher window visibility with optional modes.
+    async fn toggle(modes: Option<Vec<LauncherMode>>) -> Result<(), IpcError>;
 
     /// Quit the daemon.
-    async fn quit() -> Result<(), String>;
+    async fn quit() -> Result<(), IpcError>;
 
     /// Reload the daemon (fully restart the process).
-    async fn reload() -> Result<(), String>;
+    async fn reload() -> Result<(), IpcError>;
 
     /// List all available themes.
     async fn list_themes() -> Vec<ThemeInfo>;
@@ -36,6 +38,6 @@ pub trait ZlaunchService {
     async fn get_current_theme() -> String;
 
     /// Set the active theme by name.
-    /// Returns Ok(()) if successful, Err with message if theme not found.
-    async fn set_theme(name: String) -> Result<(), String>;
+    /// Returns Ok(()) if successful, Err with IpcError if theme not found.
+    async fn set_theme(name: String) -> Result<(), IpcError>;
 }

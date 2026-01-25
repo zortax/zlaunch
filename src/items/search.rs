@@ -1,6 +1,5 @@
-use std::os::unix::process::CommandExt;
-
 use crate::assets::PhosphorIcon;
+use crate::process;
 use crate::search::SearchProvider;
 
 use super::traits::{Categorizable, DisplayItem, Executable, IconProvider};
@@ -66,19 +65,7 @@ impl IconProvider for SearchItem {
 impl Executable for SearchItem {
     fn execute(&self) -> anyhow::Result<()> {
         // Open URL in browser, disowned from daemon
-        // SAFETY: setsid() is async-signal-safe
-        unsafe {
-            std::process::Command::new("xdg-open")
-                .arg(&self.url)
-                .stdin(std::process::Stdio::null())
-                .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .pre_exec(|| {
-                    libc::setsid();
-                    Ok(())
-                })
-                .spawn()?;
-        }
+        process::open_url(&self.url)?;
         Ok(())
     }
 }
@@ -90,5 +77,11 @@ impl Categorizable for SearchItem {
 
     fn sort_priority(&self) -> u8 {
         1
+    }
+}
+
+impl From<SearchItem> for super::ListItem {
+    fn from(item: SearchItem) -> Self {
+        Self::Search(item)
     }
 }

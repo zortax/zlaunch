@@ -2,15 +2,19 @@
 //!
 //! This module provides a trait-based abstraction for interacting with
 //! Wayland compositors to list windows and switch focus. Implementations
-//! are provided for Hyprland (IPC socket) and KDE/KWin (DBus).
+//! are provided for Hyprland (IPC socket), Niri (IPC socket), and KDE/KWin (DBus).
 
+pub mod base;
 mod detect;
+pub mod error;
 pub mod hyprland;
 mod kwin;
 mod niri;
 mod noop;
 
+pub use base::CompositorCapabilities;
 pub use detect::detect_compositor;
+pub use error::CompositorError;
 
 use std::fmt;
 
@@ -47,6 +51,13 @@ pub trait Compositor: Send + Sync {
 
     /// Get the compositor name for logging/debugging.
     fn name(&self) -> &'static str;
+
+    /// Get the capabilities of this compositor implementation.
+    ///
+    /// Default implementation returns no capabilities (same as NoopCompositor).
+    fn capabilities(&self) -> CompositorCapabilities {
+        CompositorCapabilities::none()
+    }
 }
 
 impl fmt::Debug for dyn Compositor {

@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
+use crate::config::LauncherMode;
 use crate::ipc::client;
 
 #[derive(Parser)]
@@ -14,11 +15,19 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Show the launcher window
-    Show,
+    Show {
+        /// Modes to enable (can specify multiple with commas or repeated flags)
+        #[arg(short, long, value_delimiter = ',')]
+        modes: Option<Vec<LauncherMode>>,
+    },
     /// Hide the launcher window
     Hide,
     /// Toggle the launcher window visibility
-    Toggle,
+    Toggle {
+        /// Modes to enable (can specify multiple with commas or repeated flags)
+        #[arg(short, long, value_delimiter = ',')]
+        modes: Option<Vec<LauncherMode>>,
+    },
     /// Quit the daemon
     Quit,
     /// Reload the daemon (fully restart the process)
@@ -48,14 +57,14 @@ pub fn handle_client_command(cmd: Commands) -> Result<()> {
     }
 
     match cmd {
-        Commands::Show => {
-            client::show()?;
+        Commands::Show { modes } => {
+            client::show(modes)?;
         }
         Commands::Hide => {
             client::hide()?;
         }
-        Commands::Toggle => {
-            client::toggle()?;
+        Commands::Toggle { modes } => {
+            client::toggle(modes)?;
         }
         Commands::Quit => {
             client::quit()?;

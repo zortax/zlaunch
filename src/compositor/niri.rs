@@ -1,3 +1,4 @@
+use super::base::{CompositorCapabilities, get_display_title, is_launcher_window};
 use super::{Compositor, WindowInfo};
 use anyhow::{Context, Result, anyhow, bail};
 use serde::Deserialize;
@@ -59,17 +60,13 @@ impl Compositor for NiriCompositor {
 
         let mut window_info = Vec::new();
         for window in niri_reply.windows {
-            if window.app_id.to_lowercase() == "zlaunch" {
+            if is_launcher_window(&window.app_id) {
                 continue;
             }
 
             window_info.push(WindowInfo {
                 address: format!("{}", window.id),
-                title: if window.title.is_empty() {
-                    window.app_id.clone()
-                } else {
-                    window.title
-                },
+                title: get_display_title(&window.title, &window.app_id),
                 class: window.app_id,
                 workspace: window.workspace_id as i32,
                 focused: window.is_focused,
@@ -77,6 +74,10 @@ impl Compositor for NiriCompositor {
         }
 
         Ok(window_info)
+    }
+
+    fn capabilities(&self) -> CompositorCapabilities {
+        CompositorCapabilities::full()
     }
 }
 

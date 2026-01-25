@@ -1,7 +1,7 @@
-use std::os::unix::process::CommandExt;
 use std::process::Command;
 
 use super::traits::{Categorizable, DisplayItem, Executable, IconProvider};
+use crate::process;
 
 /// The kind of action to perform.
 #[derive(Clone, Debug)]
@@ -138,19 +138,7 @@ impl Executable for ActionItem {
             }
             ActionKind::Command(cmd) => {
                 // Custom commands should be disowned from daemon
-                // SAFETY: setsid() is async-signal-safe
-                unsafe {
-                    Command::new("sh")
-                        .args(["-c", cmd])
-                        .stdin(std::process::Stdio::null())
-                        .stdout(std::process::Stdio::null())
-                        .stderr(std::process::Stdio::null())
-                        .pre_exec(|| {
-                            libc::setsid();
-                            Ok(())
-                        })
-                        .spawn()?;
-                }
+                process::run_shell_command(cmd)?;
             }
         }
         Ok(())
@@ -164,5 +152,11 @@ impl Categorizable for ActionItem {
 
     fn sort_priority(&self) -> u8 {
         3
+    }
+}
+
+impl From<ActionItem> for super::ListItem {
+    fn from(item: ActionItem) -> Self {
+        Self::Action(item)
     }
 }

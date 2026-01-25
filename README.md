@@ -110,6 +110,38 @@ zlaunch quit    # Stop daemon
 zlaunch reload  # Restart daemon (useful after config updates)
 ```
 
+### Modes
+
+The launcher supports different modes that determine what content is shown. By default, the launcher opens in **combined** mode, showing all enabled modules together. You can also open specific modes directly or configure multiple modes to cycle through.
+
+#### Opening specific modes
+
+Use the `--modes` flag to open directly into specific mode(s):
+
+```bash
+# Open directly in emoji picker
+zlaunch show --modes emojis
+
+# Open directly in clipboard history
+zlaunch toggle --modes clipboard
+
+# Open with multiple modes (use Ctrl+Tab to switch)
+zlaunch show --modes combined,emojis,clipboard
+```
+
+Available modes: `combined`, `applications`, `windows`, `emojis`, `clipboard`, `actions`, `search`, `calculator`, `ai`, `themes`
+
+Mode aliases are supported: `apps`, `app`, `emoji`, `calc`, `action`, `theme`, `window`
+
+#### Cycling between modes
+
+When multiple modes are configured, use keyboard shortcuts to switch:
+
+- `Ctrl+Tab` — Next mode
+- `Ctrl+Shift+Tab` — Previous mode
+
+Configure default modes in `config.toml` (see Configuration section).
+
 ### Theme management
 
 Use the built-in theme selector in the UI, or via CLI:
@@ -122,12 +154,14 @@ zlaunch theme set NAME  # Set theme by name
 
 ## Keybindings
 
-| Key                 | Action                |
-| ------------------- | --------------------- |
-| `↑` / `↓`           | Navigate items        |
-| `Tab` / `Shift+Tab` | Navigate grid         |
-| `Enter`             | Execute selected item |
-| `Escape`            | Back / Hide launcher  |
+| Key                      | Action                |
+| ------------------------ | --------------------- |
+| `↑` / `↓`                | Navigate items        |
+| `Tab` / `Shift+Tab`      | Navigate grid         |
+| `Ctrl+Tab`               | Next mode             |
+| `Ctrl+Shift+Tab`         | Previous mode         |
+| `Enter`                  | Execute selected item |
+| `Escape`                 | Back / Hide launcher  |
 
 ## Configuration
 
@@ -148,7 +182,11 @@ window_height = 500.0
 hyprland_auto_blur = false
 enable_transparency = false
 
-disabled_modules = ["clipboard", "ai"]
+# Modes to cycle through with Ctrl+Tab (optional)
+default_modes = ["combined", "emojis", "clipboard"]
+
+# Modules to show in combined view, in display order (optional)
+combined_modules = ["calculator", "windows", "applications", "emojis", "clipboard", "actions", "themes", "ai", "search"]
 
 [[search_providers]]
 name = "Brave"
@@ -168,19 +206,25 @@ icon = "youtube-logo"
 - `window_width` / `window_height` — Launcher window size
 - `enable_transparency` — Defaults to `true`. Set to `false` to force an opaque background
 - `hyprland_auto_blur` — Defaults to `true`. Attempts to apply Hyprland blur rules (WIP)
-- `disabled_modules` — List of modules to hide entirely
+- `default_modes` — List of modes to cycle through with Ctrl+Tab. Defaults to `["combined"]`
+- `combined_modules` — Ordered list of modules to include in combined view. Omit to show all modules
 - `search_providers` — Custom web search providers
 
 #### Available modules
 
-- `actions`
-- `ai`
 - `calculator`
-- `clipboard`
-- `emojis`
-- `search`
-- `themes`
 - `windows`
+- `applications`
+- `emojis`
+- `clipboard`
+- `actions`
+- `themes`
+- `ai`
+- `search`
+
+The order in `combined_modules` determines the display order of sections in combined view.
+
+> **Note:** The `disabled_modules` option is deprecated. Use `combined_modules` instead to specify which modules to include (and in what order).
 
 ### Search providers
 

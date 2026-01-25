@@ -122,3 +122,9 @@ impl Categorizable for SubmenuItem {
         3
     }
 }
+
+impl From<SubmenuItem> for super::ListItem {
+    fn from(item: SubmenuItem) -> Self {
+        Self::Submenu(item)
+    }
+}

@@ -1,5 +1,6 @@
 //! No-op compositor implementation for unsupported environments.
 
+use super::base::CompositorCapabilities;
 use super::{Compositor, WindowInfo};
 
 /// A no-op compositor that returns empty results.
@@ -20,5 +21,9 @@ impl Compositor for NoopCompositor {
 
     fn name(&self) -> &'static str {
         "Noop"
+    }
+
+    fn capabilities(&self) -> CompositorCapabilities {
+        CompositorCapabilities::none()
     }
 }

@@ -114,6 +114,12 @@ impl Categorizable for WindowItem {
     }
 }
 
+impl From<WindowItem> for super::ListItem {
+    fn from(item: WindowItem) -> Self {
+        Self::Window(item)
+    }
+}
+
 /// Convert an app class to a human-readable name.
 fn titlecase_app_name(class: &str) -> String {
     let name = class.rsplit('.').next().unwrap_or(class);

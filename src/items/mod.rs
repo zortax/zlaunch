@@ -1,12 +1,57 @@
+//! Launcher item types and traits.
+//!
+//! This module defines all the item types that can appear in the launcher,
+//! along with the traits that describe their behavior.
+//!
+//! # Item Types
+//!
+//! Each item type represents a different kind of launcher entry:
+//!
+//! - [`ApplicationItem`] - Desktop applications (from .desktop files)
+//! - [`WindowItem`] - Open windows for window switching
+//! - [`ActionItem`] - System actions (shutdown, reboot, logout)
+//! - [`CalculatorItem`] - Mathematical calculation results
+//! - [`SearchItem`] - Web search queries
+//! - [`AiItem`] - AI/LLM query interface
+//! - [`ThemeItem`] - Theme selection entries
+//! - [`SubmenuItem`] - Nested submenus
+//!
+//! # The ListItem Enum
+//!
+//! All item types are unified under the [`ListItem`] enum, which allows the
+//! launcher to work with heterogeneous collections of items. The enum uses
+//! a dispatch macro system ([`dispatch_item!`]) to delegate trait method calls
+//! to the appropriate variant.
+//!
+//! # Core Traits
+//!
+//! Items implement several traits from the [`traits`] module:
+//!
+//! - [`DisplayItem`] - Required: id, name, description, action_label
+//! - [`IconProvider`] - Icon path or Phosphor icon name
+//! - [`Executable`] - How to execute/activate the item
+//! - [`Categorizable`] - Section grouping and sort priority
+//! - [`Previewable`] - Preview content for preview panels
+//!
+//! # Design Decisions
+//!
+//! The dispatch macro approach was chosen over trait objects because:
+//! 1. All item types are known at compile time
+//! 2. It avoids boxing overhead for common operations
+//! 3. The enum can be cloned and compared easily
+
 mod action;
 mod ai;
 mod application;
 mod calculator;
+mod dispatch;
 mod search;
 mod submenu;
 mod theme;
 mod traits;
 mod window;
+
+use dispatch::dispatch_item;
 
 pub use action::{ActionItem, ActionKind};
 pub use ai::AiItem;
@@ -18,6 +63,7 @@ pub use theme::{ThemeItem, ThemeSource};
 pub use traits::{Categorizable, DisplayItem, Executable, IconProvider, Previewable};
 pub use window::WindowItem;
 
+use crate::config::ConfigModule;
 use std::path::PathBuf;
 
 /// A list item that can be displayed in the launcher.
@@ -45,72 +91,27 @@ pub enum ListItem {
 impl ListItem {
     /// Get the unique identifier for this item.
     pub fn id(&self) -> &str {
-        match self {
-            Self::Application(item) => item.id(),
-            Self::Window(item) => item.id(),
-            Self::Action(item) => item.id(),
-            Self::Submenu(item) => item.id(),
-            Self::Calculator(item) => item.id(),
-            Self::Search(item) => item.id(),
-            Self::Ai(item) => item.id(),
-            Self::Theme(item) => item.id(),
-        }
+        dispatch_item!(self, id)
     }
 
     /// Get the display name for this item.
     pub fn name(&self) -> &str {
-        match self {
-            Self::Application(item) => item.name(),
-            Self::Window(item) => item.name(),
-            Self::Action(item) => item.name(),
-            Self::Submenu(item) => item.name(),
-            Self::Calculator(item) => item.name(),
-            Self::Search(item) => item.name(),
-            Self::Ai(item) => item.name(),
-            Self::Theme(item) => item.name(),
-        }
+        dispatch_item!(self, name)
     }
 
     /// Get the description/subtitle for this item.
     pub fn description(&self) -> Option<&str> {
-        match self {
-            Self::Application(item) => item.description(),
-            Self::Window(item) => item.description(),
-            Self::Action(item) => item.description(),
-            Self::Submenu(item) => item.description(),
-            Self::Calculator(item) => item.description(),
-            Self::Search(item) => item.description(),
-            Self::Ai(item) => item.description(),
-            Self::Theme(item) => item.description(),
-        }
+        dispatch_item!(self, description)
     }
 
     /// Get the icon path for this item.
     pub fn icon_path(&self) -> Option<&PathBuf> {
-        match self {
-            Self::Application(item) => item.icon_path(),
-            Self::Window(item) => item.icon_path(),
-            Self::Action(item) => item.icon_path(),
-            Self::Submenu(item) => item.icon_path(),
-            Self::Calculator(item) => item.icon_path(),
-            Self::Search(item) => item.icon_path(),
-            Self::Ai(item) => item.icon_path(),
-            Self::Theme(item) => item.icon_path(),
-        }
+        dispatch_item!(self, icon_path)
     }
 
     /// Get the icon name for this item.
     pub fn icon_name(&self) -> Option<&str> {
-        match self {
-            Self::Application(item) => item.icon_name(),
-            Self::Window(item) => item.icon_name(),
-            Self::Action(item) => item.icon_name(),
-            Self::Submenu(item) => item.icon_name(),
-            Self::Calculator(item) => item.icon_name(),
-            Self::Search(item) => item.icon_name(),
-            Self::Ai(item) => item.icon_name(),
-            Self::Theme(item) => item.icon_name(),
-        }
+        dispatch_item!(self, icon_name)
     }
 
     /// Check if this item is a submenu.
@@ -140,94 +141,40 @@ impl ListItem {
 
     /// Get the action label to display (e.g., "Open", "Switch", "Run").
     pub fn action_label(&self) -> &'static str {
-        match self {
-            Self::Application(item) => item.action_label(),
-            Self::Window(item) => item.action_label(),
-            Self::Action(item) => item.action_label(),
-            Self::Submenu(item) => item.action_label(),
-            Self::Calculator(item) => item.action_label(),
-            Self::Search(item) => item.action_label(),
-            Self::Ai(item) => item.action_label(),
-            Self::Theme(item) => item.action_label(),
-        }
+        dispatch_item!(self, action_label)
     }
 
     /// Get the sort priority for this item type.
     /// Lower values appear first in the list.
     pub fn sort_priority(&self) -> u8 {
-        match self {
-            Self::Application(item) => item.sort_priority(),
-            Self::Window(item) => item.sort_priority(),
-            Self::Action(item) => item.sort_priority(),
-            Self::Submenu(item) => item.sort_priority(),
-            Self::Calculator(item) => item.sort_priority(),
-            Self::Search(item) => item.sort_priority(),
-            Self::Ai(item) => item.sort_priority(),
-            Self::Theme(item) => item.sort_priority(),
-        }
+        dispatch_item!(self, sort_priority)
     }
 
     /// Get the section name for this item type.
     pub fn section_name(&self) -> &'static str {
+        dispatch_item!(self, section_name)
+    }
+
+    /// Get the ConfigModule this item belongs to.
+    /// This method has custom logic per variant and cannot use dispatch_item!.
+    pub fn config_module(&self) -> ConfigModule {
         match self {
-            Self::Application(item) => item.section_name(),
-            Self::Window(item) => item.section_name(),
-            Self::Action(item) => item.section_name(),
-            Self::Submenu(item) => item.section_name(),
-            Self::Calculator(item) => item.section_name(),
-            Self::Search(item) => item.section_name(),
-            Self::Ai(item) => item.section_name(),
-            Self::Theme(item) => item.section_name(),
+            Self::Application(_) => ConfigModule::Applications,
+            Self::Window(_) => ConfigModule::Windows,
+            Self::Action(_) => ConfigModule::Actions,
+            Self::Submenu(item) => {
+                // Map submenu IDs to their modules
+                match item.id.as_str() {
+                    "submenu-emojis" => ConfigModule::Emojis,
+                    "submenu-clipboard" => ConfigModule::Clipboard,
+                    "submenu-themes" => ConfigModule::Themes,
+                    _ => ConfigModule::Actions, // Default fallback
+                }
+            }
+            Self::Calculator(_) => ConfigModule::Calculator,
+            Self::Search(_) => ConfigModule::Search,
+            Self::Ai(_) => ConfigModule::Ai,
+            Self::Theme(_) => ConfigModule::Themes,
         }
-    }
-}
-
-// Convenient From implementations
-
-impl From<ApplicationItem> for ListItem {
-    fn from(item: ApplicationItem) -> Self {
-        Self::Application(item)
-    }
-}
-
-impl From<WindowItem> for ListItem {
-    fn from(item: WindowItem) -> Self {
-        Self::Window(item)
-    }
-}
-
-impl From<ActionItem> for ListItem {
-    fn from(item: ActionItem) -> Self {
-        Self::Action(item)
-    }
-}
-
-impl From<SubmenuItem> for ListItem {
-    fn from(item: SubmenuItem) -> Self {
-        Self::Submenu(item)
-    }
-}
-
-impl From<CalculatorItem> for ListItem {
-    fn from(item: CalculatorItem) -> Self {
-        Self::Calculator(item)
-    }
-}
-
-impl From<SearchItem> for ListItem {
-    fn from(item: SearchItem) -> Self {
-        Self::Search(item)
-    }
-}
-
-impl From<AiItem> for ListItem {
-    fn from(item: AiItem) -> Self {
-        Self::Ai(item)
-    }
-}
-
-impl From<ThemeItem> for ListItem {
-    fn from(item: ThemeItem) -> Self {
-        Self::Theme(Box::new(item))
     }
 }

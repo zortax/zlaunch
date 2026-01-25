@@ -77,4 +77,49 @@ mod tests {
         let result = detect_search("");
         assert_eq!(result, SearchDetection::None);
     }
+
+    #[test]
+    fn test_detect_whitespace_only() {
+        let result = detect_search("   ");
+        assert_eq!(result, SearchDetection::None);
+    }
+
+    #[test]
+    fn test_detect_text_without_trigger_is_fallback() {
+        // Regular text without a trigger should be fallback
+        let result = detect_search("hello world");
+        match result {
+            SearchDetection::Fallback { query } => {
+                assert_eq!(query, "hello world");
+            }
+            _ => panic!("Expected Fallback, got {:?}", result),
+        }
+    }
+
+    #[test]
+    fn test_detect_unknown_trigger_is_fallback() {
+        // Unknown trigger (not in configured providers) should be treated as fallback
+        let result = detect_search("!zzz_unknown_trigger test query");
+        match result {
+            SearchDetection::Fallback { query } => {
+                assert_eq!(query, "!zzz_unknown_trigger test query");
+            }
+            _ => panic!("Expected Fallback, got {:?}", result),
+        }
+    }
+
+    #[test]
+    fn test_detect_preserves_query_whitespace() {
+        let result = detect_search("  some query  ");
+        match result {
+            SearchDetection::Fallback { query } => {
+                // trim() is applied, so leading/trailing whitespace is removed
+                assert_eq!(query, "some query");
+            }
+            _ => panic!("Expected Fallback"),
+        }
+    }
+
+    // Note: Tests for specific triggers (!g, !d, etc.) are skipped because they depend
+    // on config being initialized. These are tested through integration tests instead.
 }

@@ -5,4 +5,4 @@ pub mod commands;
 pub mod server;
 
 pub use commands::{ThemeInfo, ZlaunchServiceClient};
-pub use server::{IpcServerHandle, get_socket_path, start_server};
+pub use server::{IpcServerHandle, get_socket_path, prepare_socket, start_server};

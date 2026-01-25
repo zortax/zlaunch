@@ -135,8 +135,7 @@ impl ThemeModeHandler {
         window: &mut Window,
         cx: &mut Context<InputState>,
     ) {
-        input_state.set_value("", window, cx);
-        input_state.set_placeholder("Search themes...", window, cx);
+        super::base::setup_list_mode_input(input_state, "Search themes...", window, cx);
     }
 
     /// Restore input placeholder when exiting theme mode.
@@ -145,7 +144,6 @@ impl ThemeModeHandler {
         window: &mut Window,
         cx: &mut Context<InputState>,
     ) {
-        input_state.set_value("", window, cx);
-        input_state.set_placeholder("Search applications...", window, cx);
+        super::base::restore_main_input(input_state, window, cx);
     }
 }
