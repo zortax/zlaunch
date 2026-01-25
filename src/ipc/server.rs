@@ -22,7 +22,11 @@ pub struct IpcServerHandle {
 impl Drop for IpcServerHandle {
     fn drop(&mut self) {
         if let Err(e) = std::fs::remove_file(&self.socket_path) {
-            tracing::warn!("Failed to clean up IPC socket: {}", e);
+            // Don't warn if the file doesn't exist - that's expected if the socket
+            // was never created or was already cleaned up
+            if e.kind() != std::io::ErrorKind::NotFound {
+                tracing::warn!("Failed to clean up IPC socket: {}", e);
+            }
         }
     }
 }
@@ -113,10 +117,11 @@ impl ZlaunchService for ZlaunchServer {
     }
 }
 
-/// Start the tarpc IPC server.
+/// Prepare the IPC socket, checking for existing instances.
 ///
-/// Returns Ok with handle on success, Err if another instance is running.
-pub fn start_server(event_tx: flume::Sender<DaemonEvent>) -> anyhow::Result<IpcServerHandle> {
+/// This should be called early, before the GPUI application starts.
+/// Returns Ok with the socket path on success, Err if another instance is running.
+pub fn prepare_socket() -> anyhow::Result<PathBuf> {
     let socket_path = get_socket_path();
 
     // Check for existing instance
@@ -128,49 +133,49 @@ pub fn start_server(event_tx: flume::Sender<DaemonEvent>) -> anyhow::Result<IpcS
         std::fs::remove_file(&socket_path)?;
     }
 
+    Ok(socket_path)
+}
+
+/// Start the tarpc IPC server on the shared tokio runtime.
+///
+/// This should be called inside the GPUI run closure, after the tokio runtime is initialized.
+pub fn start_server(event_tx: flume::Sender<DaemonEvent>, cx: &gpui::App) -> IpcServerHandle {
+    let socket_path = get_socket_path();
     let socket_path_clone = socket_path.clone();
 
-    // Spawn the server in a background thread with its own tokio runtime
-    std::thread::spawn(move || {
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .expect("Failed to create tokio runtime for IPC server");
+    // Spawn the server on the shared tokio runtime
+    crate::tokio_runtime::spawn(cx, async move {
+        let listener = UnixListener::bind(&socket_path_clone).expect("Failed to bind IPC socket");
 
-        rt.block_on(async move {
-            let listener =
-                UnixListener::bind(&socket_path_clone).expect("Failed to bind IPC socket");
+        tracing::info!("IPC server listening on {:?}", socket_path_clone);
 
-            tracing::info!("IPC server listening on {:?}", socket_path_clone);
+        loop {
+            let (stream, _) = match listener.accept().await {
+                Ok(conn) => conn,
+                Err(e) => {
+                    tracing::warn!("Failed to accept IPC connection: {}", e);
+                    continue;
+                }
+            };
 
-            loop {
-                let (stream, _) = match listener.accept().await {
-                    Ok(conn) => conn,
-                    Err(e) => {
-                        tracing::warn!("Failed to accept IPC connection: {}", e);
-                        continue;
-                    }
-                };
+            let framed = tokio_util::codec::Framed::new(stream, LengthDelimitedCodec::new());
+            let transport = tarpc::serde_transport::new(framed, Json::default());
 
-                let framed = tokio_util::codec::Framed::new(stream, LengthDelimitedCodec::new());
-                let transport = tarpc::serde_transport::new(framed, Json::default());
+            let server = ZlaunchServer {
+                event_tx: event_tx.clone(),
+            };
 
-                let server = ZlaunchServer {
-                    event_tx: event_tx.clone(),
-                };
+            let channel = BaseChannel::with_defaults(transport);
 
-                let channel = BaseChannel::with_defaults(transport);
-
-                tokio::spawn(
-                    channel
-                        .execute(server.serve())
-                        .for_each(|response| async move {
-                            tokio::spawn(response);
-                        }),
-                );
-            }
-        });
+            tokio::spawn(
+                channel
+                    .execute(server.serve())
+                    .for_each(|response| async move {
+                        tokio::spawn(response);
+                    }),
+            );
+        }
     });
 
-    Ok(IpcServerHandle { socket_path })
+    IpcServerHandle { socket_path }
 }

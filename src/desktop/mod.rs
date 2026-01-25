@@ -2,7 +2,6 @@ pub mod cache;
 pub mod entry;
 pub mod env;
 pub mod exec;
-pub mod icon_cache;
 pub mod parser;
 pub mod scanner;
 pub mod watcher;

@@ -14,6 +14,7 @@ pub mod ipc;
 pub mod items;
 pub mod process;
 pub mod search;
+pub mod tokio_runtime;
 pub mod ui;
 
 #[cfg(test)]

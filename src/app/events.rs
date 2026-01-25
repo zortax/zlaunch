@@ -2,6 +2,7 @@
 
 use crate::config::LauncherMode;
 use crate::error::IpcError;
+use crate::items::ApplicationItem;
 use tokio::sync::oneshot;
 
 /// Response type for IPC operations.
@@ -51,6 +52,9 @@ pub enum DaemonEvent {
     Reload {
         response_tx: oneshot::Sender<IpcResponse>,
     },
+
+    /// Applications have been updated (from file watcher)
+    ApplicationsChanged { applications: Vec<ApplicationItem> },
 }
 
 impl From<WindowEvent> for DaemonEvent {

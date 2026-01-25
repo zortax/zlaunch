@@ -54,11 +54,12 @@ impl Default for WindowState {
 pub async fn run_event_loop(
     event_rx: flume::Receiver<DaemonEvent>,
     event_tx: flume::Sender<DaemonEvent>,
-    applications: Vec<ApplicationItem>,
+    initial_applications: Vec<ApplicationItem>,
     compositor: Arc<dyn Compositor>,
     cx: &mut gpui::AsyncApp,
 ) {
     let mut window_state = WindowState::new();
+    let mut applications = initial_applications;
 
     while let Ok(event) = event_rx.recv_async().await {
         match event {
@@ -162,6 +163,28 @@ pub async fn run_event_loop(
                     cx.quit();
                 });
                 return;
+            }
+
+            DaemonEvent::ApplicationsChanged {
+                applications: new_apps,
+            } => {
+                debug!("Applications updated, {} entries", new_apps.len());
+                applications = new_apps;
+
+                // If window visible, refresh the view
+                if window_state.visible {
+                    if let Some(ref lw) = window_state.launcher_window {
+                        let view = lw.launcher_view.clone();
+                        let apps = applications.clone();
+                        let _ = cx.update(|cx| {
+                            let _ = lw.handle.update(cx, |_, window, cx| {
+                                view.update(cx, |launcher, cx| {
+                                    launcher.refresh_applications(apps, window, cx);
+                                });
+                            });
+                        });
+                    }
+                }
             }
 
             _ => {}

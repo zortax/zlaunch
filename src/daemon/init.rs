@@ -9,7 +9,7 @@ use tracing::{error, info};
 use crate::compositor::{Compositor, detect_compositor};
 use crate::config::{ConfigModule, get_combined_modules};
 use crate::desktop::cache::load_applications;
-use crate::ipc::{IpcServerHandle, client, start_server};
+use crate::ipc::{IpcServerHandle, client, prepare_socket, start_server};
 use crate::items::ApplicationItem;
 
 /// Initialize the tracing subscriber for logging.
@@ -27,15 +27,13 @@ pub fn init_logging() {
         .init();
 }
 
-/// Start the IPC server.
+/// Prepare the IPC socket, checking for existing daemon instances.
 ///
-/// Returns the server handle, or an error if the server couldn't start
-/// (e.g., another daemon is already running).
-pub fn start_ipc_server(
-    event_tx: flume::Sender<crate::app::DaemonEvent>,
-) -> Result<IpcServerHandle> {
-    match start_server(event_tx) {
-        Ok(handle) => Ok(handle),
+/// This should be called early, before the GPUI application starts.
+/// Returns Ok if socket is ready, Err if another daemon is running.
+pub fn prepare_ipc_socket() -> Result<()> {
+    match prepare_socket() {
+        Ok(_) => Ok(()),
         Err(e) => {
             if client::is_daemon_running() {
                 error!("Daemon already running, exiting");
@@ -44,6 +42,16 @@ pub fn start_ipc_server(
             Err(e)
         }
     }
+}
+
+/// Start the IPC server on the shared tokio runtime.
+///
+/// This should be called inside the GPUI run closure, after the tokio runtime is initialized.
+pub fn start_ipc_server(
+    event_tx: flume::Sender<crate::app::DaemonEvent>,
+    cx: &gpui::App,
+) -> IpcServerHandle {
+    start_server(event_tx, cx)
 }
 
 /// Initialize clipboard monitoring if enabled in config.

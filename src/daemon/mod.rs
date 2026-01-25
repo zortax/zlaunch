@@ -7,6 +7,7 @@ mod event_handler;
 mod init;
 mod reload;
 mod theme;
+mod watcher;
 
 use anyhow::Result;
 use gpui::{Application, QuitMode};
@@ -33,8 +34,8 @@ pub fn run() -> Result<()> {
     // Create unified event channel
     let (event_tx, event_rx) = create_daemon_channel();
 
-    // Start tarpc IPC server
-    let _ipc_handle = init::start_ipc_server(event_tx.clone())?;
+    // Prepare IPC socket (check for existing instance)
+    init::prepare_ipc_socket()?;
 
     // Initialize config from file (single source of truth)
     crate::config::init_config();
@@ -63,6 +64,12 @@ pub fn run() -> Result<()> {
             init_launcher(cx);
             Theme::change(ThemeMode::Dark, None, cx);
 
+            // Initialize shared tokio runtime
+            crate::tokio_runtime::init(cx);
+
+            // Start IPC server on shared tokio runtime
+            let _ipc_handle = init::start_ipc_server(event_tx.clone(), cx);
+
             // Configure theme for transparent background
             theme::configure_theme(cx);
 
@@ -71,7 +78,11 @@ pub fn run() -> Result<()> {
             let compositor = compositor.clone();
             let event_tx_clone = event_tx.clone();
 
-            // Main event loop
+            // Spawn file watcher on shared tokio runtime
+            let event_tx_for_watcher = event_tx.clone();
+            crate::tokio_runtime::spawn(cx, watcher::run_watcher_loop(event_tx_for_watcher));
+
+            // Main event loop (runs on GPUI executor)
             cx.spawn(async move |cx: &mut gpui::AsyncApp| {
                 event_handler::run_event_loop(
                     event_rx,

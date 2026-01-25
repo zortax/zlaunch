@@ -281,6 +281,25 @@ impl LauncherView {
         cx.notify();
     }
 
+    /// Refresh the application list after file changes.
+    /// Called when the daemon detects changes to installed applications.
+    pub fn refresh_applications(
+        &mut self,
+        applications: Vec<crate::items::ApplicationItem>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        // Update original_items with new applications
+        self.original_items = applications
+            .into_iter()
+            .map(ListItem::Application)
+            .collect();
+
+        // Recreate the delegate (reuses existing mode_switching.rs logic)
+        self.recreate_delegate_for_mode(window, cx);
+        cx.notify();
+    }
+
     /// Focus the launcher input.
     pub fn focus(&self, window: &mut Window, cx: &mut Context<Self>) {
         self.input_state.update(cx, |input: &mut InputState, cx| {

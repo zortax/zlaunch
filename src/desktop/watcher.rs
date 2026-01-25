@@ -3,9 +3,9 @@
 //! Watches XDG application directories for changes and emits events
 //! when applications are added, removed, or modified.
 
+use flume::{Receiver, TryRecvError};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::PathBuf;
-use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
@@ -33,7 +33,7 @@ impl ApplicationWatcher {
     ///
     /// Watches all XDG application directories for file system changes.
     pub fn new() -> anyhow::Result<Self> {
-        let (tx, rx) = mpsc::channel();
+        let (tx, rx) = flume::unbounded();
 
         let mut watcher = notify::recommended_watcher(move |res: Result<Event, _>| match res {
             Ok(event) => {
@@ -96,13 +96,18 @@ impl ApplicationWatcher {
                 // Drain any additional pending events
                 events.extend(self.poll_events());
             }
-            Err(mpsc::RecvTimeoutError::Timeout) => {}
-            Err(mpsc::RecvTimeoutError::Disconnected) => {
+            Err(flume::RecvTimeoutError::Timeout) => {}
+            Err(flume::RecvTimeoutError::Disconnected) => {
                 error!("Watcher channel disconnected");
             }
         }
 
         events
+    }
+
+    /// Async wait for a single event (for use with tokio).
+    pub async fn recv_async(&self) -> Result<WatcherEvent, flume::RecvError> {
+        self.rx.recv_async().await
     }
 
     /// Check if there are pending updates.
