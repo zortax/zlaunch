@@ -16,12 +16,21 @@ use crate::items::ListItem;
 use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
 
+/// A filtered item with its index and score.
+#[derive(Debug, Clone, Copy)]
+pub struct FilteredItem {
+    /// Index into the original items array.
+    pub index: usize,
+    /// Fuzzy match score (higher is better).
+    pub score: i64,
+}
+
 /// Fuzzy filter for list items with enhanced scoring.
 pub struct ItemFilter {
     /// The fuzzy matcher instance.
     matcher: SkimMatcherV2,
     /// Configuration for scoring adjustments.
-    config: FuzzyMatchConfig,
+    pub config: FuzzyMatchConfig,
 }
 
 impl Default for ItemFilter {
@@ -41,33 +50,55 @@ impl ItemFilter {
 
     /// Filter items by query, returning indices of matching items.
     ///
-    /// When query is empty, returns all indices in original order.
-    /// When query is non-empty, returns indices sorted by:
-    /// 1. Module position in combined_modules (primary)
-    /// 2. Enhanced fuzzy score (secondary, higher is better)
-    pub fn filter_with_modules(
+    /// This is a convenience method that wraps `filter_with_scores`
+    /// and returns only the indices.
+    #[cfg(test)]
+    pub fn filter_indices(
         &self,
         items: &[ListItem],
         query: &str,
         combined_modules: &[ConfigModule],
     ) -> Vec<usize> {
+        self.filter_with_scores(items, query, combined_modules)
+            .into_iter()
+            .map(|f| f.index)
+            .collect()
+    }
+
+    /// Filter items by query, returning items with their scores.
+    ///
+    /// This is used for best-match detection where we need to know
+    /// the score of each item to determine which should be promoted.
+    ///
+    /// When query is empty, returns all items with score 0.
+    /// When query is non-empty, returns matching items sorted by:
+    /// 1. Module position in combined_modules (primary)
+    /// 2. Enhanced fuzzy score (secondary, higher is better)
+    pub fn filter_with_scores(
+        &self,
+        items: &[ListItem],
+        query: &str,
+        combined_modules: &[ConfigModule],
+    ) -> Vec<FilteredItem> {
         if query.is_empty() {
-            return (0..items.len()).collect();
+            return (0..items.len())
+                .map(|index| FilteredItem { index, score: 0 })
+                .collect();
         }
 
-        let mut scored: Vec<(usize, i64)> = items
+        let mut scored: Vec<FilteredItem> = items
             .iter()
             .enumerate()
             .filter_map(|(idx, item)| {
                 let score = self.score_item(item, query)?;
-                Some((idx, score))
+                Some(FilteredItem { index: idx, score })
             })
             .collect();
 
         // Sort by module position, then by score within same module
         scored.sort_by(|a, b| {
-            let module_a = items[a.0].config_module();
-            let module_b = items[b.0].config_module();
+            let module_a = items[a.index].config_module();
+            let module_b = items[b.index].config_module();
 
             let pos_a = combined_modules
                 .iter()
@@ -79,10 +110,10 @@ impl ItemFilter {
                 .unwrap_or(usize::MAX);
 
             // Primary: module position, Secondary: fuzzy score (higher is better)
-            pos_a.cmp(&pos_b).then_with(|| b.1.cmp(&a.1))
+            pos_a.cmp(&pos_b).then_with(|| b.score.cmp(&a.score))
         });
 
-        scored.into_iter().map(|(idx, _)| idx).collect()
+        scored
     }
 
     /// Get the enhanced fuzzy score for an item against a query.
@@ -229,7 +260,7 @@ mod tests {
     fn test_empty_query_returns_all() {
         let filter = ItemFilter::default();
         let items: Vec<ListItem> = vec![];
-        let result = filter.filter_with_modules(&items, "", &[]);
+        let result = filter.filter_indices(&items, "", &[]);
         assert!(result.is_empty());
     }
 
@@ -248,7 +279,7 @@ mod tests {
             ListItem::Application(mock_application("Chrome")),
             ListItem::Application(mock_application("Code")),
         ];
-        let result = filter.filter_with_modules(&items, "", &[]);
+        let result = filter.filter_indices(&items, "", &[]);
         assert_eq!(result, vec![0, 1, 2]);
     }
 
@@ -260,7 +291,7 @@ mod tests {
             ListItem::Application(mock_application("Chrome")),
             ListItem::Application(mock_application("Code")),
         ];
-        let result = filter.filter_with_modules(&items, "fire", &[]);
+        let result = filter.filter_indices(&items, "fire", &[]);
         assert_eq!(result.len(), 1);
         assert_eq!(result[0], 0); // Firefox
     }
@@ -274,7 +305,7 @@ mod tests {
             ListItem::Application(mock_application("Chrome")),
         ];
         // "ff" should match "Firefox" through fuzzy matching
-        let result = filter.filter_with_modules(&items, "ff", &[]);
+        let result = filter.filter_indices(&items, "ff", &[]);
         assert!(!result.is_empty());
         // Firefox should be in results
         assert!(result.contains(&0));
@@ -288,7 +319,7 @@ mod tests {
             ListItem::Application(mock_application_with_desc("App2", "Text Editor")),
             ListItem::Application(mock_application_with_desc("App3", "File Manager")),
         ];
-        let result = filter.filter_with_modules(&items, "browser", &[]);
+        let result = filter.filter_indices(&items, "browser", &[]);
         assert_eq!(result.len(), 1);
         assert_eq!(result[0], 0); // App1 with "Web Browser" description
     }
@@ -300,7 +331,7 @@ mod tests {
             ListItem::Application(mock_application("Firefox")),
             ListItem::Application(mock_application("Chrome")),
         ];
-        let result = filter.filter_with_modules(&items, "zzzznotfound", &[]);
+        let result = filter.filter_indices(&items, "zzzznotfound", &[]);
         assert!(result.is_empty());
     }
 
@@ -312,7 +343,7 @@ mod tests {
             ListItem::Application(mock_application("Chrome")),
         ];
         // Test with lowercase query matching uppercase in name
-        let result = filter.filter_with_modules(&items, "firefox", &[]);
+        let result = filter.filter_indices(&items, "firefox", &[]);
         assert_eq!(result.len(), 1);
         assert_eq!(result[0], 0);
     }
@@ -326,7 +357,7 @@ mod tests {
         ];
         // With Applications module first, both apps should match "App"
         let modules = vec![ConfigModule::Applications];
-        let result = filter.filter_with_modules(&items, "App", &modules);
+        let result = filter.filter_indices(&items, "App", &modules);
         assert_eq!(result.len(), 2);
     }
 
@@ -339,7 +370,7 @@ mod tests {
         ];
         // "eden" exactly matches the app name, but also fuzzy-matches "End the session"
         // The app should rank first due to exact match bonus
-        let result = filter.filter_with_modules(&items, "eden", &[]);
+        let result = filter.filter_indices(&items, "eden", &[]);
         assert!(!result.is_empty());
         assert_eq!(result[0], 0); // Eden app should be first
     }
@@ -353,7 +384,7 @@ mod tests {
         ];
         // "browser" matches first item's name, second item's description
         // Name match should rank higher
-        let result = filter.filter_with_modules(&items, "browser", &[]);
+        let result = filter.filter_indices(&items, "browser", &[]);
         assert_eq!(result.len(), 2);
         assert_eq!(result[0], 0); // Browser (name match) first
     }
@@ -365,7 +396,7 @@ mod tests {
             ListItem::Application(mock_application("Firefox")), // fire = contiguous
             ListItem::Application(mock_application("FooInRExact")), // f-i-r-e = scattered
         ];
-        let result = filter.filter_with_modules(&items, "fire", &[]);
+        let result = filter.filter_indices(&items, "fire", &[]);
         assert!(!result.is_empty());
         // Firefox should rank higher due to contiguous match
         assert_eq!(result[0], 0);
@@ -379,7 +410,7 @@ mod tests {
             ListItem::Application(mock_application("Waterfox")),
         ];
         // "fire" is a prefix of Firefox but in the middle of Waterfox
-        let result = filter.filter_with_modules(&items, "fire", &[]);
+        let result = filter.filter_indices(&items, "fire", &[]);
         assert!(!result.is_empty());
         // Firefox should rank higher due to prefix bonus
         assert_eq!(result[0], 0);
@@ -405,7 +436,7 @@ mod tests {
         ];
 
         // Both have exact match on "testaction", but action should score lower due to 0.8x multiplier
-        let result = filter.filter_with_modules(&items, "testaction", &[]);
+        let result = filter.filter_indices(&items, "testaction", &[]);
         assert_eq!(result.len(), 2);
         assert_eq!(result[0], 0); // App should be first due to action's 0.8x multiplier
     }
@@ -457,7 +488,7 @@ mod tests {
 
         // With low action multiplier, even if "log" matches Logout better,
         // the multiplier should significantly reduce its score
-        let result = filter.filter_with_modules(&items, "log", &[]);
+        let result = filter.filter_indices(&items, "log", &[]);
         // Logout action should still match but with reduced score
         assert!(result.contains(&1));
     }
@@ -471,7 +502,7 @@ mod tests {
         ))];
 
         // Should match with space in query even though name has hyphen
-        let result = filter.filter_with_modules(&items, "counter strike", &[]);
+        let result = filter.filter_indices(&items, "counter strike", &[]);
         assert_eq!(
             result.len(),
             1,
@@ -480,11 +511,11 @@ mod tests {
         assert_eq!(result[0], 0);
 
         // Should also match without space
-        let result2 = filter.filter_with_modules(&items, "counterstrike", &[]);
+        let result2 = filter.filter_indices(&items, "counterstrike", &[]);
         assert_eq!(result2.len(), 1);
 
         // And with hyphen
-        let result3 = filter.filter_with_modules(&items, "counter-strike", &[]);
+        let result3 = filter.filter_indices(&items, "counter-strike", &[]);
         assert_eq!(result3.len(), 1);
     }
 
@@ -497,11 +528,11 @@ mod tests {
         ];
 
         // "visual studio" should match "Visual Studio Code"
-        let result = filter.filter_with_modules(&items, "visual studio", &[]);
+        let result = filter.filter_indices(&items, "visual studio", &[]);
         assert!(result.contains(&0), "Should match 'Visual Studio Code'");
 
         // "android studio" should match "Android Studio"
-        let result2 = filter.filter_with_modules(&items, "android studio", &[]);
+        let result2 = filter.filter_indices(&items, "android studio", &[]);
         assert!(result2.contains(&1), "Should match 'Android Studio'");
     }
 }

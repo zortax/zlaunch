@@ -108,12 +108,13 @@ impl ItemListDelegate {
             tracing::debug!(i, name = item.name(), module = ?item.config_module(), "Sorted item");
         }
 
-        let mut sections = SectionManager::new(combined_modules.clone());
-        let filtered_indices: Vec<usize> = (0..items.len()).collect();
-        sections.update(&items, &filtered_indices, false, false, 0);
-
         // Get fuzzy match config from application config
         let fuzzy_config = config().fuzzy_match.clone();
+
+        let mut sections =
+            SectionManager::new(combined_modules.clone(), fuzzy_config.show_best_match);
+        let filtered_indices: Vec<usize> = (0..items.len()).collect();
+        sections.update(&items, &filtered_indices, false, false, 0);
 
         Self {
             base: BaseDelegate::new(items),
@@ -161,7 +162,8 @@ impl ItemListDelegate {
     pub fn clear_query(&mut self) {
         self.dynamic.clear();
         self.base.clear_query();
-        self.update_sections();
+        // Re-filter to reset sections
+        self.filter_items();
     }
 
     /// Set the query and trigger filtering.
@@ -195,11 +197,23 @@ impl ItemListDelegate {
         let query = self.base.query();
         let items = self.base.items();
 
-        let filtered_indices =
-            self.filter
-                .filter_with_modules(items, query, &self.combined_modules);
+        // Get filtered items with scores for best-match detection
+        let filtered = self
+            .filter
+            .filter_with_scores(items, query, &self.combined_modules);
+
+        // Extract indices for base delegate
+        let filtered_indices: Vec<usize> = filtered.iter().map(|f| f.index).collect();
         self.base.apply_filtered_indices(filtered_indices);
-        self.update_sections();
+
+        // Update sections with scores
+        self.sections.update_with_scores(
+            self.base.items(),
+            &filtered,
+            self.dynamic.has_calculator(),
+            self.dynamic.has_ai(),
+            self.dynamic.search_count(),
+        );
 
         // Ensure selection is initialized
         if self.base.selected_index().is_none() && self.filtered_count() > 0 {
@@ -207,33 +221,14 @@ impl ItemListDelegate {
         }
     }
 
-    /// Update section manager with current state.
-    fn update_sections(&mut self) {
-        self.sections.update(
-            self.base.items(),
-            self.base.filtered_indices(),
-            self.dynamic.has_calculator(),
-            self.dynamic.has_ai(),
-            self.dynamic.search_count(),
-        );
-    }
-
     /// Get an item at a global index (including dynamic items).
     pub fn get_item_at(&self, global_index: usize) -> Option<ListItem> {
-        let calc_offset = if self.dynamic.has_calculator() { 1 } else { 0 };
-
-        // Calculator item (always first if present)
-        if global_index == 0 && self.dynamic.has_calculator() {
-            return self
-                .dynamic
-                .calculator_item
-                .clone()
-                .map(ListItem::Calculator);
-        }
-
-        // Track offset within regular items
+        // Track offset within regular items (excluding best match)
         let mut regular_item_offset = 0;
-        let mut current_start = calc_offset;
+        let mut current_start = 0;
+
+        // Get the best match position if applicable
+        let best_match_pos = self.sections.best_match_filtered_pos();
 
         for section_type in self.sections.ordered_section_types() {
             let section_count = self.sections.section_item_count(section_type);
@@ -243,13 +238,24 @@ impl ItemListDelegate {
                 let row = global_index - current_start;
 
                 return match section_type {
+                    SectionType::BestMatch => {
+                        // Return the promoted best match item
+                        let best_pos = best_match_pos?;
+                        self.base.get_filtered_item(best_pos).cloned()
+                    }
                     SectionType::Calculator => self
                         .dynamic
                         .calculator_item
                         .clone()
                         .map(ListItem::Calculator),
                     SectionType::Windows | SectionType::Commands | SectionType::Applications => {
-                        let base_idx = regular_item_offset + row;
+                        // Calculate the actual index, skipping the best match if it was in this section
+                        let base_idx = self.get_adjusted_base_index(
+                            regular_item_offset,
+                            row,
+                            section_type,
+                            best_match_pos,
+                        );
                         self.base.get_filtered_item(base_idx).cloned()
                     }
                     SectionType::SearchAndAi => {
@@ -268,17 +274,46 @@ impl ItemListDelegate {
                 };
             }
 
-            // Track offset for regular items
+            // Track offset for regular items (excluding BestMatch and Calculator)
             if matches!(
                 section_type,
                 SectionType::Windows | SectionType::Commands | SectionType::Applications
             ) {
                 regular_item_offset += section_count;
+                // Add 1 if best match was from this section (since we subtracted it from count)
+                if self.sections.best_match_original_section() == Some(section_type) {
+                    regular_item_offset += 1;
+                }
             }
             current_start = section_end;
         }
 
         None
+    }
+
+    /// Get the adjusted base index, accounting for the best match being skipped.
+    fn get_adjusted_base_index(
+        &self,
+        offset: usize,
+        row: usize,
+        section_type: SectionType,
+        best_match_pos: Option<usize>,
+    ) -> usize {
+        let base_idx = offset + row;
+
+        // If best match is from this section and we're past where it would be, add 1
+        if let Some(best_pos) = best_match_pos {
+            if self.sections.best_match_original_section() == Some(section_type) {
+                // The best match was removed from this section
+                // We need to map our row to the correct position in filtered items
+                // by skipping the best match position
+                if base_idx >= best_pos {
+                    return base_idx + 1;
+                }
+            }
+        }
+
+        base_idx
     }
 
     /// Execute confirm callback for the selected item.

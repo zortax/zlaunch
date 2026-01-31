@@ -227,6 +227,24 @@ The order in `combined_modules` determines the display order of sections in comb
 
 > **Note:** The `disabled_modules` option is deprecated. Use `combined_modules` instead to specify which modules to include (and in what order).
 
+### Fuzzy matching
+
+The fuzzy search can be fine-tuned via the `[fuzzy_match]` section:
+
+```toml
+[fuzzy_match]
+show_best_match = true          # Promote highest-scoring item to top (default: true)
+exact_match_bonus = 100000      # Bonus for exact name match
+prefix_match_bonus = 50000      # Bonus when query matches start of name
+word_prefix_bonus = 25000       # Bonus when query matches start of a word
+contiguity_bonus = 10000        # Bonus for consecutive character matches
+description_penalty = 0.3       # Multiplier for description-only matches (0.0-1.0)
+action_score_multiplier = 0.8   # Score multiplier for action items
+submenu_score_multiplier = 0.9  # Score multiplier for submenu items
+```
+
+**Best match feature:** When enabled, the highest-scoring search result is promoted to the top of the list regardless of module order. This ensures the most relevant match is always visible first in combined mode.
+
 ### Search providers
 
 Each provider supports the following fields:

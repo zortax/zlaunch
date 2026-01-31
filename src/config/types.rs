@@ -33,6 +33,11 @@ pub struct FuzzyMatchConfig {
     /// Score multiplier for submenu items in combined mode.
     /// Default: 0.9
     pub submenu_score_multiplier: f64,
+    /// Show the best matching item at the top, regardless of module order.
+    /// When enabled, if a higher-scoring item exists in a lower-priority module,
+    /// it will be promoted to the top of the list.
+    /// Default: true
+    pub show_best_match: bool,
 }
 
 impl FuzzyMatchConfig {
@@ -46,6 +51,7 @@ impl FuzzyMatchConfig {
             description_penalty: 0.3,
             action_score_multiplier: 0.8,
             submenu_score_multiplier: 0.9,
+            show_best_match: true,
         }
     }
 }
