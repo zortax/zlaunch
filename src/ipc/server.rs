@@ -139,13 +139,30 @@ pub fn prepare_socket() -> anyhow::Result<PathBuf> {
 /// Start the tarpc IPC server on the shared tokio runtime.
 ///
 /// This should be called inside the GPUI run closure, after the tokio runtime is initialized.
-pub fn start_server(event_tx: flume::Sender<DaemonEvent>, cx: &gpui::App) -> IpcServerHandle {
+/// Blocks until the socket is successfully bound, ensuring the socket file exists before returning.
+pub fn start_server(
+    event_tx: flume::Sender<DaemonEvent>,
+    cx: &gpui::App,
+) -> anyhow::Result<IpcServerHandle> {
     let socket_path = get_socket_path();
     let socket_path_clone = socket_path.clone();
 
+    // Channel to signal when socket binding is complete
+    let (bind_tx, bind_rx) = std::sync::mpsc::channel::<Result<(), std::io::Error>>();
+
     // Spawn the server on the shared tokio runtime
     crate::tokio_runtime::spawn(cx, async move {
-        let listener = UnixListener::bind(&socket_path_clone).expect("Failed to bind IPC socket");
+        // Bind the socket and signal the result
+        let listener = match UnixListener::bind(&socket_path_clone) {
+            Ok(listener) => {
+                let _ = bind_tx.send(Ok(()));
+                listener
+            }
+            Err(e) => {
+                let _ = bind_tx.send(Err(e));
+                return;
+            }
+        };
 
         tracing::info!("IPC server listening on {:?}", socket_path_clone);
 
@@ -177,5 +194,10 @@ pub fn start_server(event_tx: flume::Sender<DaemonEvent>, cx: &gpui::App) -> Ipc
         }
     });
 
-    IpcServerHandle { socket_path }
+    // Wait for the socket to be bound before returning
+    match bind_rx.recv() {
+        Ok(Ok(())) => Ok(IpcServerHandle { socket_path }),
+        Ok(Err(e)) => anyhow::bail!("Failed to bind IPC socket: {}", e),
+        Err(_) => anyhow::bail!("IPC server task terminated unexpectedly before binding socket"),
+    }
 }

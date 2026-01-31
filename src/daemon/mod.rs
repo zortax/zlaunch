@@ -68,7 +68,14 @@ pub fn run() -> Result<()> {
             crate::tokio_runtime::init(cx);
 
             // Start IPC server on shared tokio runtime
-            let _ipc_handle = init::start_ipc_server(event_tx.clone(), cx);
+            let ipc_handle = match init::start_ipc_server(event_tx.clone(), cx) {
+                Ok(handle) => handle,
+                Err(e) => {
+                    tracing::error!("Failed to start IPC server: {}", e);
+                    cx.quit();
+                    return;
+                }
+            };
 
             // Configure theme for transparent background
             theme::configure_theme(cx);
@@ -83,6 +90,7 @@ pub fn run() -> Result<()> {
             crate::tokio_runtime::spawn(cx, watcher::run_watcher_loop(event_tx_for_watcher));
 
             // Main event loop (runs on GPUI executor)
+            // Move ipc_handle into the async block to keep it alive for the daemon's lifetime
             cx.spawn(async move |cx: &mut gpui::AsyncApp| {
                 event_handler::run_event_loop(
                     event_rx,
@@ -92,6 +100,9 @@ pub fn run() -> Result<()> {
                     cx,
                 )
                 .await;
+
+                // ipc_handle is dropped here when the event loop exits, cleaning up the socket
+                drop(ipc_handle);
             })
             .detach();
         });

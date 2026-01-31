@@ -47,10 +47,11 @@ pub fn prepare_ipc_socket() -> Result<()> {
 /// Start the IPC server on the shared tokio runtime.
 ///
 /// This should be called inside the GPUI run closure, after the tokio runtime is initialized.
+/// Returns an error if the socket cannot be bound.
 pub fn start_ipc_server(
     event_tx: flume::Sender<crate::app::DaemonEvent>,
     cx: &gpui::App,
-) -> IpcServerHandle {
+) -> Result<IpcServerHandle> {
     start_server(event_tx, cx)
 }
 
