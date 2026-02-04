@@ -165,9 +165,7 @@ fn render_icon_element(icon: Icon) -> Div {
                 render_placeholder_icon(icon_container, "?")
             }
         }
-        Icon::Data(image) => {
-            icon_container.child(img(image).w(size).h(size).rounded_sm())
-        }
+        Icon::Data(image) => icon_container.child(img(image).w(size).h(size).rounded_sm()),
         Icon::Named(_name) => {
             // For named icons, we'd typically use an icon library
             // For now, use placeholder
