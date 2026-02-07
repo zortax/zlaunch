@@ -229,6 +229,11 @@ impl SectionManager {
 
         for module in &self.combined_modules {
             match module {
+                ConfigModule::Calculator if self.has_calculator => {
+                    if !sections.contains(&SectionType::Calculator) {
+                        sections.push(SectionType::Calculator);
+                    }
+                }
                 ConfigModule::Windows if self.section_info.window_count > 0 => {
                     if !sections.contains(&SectionType::Windows) {
                         sections.push(SectionType::Windows);
@@ -285,9 +290,6 @@ impl SectionManager {
         if self.has_best_match() {
             count += 1;
         }
-        if self.has_calculator {
-            count += 1;
-        }
         count += self.ordered_section_types_internal().len();
         count
     }
@@ -300,14 +302,6 @@ impl SectionManager {
         if self.has_best_match() {
             if section == current_section {
                 return SectionType::BestMatch;
-            }
-            current_section += 1;
-        }
-
-        // Calculator next (if present)
-        if self.has_calculator {
-            if section == current_section {
-                return SectionType::Calculator;
             }
             current_section += 1;
         }
@@ -389,11 +383,6 @@ impl SectionManager {
             offset += self.section_item_count(st);
         }
 
-        // Include calculator if it comes before this section
-        if self.has_calculator && section_type != SectionType::Calculator {
-            offset += 1;
-        }
-
         offset
     }
 
@@ -421,14 +410,6 @@ impl SectionManager {
                 current_section += 1;
             }
             current_start = section_end;
-        }
-
-        // Check calculator section
-        if self.has_calculator {
-            let calc_start = current_start;
-            if global_idx == calc_start {
-                return Some(IndexPath::new(0).section(current_section));
-            }
         }
 
         None

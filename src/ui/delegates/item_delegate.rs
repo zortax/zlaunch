@@ -394,14 +394,6 @@ impl ListDelegate for ItemListDelegate {
             return None;
         }
 
-        // SearchAndAi section: show header only when there are other sections
-        if section_type == SectionType::SearchAndAi {
-            let has_other_sections = sections.iter().any(|s| *s != SectionType::SearchAndAi);
-            if !has_other_sections {
-                return None;
-            }
-        }
-
         let theme = theme();
         let title = section_type.title();
 
