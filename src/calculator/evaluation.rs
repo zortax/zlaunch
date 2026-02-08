@@ -6,6 +6,26 @@
 use crate::items::CalculatorItem;
 use fend_core::Context;
 use std::sync::{Mutex, OnceLock};
+use std::time::{Duration, Instant};
+
+/// Interrupt handler that stops fend evaluation after a timeout.
+struct TimeoutInterrupt {
+    deadline: Instant,
+}
+
+impl TimeoutInterrupt {
+    fn new(timeout: Duration) -> Self {
+        Self {
+            deadline: Instant::now() + timeout,
+        }
+    }
+}
+
+impl fend_core::Interrupt for TimeoutInterrupt {
+    fn should_interrupt(&self) -> bool {
+        Instant::now() >= self.deadline
+    }
+}
 
 static CONTEXT: OnceLock<Mutex<Context>> = OnceLock::new();
 
@@ -20,7 +40,8 @@ pub fn evaluate_expression(input: &str) -> Result<CalculatorItem, String> {
         .get_or_init(|| Mutex::new(Context::new()))
         .lock()
         .unwrap();
-    match fend_core::evaluate(&expression, &mut context) {
+    let interrupt = TimeoutInterrupt::new(Duration::from_millis(50));
+    match fend_core::evaluate_with_interrupt(&expression, &mut context, &interrupt) {
         Ok(value) => {
             let value = value.get_main_result();
             let calc_value = value.trim_start_matches("approx. ");
