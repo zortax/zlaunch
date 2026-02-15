@@ -71,9 +71,7 @@ pub fn render_markdown_with_id(
     let text: SharedString = text.to_string().into();
 
     // Wrap in a container with text_sm for consistent small font size
-    div().text_sm().child(
-        TextView::markdown(id, text)
-            .style(style)
-            .selectable(true),
-    )
+    div()
+        .text_sm()
+        .child(TextView::markdown(id, text).style(style).selectable(true))
 }
