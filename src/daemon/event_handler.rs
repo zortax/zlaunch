@@ -230,5 +230,4 @@ fn handle_show(
             }
         }
     })
-    .unwrap_or(Err(IpcError::Internal("Failed to update app".into())))
 }
