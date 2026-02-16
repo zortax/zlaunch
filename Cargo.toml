@@ -1,6 +1,6 @@
 [package]
 name = "zlaunch"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 description = "A fast application launcher for Linux wayland desktops built with GPUI."
 repository = "https://github.com/zortax/zlaunch"

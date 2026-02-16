@@ -47,7 +47,7 @@ Available on the AUR as [`zlaunch-bin`](https://aur.archlinux.org/packages/zlaun
 ```nix
 {
   inputs = {
-    zlaunch.url = "github:zortax/zlaunch/0.4.0";
+    zlaunch.url = "github:zortax/zlaunch/0.5.0";
   };
 }
 ```
