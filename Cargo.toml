@@ -8,9 +8,9 @@ license = "MIT"
 authors = ["Leonard Seibold <git@zrtx.de>"]
 
 [dependencies]
-gpui = { git = "https://github.com/zed-industries/zed", rev = "7c724c0f1049e610c541c2f4f6a8739f91865e02" }
-gpui-component = "0.5.0"
-gpui-component-assets = "0.5.0"
+gpui = { git = "https://github.com/zed-industries/zed" }
+gpui-component = { git = "https://github.com/longbridge/gpui-component", rev = "11b02b0e7a9fb51639dd9a28f3ad5aa4f99fdd81" }
+gpui-component-assets = { git = "https://github.com/longbridge/gpui-component", rev = "11b02b0e7a9fb51639dd9a28f3ad5aa4f99fdd81" }
 rust-embed = "8"
 anyhow = "1"
 thiserror = "2"
@@ -46,7 +46,7 @@ zbus = { version = "5", default-features = false, features = ["blocking-api"] }
 notify = "8"
 
 [patch.crates-io]
-gpui = { git = "https://github.com/zed-industries/zed", rev = "7c724c0f1049e610c541c2f4f6a8739f91865e02" }
+gpui = { git = "https://github.com/zed-industries/zed" }
 zbus = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
 zbus_macros = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
 zbus_names = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }

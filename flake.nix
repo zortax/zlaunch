@@ -24,13 +24,13 @@
           buildInputs = with pkgs; [
             openssl
             libxkbcommon
-            xorg.libxcb
+            libxcb
             wayland
             freetype
             fontconfig
           ];
 
-          cargoHash = "sha256-4MIGbfsXbsCdz3f6axO5AwoeH4oLpWxy4UI8qzYUZpY=";
+          cargoHash = "sha256-jTsq4Ed7REQ+dPgSXud2Frr27VqF99XFRO+v5+PjTeU=";
 
           postFixup = with pkgs; ''
             patchelf --add-rpath ${vulkan-loader}/lib $out/bin/zlaunch
@@ -51,7 +51,7 @@
           buildInputs = with pkgs; [
             openssl
             libxkbcommon
-            xorg.libxcb
+            libxcb
             wayland
             freetype
             fontconfig
@@ -62,7 +62,7 @@
               pkgs.wayland
               pkgs.libxkbcommon
               pkgs.vulkan-loader
-              pkgs.xorg.libxcb
+              pkgs.libxcb
             ];
           };
         };
