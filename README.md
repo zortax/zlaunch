@@ -53,8 +53,8 @@ Available on the AUR as [`zlaunch-bin`](https://aur.archlinux.org/packages/zlaun
 ```
 
 The package is available as `zlaunch.packages.${pkgs.system}.default`. A Home
-Manager module available as `zlaunch.homeManagerModules.default` (for details
-see [Installation Instructions](https://zlaunch.zortax.de/docs/getting-started/installation).
+Manager module is available as `zlaunch.homeManagerModules.default` (for
+details see [Installation Instructions](https://zlaunch.zortax.de/docs/getting-started/installation).
 
 ### Building from source
 
