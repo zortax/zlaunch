@@ -52,33 +52,9 @@ Available on the AUR as [`zlaunch-bin`](https://aur.archlinux.org/packages/zlaun
 }
 ```
 
-The package is available as `zlaunch.packages.${pkgs.system}.default`.
-
-#### Home Manager module
-
-```nix
-{
-  services.zlaunch = {
-    enable = true;
-    systemd.enabled = true;
-
-    settings = {
-      theme = "one-dark";
-      launcher_size = [ 800.0 500.0 ];
-
-      search_providers = [
-        {
-          name = "GitHub";
-          trigger = "!gh";
-          url = "https://github.com/search?q={query}";
-        }
-      ];
-    };
-  };
-}
-```
-
-You can use zlaunch through a Home Manager module available as `zlaunch.homeManagerModules.default`. You can enable it and use it managed by a systemd service. To configure it use the `settings` attribute, with the same sintax as `config.toml`. Check all available options in `flake.nix`.
+The package is available as `zlaunch.packages.${pkgs.system}.default`. A Home
+Manager module available as `zlaunch.homeManagerModules.default` (for details
+see [Installation Instructions](https://zlaunch.zortax.de/docs/getting-started/installation).
 
 ### Building from source
 
@@ -86,7 +62,8 @@ You can use zlaunch through a Home Manager module available as `zlaunch.homeMana
 cargo build --release
 ```
 
-If you have Nix installed, you can use `nix develop` for a preconfigured dev shell with all dependencies.
+If you have Nix installed, you can use `nix develop` for a preconfigured dev
+shell with all dependencies.
 
 ## Quick Start
 
