@@ -7,7 +7,7 @@ use std::sync::Arc;
 use tracing::{error, info};
 
 use crate::compositor::{Compositor, detect_compositor};
-use crate::config::{ConfigModule, get_combined_modules};
+use crate::config::{ConfigModule, LauncherMode, get_combined_modules, get_default_modes};
 use crate::desktop::cache::load_applications;
 use crate::ipc::{IpcServerHandle, client, prepare_socket, start_server};
 use crate::items::ApplicationItem;
@@ -58,9 +58,12 @@ pub fn start_ipc_server(
 /// Initialize clipboard monitoring if enabled in config.
 pub fn init_clipboard_if_enabled() {
     let combined_modules = get_combined_modules();
+    let default_modes = get_default_modes();
 
-    if combined_modules.contains(&ConfigModule::Clipboard) {
-        // Initialize clipboard history
+    let in_combined = combined_modules.contains(&ConfigModule::Clipboard);
+    let in_modes = default_modes.contains(&LauncherMode::Clipboard);
+
+    if in_combined || in_modes {
         crate::clipboard::data::init();
         info!("Initialized clipboard history");
 
