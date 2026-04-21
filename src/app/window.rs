@@ -6,7 +6,7 @@ use crate::ui::LauncherView;
 use gpui::{
     App, AppContext, Bounds, Entity, WindowBackgroundAppearance, WindowBounds, WindowDecorations,
     WindowHandle, WindowKind, WindowOptions,
-    layer_shell::{Anchor, KeyboardInteractivity, Layer, LayerShellOptions},
+    layer_shell::{Anchor, KeyboardInteractivity, LayerShellOptions},
     point, px, size,
 };
 use gpui_component::Root;
@@ -92,7 +92,7 @@ fn create_and_show_window_impl(
         window_decorations: Some(WindowDecorations::Server),
         kind: WindowKind::LayerShell(LayerShellOptions {
             namespace: "zlaunch".to_string(),
-            layer: Layer::Overlay,
+            layer: config.layer_shell_layer.into(),
             // Anchor to all edges = fullscreen overlay
             anchor: Anchor::TOP | Anchor::BOTTOM | Anchor::LEFT | Anchor::RIGHT,
             // Exclusive keyboard so typing works immediately

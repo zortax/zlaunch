@@ -1,7 +1,33 @@
 //! Configuration type definitions.
 
+use gpui::layer_shell::Layer;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+
+/// Wayland layer-shell layer on which the launcher window is placed.
+///
+/// Only the two layers that make sense for a launcher surface are exposed.
+/// Defaults to `Overlay`, which is suitable in almost all cases. Use `Top`
+/// when another surface (e.g. certain input-method popups) needs to render
+/// above the launcher.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum LayerShellLayer {
+    /// The `top` layer from the `zwlr_layer_shell_v1` protocol.
+    Top,
+    /// The `overlay` layer from the `zwlr_layer_shell_v1` protocol. Default.
+    #[default]
+    Overlay,
+}
+
+impl From<LayerShellLayer> for Layer {
+    fn from(value: LayerShellLayer) -> Self {
+        match value {
+            LayerShellLayer::Top => Layer::Top,
+            LayerShellLayer::Overlay => Layer::Overlay,
+        }
+    }
+}
 
 /// Configuration for fuzzy matching algorithm.
 ///
@@ -94,6 +120,10 @@ pub struct AppConfig {
     pub combined_modules: Option<Vec<ConfigModule>>,
     /// Fuzzy matching configuration for search scoring.
     pub fuzzy_match: FuzzyMatchConfig,
+    /// Wayland layer-shell layer to place the launcher window on.
+    /// Default: `Overlay`. Use `Top` if another surface (e.g. an input-method
+    /// popup) needs to render above the launcher.
+    pub layer_shell_layer: LayerShellLayer,
 }
 
 impl AppConfig {
@@ -111,6 +141,7 @@ impl AppConfig {
             default_modes: None,
             combined_modules: None,
             fuzzy_match: FuzzyMatchConfig::default_const(),
+            layer_shell_layer: LayerShellLayer::Overlay,
         }
     }
 
@@ -159,6 +190,7 @@ impl Default for AppConfig {
             default_modes: None,
             combined_modules: None,
             fuzzy_match: FuzzyMatchConfig::default(),
+            layer_shell_layer: LayerShellLayer::default(),
         }
     }
 }
@@ -597,5 +629,66 @@ mod tests {
         // Should use all defaults when fuzzy_match section is missing
         assert_eq!(config.fuzzy_match.exact_match_bonus, 100_000);
         assert_eq!(config.fuzzy_match.prefix_match_bonus, 50_000);
+    }
+
+    #[test]
+    fn test_layer_shell_layer_default_is_overlay() {
+        assert_eq!(LayerShellLayer::default(), LayerShellLayer::Overlay);
+        let config = AppConfig::default();
+        assert_eq!(config.layer_shell_layer, LayerShellLayer::Overlay);
+        let config = AppConfig::default_const();
+        assert_eq!(config.layer_shell_layer, LayerShellLayer::Overlay);
+    }
+
+    #[test]
+    fn test_layer_shell_layer_deserialization() {
+        let toml_str = r#"
+            layer_shell_layer = "top"
+        "#;
+        let config: AppConfig = toml::from_str(toml_str).expect("Failed to deserialize");
+        assert_eq!(config.layer_shell_layer, LayerShellLayer::Top);
+
+        let toml_str = r#"
+            layer_shell_layer = "overlay"
+        "#;
+        let config: AppConfig = toml::from_str(toml_str).expect("Failed to deserialize");
+        assert_eq!(config.layer_shell_layer, LayerShellLayer::Overlay);
+    }
+
+    #[test]
+    fn test_layer_shell_layer_serialization() {
+        let config = AppConfig {
+            layer_shell_layer: LayerShellLayer::Top,
+            ..AppConfig::default()
+        };
+        let toml_str = toml::to_string(&config).expect("Failed to serialize");
+        assert!(toml_str.contains("layer_shell_layer = \"top\""));
+    }
+
+    #[test]
+    fn test_layer_shell_layer_missing_uses_default() {
+        let toml_str = r#"
+            theme = "default"
+        "#;
+        let config: AppConfig = toml::from_str(toml_str).expect("Failed to deserialize");
+        assert_eq!(config.layer_shell_layer, LayerShellLayer::Overlay);
+    }
+
+    #[test]
+    fn test_layer_shell_layer_invalid_value_rejected() {
+        let toml_str = r#"
+            layer_shell_layer = "background"
+        "#;
+        // "background" is a valid wlr layer but intentionally not exposed.
+        assert!(toml::from_str::<AppConfig>(toml_str).is_err());
+    }
+
+    #[test]
+    fn test_layer_shell_layer_into_gpui_layer() {
+        use gpui::layer_shell::Layer;
+        let layer: Layer = LayerShellLayer::Overlay.into();
+        assert!(matches!(layer, Layer::Overlay));
+        let layer: Layer = LayerShellLayer::Top.into();
+        assert!(matches!(layer, Layer::Top));
     }
 }
