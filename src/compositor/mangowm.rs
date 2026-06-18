@@ -18,8 +18,9 @@ impl MangowmCompositor {
     }
 
     fn send_command(&self, cmd: &str) -> Result<String> {
-        let mut stream = UnixStream::connect(&self.socket_path)
-            .with_context(|| format!("Failed to connect to mango socket: {:?}", self.socket_path))?;
+        let mut stream = UnixStream::connect(&self.socket_path).with_context(|| {
+            format!("Failed to connect to mango socket: {:?}", self.socket_path)
+        })?;
 
         stream
             .write_all(cmd.as_bytes())

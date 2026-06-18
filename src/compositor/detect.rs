@@ -3,8 +3,8 @@
 use super::Compositor;
 use super::hyprland::HyprlandCompositor;
 use super::kwin::KwinCompositor;
-use super::niri::NiriCompositor;
 use super::mangowm::MangowmCompositor;
+use super::niri::NiriCompositor;
 use super::noop::NoopCompositor;
 use tracing::{info, warn};
 
