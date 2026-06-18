@@ -14,7 +14,8 @@ use tracing::{info, warn};
 /// 1. Hyprland (via HYPRLAND_INSTANCE_SIGNATURE env var)
 /// 2. KDE/KWin (via KDE_SESSION_VERSION env var)
 /// 3. Niri     (via NIRI_SOCKET env var)
-/// 3. Fallback to NoopCompositor
+/// 4. MangoWC  (via MANGO_INSTANCE_SIGNATURE env var)
+/// 5. Fallback to NoopCompositor
 ///
 /// The NoopCompositor allows the launcher to function (with applications only)
 /// even on unsupported compositors.
