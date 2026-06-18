@@ -160,12 +160,12 @@ fn render_icon_element(icon: Icon) -> Div {
         Icon::Path(path) => {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "png" | "jpg" | "jpeg" | "svg") {
-                icon_container.child(img(path).w(size).h(size).rounded_sm())
+                icon_container.child(img(path).w(size).h(size).rounded(theme.icon_border_radius))
             } else {
                 render_placeholder_icon(icon_container, "?")
             }
         }
-        Icon::Data(image) => icon_container.child(img(image).w(size).h(size).rounded_sm()),
+        Icon::Data(image) => icon_container.child(img(image).w(size).h(size).rounded(theme.icon_border_radius)),
         Icon::Named(_name) => {
             // For named icons, we'd typically use an icon library
             // For now, use placeholder
@@ -180,7 +180,7 @@ fn render_placeholder_icon(container: Div, text: &str) -> Div {
     let theme = theme();
     container
         .bg(theme.icon_placeholder_background)
-        .rounded_sm()
+        .rounded(theme.icon_border_radius)
         .child(
             div()
                 .text_sm()

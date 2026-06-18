@@ -97,7 +97,7 @@ fn render_item_icon(item: &ClipboardItem) -> Div {
                 .items_center()
                 .justify_center()
                 .bg(t.icon_placeholder_background)
-                .rounded_sm()
+                .rounded(t.icon_border_radius)
                 .child(
                     div()
                         .w(t.clipboard.color_icon_size)
@@ -209,7 +209,7 @@ fn render_icon_container(icon: PhosphorIcon) -> Div {
         .items_center()
         .justify_center()
         .bg(t.icon_placeholder_background)
-        .rounded_sm()
+        .rounded(t.icon_border_radius)
         .child(
             svg()
                 .path(icon.path())

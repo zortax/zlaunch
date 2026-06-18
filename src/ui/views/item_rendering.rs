@@ -172,7 +172,7 @@ fn render_calculator_icon() -> Div {
         .items_center()
         .justify_center()
         .bg(icon_bg)
-        .rounded_sm()
+        .rounded(theme.icon_border_radius)
         .child(
             div()
                 .text_sm()
@@ -280,7 +280,7 @@ fn render_icon_from_data(data: &[u8]) -> Div {
         .justify_center();
 
     let image = Arc::new(gpui::Image::from_bytes(ImageFormat::Png, data.to_vec()));
-    icon_container.child(img(image).w(size).h(size).rounded_sm())
+    icon_container.child(img(image).w(size).h(size).rounded(theme.icon_border_radius))
 }
 
 /// Render an icon from a file path, with fallback placeholder.
@@ -299,14 +299,14 @@ pub fn render_icon(icon_path: Option<&PathBuf>) -> Div {
     if let Some(path) = icon_path {
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
         if matches!(ext, "png" | "jpg" | "jpeg" | "svg") {
-            return icon_container.child(img(path.clone()).w(size).h(size).rounded_sm());
+            return icon_container.child(img(path.clone()).w(size).h(size).rounded(theme.icon_border_radius));
         }
     }
 
     // Fallback: show a subtle placeholder
     icon_container
         .bg(theme.icon_placeholder_background)
-        .rounded_sm()
+        .rounded(theme.icon_border_radius)
         .child(
             div()
                 .text_sm()
@@ -328,7 +328,7 @@ pub fn render_phosphor_icon(icon: Option<PhosphorIcon>) -> Div {
         .items_center()
         .justify_center()
         .bg(theme.icon_placeholder_background)
-        .rounded_sm();
+        .rounded(theme.icon_border_radius);
 
     if let Some(icon) = icon {
         icon_container.child(
