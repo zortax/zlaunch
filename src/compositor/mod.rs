@@ -9,6 +9,7 @@ mod detect;
 pub mod error;
 pub mod hyprland;
 mod kwin;
+pub mod mangowm;
 mod niri;
 mod noop;
 

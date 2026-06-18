@@ -27,7 +27,7 @@ A fast application launcher and window switcher for Linux Wayland, built with
 ## Features
 
 - **Application launching** — Fuzzy search through desktop entries with icons
-- **Window switching** — Switch between open windows (Hyprland, Niri, KWin)
+- **Window switching** — Switch between open windows (Hyprland, Niri, KWin, MangoWM)
 - **Calculator** — Evaluate math expressions and copy the result to clipboard
 - **Web search** — Search Google, DuckDuckGo, Wikipedia, YouTube, and more
 - **Emoji picker** — Searchable emoji grid

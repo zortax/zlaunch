@@ -3,6 +3,7 @@
 use super::Compositor;
 use super::hyprland::HyprlandCompositor;
 use super::kwin::KwinCompositor;
+use super::mangowm::MangowmCompositor;
 use super::niri::NiriCompositor;
 use super::noop::NoopCompositor;
 use tracing::{info, warn};
@@ -13,7 +14,8 @@ use tracing::{info, warn};
 /// 1. Hyprland (via HYPRLAND_INSTANCE_SIGNATURE env var)
 /// 2. KDE/KWin (via KDE_SESSION_VERSION env var)
 /// 3. Niri     (via NIRI_SOCKET env var)
-/// 3. Fallback to NoopCompositor
+/// 4. MangoWC  (via MANGO_INSTANCE_SIGNATURE env var)
+/// 5. Fallback to NoopCompositor
 ///
 /// The NoopCompositor allows the launcher to function (with applications only)
 /// even on unsupported compositors.
@@ -33,6 +35,12 @@ pub fn detect_compositor() -> Box<dyn Compositor> {
     // Try Niri
     if let Some(compositor) = NiriCompositor::new() {
         info!("Detected Niri compositor");
+        return Box::new(compositor);
+    }
+
+    // Try MangoWM
+    if let Some(compositor) = MangowmCompositor::new() {
+        info!("Detected MangoWM compositor");
         return Box::new(compositor);
     }
 
