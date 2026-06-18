@@ -425,6 +425,8 @@ pub struct LauncherTheme {
     // Icons
     #[serde(with = "pixels_serde")]
     pub icon_size: Pixels,
+    #[serde(with = "pixels_serde")]
+    pub icon_border_radius: Pixels,
     #[serde(with = "hsla_serde")]
     pub icon_placeholder_background: Hsla,
     #[serde(with = "hsla_serde")]
@@ -579,6 +581,7 @@ impl Default for LauncherTheme {
 
             // Icons
             icon_size: px(24.0),
+            icon_border_radius: px(4.0),
             icon_placeholder_background: hsla(0.0, 0.0, 1.0, 0.04), // ~4% white
             icon_placeholder_color: hsla(0.0, 0.0, 1.0, 0.25),      // 25% white
 
