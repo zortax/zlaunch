@@ -94,6 +94,8 @@ impl Default for FuzzyMatchConfig {
 pub struct FontConfig {
     /// Font family name, for example "CaskaydiaCove Nerd Font Mono".
     pub font_family: Option<String>,
+    /// Font family name, for example "Mononoki Nerd Font Mono"
+    pub mono_font_family: Option<String>,
     /// Font size in pixels.
     pub font_size: Option<f32>,
 }
@@ -102,6 +104,7 @@ impl Default for FontConfig {
     fn default() -> Self {
         Self {
             font_family: None,
+            mono_font_family: None,
             font_size: None,
         }
     }
@@ -166,6 +169,7 @@ impl AppConfig {
             layer_shell_layer: LayerShellLayer::Overlay,
             font: FontConfig {
                 font_family: None,
+                mono_font_family: None,
                 font_size: None,
             },
         }

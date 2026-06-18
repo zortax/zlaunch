@@ -36,12 +36,24 @@ pub fn configure_theme(cx: &mut gpui::App) {
         .font_family
         .clone()
         .or(config.font.font_family.clone()); // Fallback to config font if theme has no font set
+
+    let mono_font_family = theme_config
+        .font
+        .mono_font_family
+        .clone()
+        .or(config.font.mono_font_family.clone()); // Fallback to config font if theme has no font set
+
     let font_size = theme_config.font.font_size.or(config.font.font_size);
 
     // Apply font family and size
     if let Some(family) = font_family {
         theme.font_family = family.into();
     }
+
+    if let Some(family) = mono_font_family {
+        theme.mono_font_family = family.into();
+    }
+
     if let Some(size) = font_size {
         theme.font_size = px(size);
     }
