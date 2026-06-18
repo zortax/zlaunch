@@ -299,7 +299,12 @@ pub fn render_icon(icon_path: Option<&PathBuf>) -> Div {
     if let Some(path) = icon_path {
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
         if matches!(ext, "png" | "jpg" | "jpeg" | "svg") {
-            return icon_container.child(img(path.clone()).w(size).h(size).rounded(theme.icon_border_radius));
+            return icon_container.child(
+                img(path.clone())
+                    .w(size)
+                    .h(size)
+                    .rounded(theme.icon_border_radius),
+            );
         }
     }
 
