@@ -1,3 +1,4 @@
+use crate::config::FontConfig;
 use gpui::{Hsla, Pixels, hsla, px};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -318,9 +319,6 @@ pub struct MarkdownTheme {
     /// Border radius for code blocks
     #[serde(with = "pixels_serde")]
     pub code_block_radius: Pixels,
-    /// Font family for code blocks
-    #[serde(skip)]
-    pub code_font_family: &'static str,
     /// Line height for code text
     #[serde(with = "pixels_serde")]
     pub code_line_height: Pixels,
@@ -438,6 +436,10 @@ pub struct LauncherTheme {
     #[serde(with = "hsla_serde")]
     pub empty_state_color: Hsla,
 
+    // Font
+    #[serde(default)]
+    pub font: FontConfig,
+
     // Sub-themes for specific components
     pub calculator: CalculatorTheme,
     pub action_indicator: ActionIndicatorTheme,
@@ -515,7 +517,6 @@ impl Default for MarkdownTheme {
             paragraph_line_height: px(20.0),
             heading_line_height: px(22.0),
             code_block_radius: px(6.0),
-            code_font_family: "Hack Nerd Font Mono",
             code_line_height: px(18.0),
         }
     }
@@ -588,6 +589,9 @@ impl Default for LauncherTheme {
             // Empty state
             empty_state_height: px(200.0),
             empty_state_color: hsla(0.0, 0.0, 1.0, 0.25), // 25% white
+
+            // Use font Default implementation
+            font: FontConfig::default(),
 
             // Sub-themes use their Default implementations
             calculator: CalculatorTheme::default(),

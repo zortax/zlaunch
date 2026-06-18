@@ -88,6 +88,28 @@ impl Default for FuzzyMatchConfig {
     }
 }
 
+/// Font configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct FontConfig {
+    /// Font family name, for example "CaskaydiaCove Nerd Font Mono".
+    pub font_family: Option<String>,
+    /// Font family name, for example "Mononoki Nerd Font Mono"
+    pub mono_font_family: Option<String>,
+    /// Font size in pixels.
+    pub font_size: Option<f32>,
+}
+
+impl Default for FontConfig {
+    fn default() -> Self {
+        Self {
+            font_family: None,
+            mono_font_family: None,
+            font_size: None,
+        }
+    }
+}
+
 /// Application configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
@@ -124,6 +146,9 @@ pub struct AppConfig {
     /// Default: `Overlay`. Use `Top` if another surface (e.g. an input-method
     /// popup) needs to render above the launcher.
     pub layer_shell_layer: LayerShellLayer,
+    /// Font configuration for the launcher UI.
+    /// Can be overridden by the active theme's `[font]` section.
+    pub font: FontConfig,
 }
 
 impl AppConfig {
@@ -142,6 +167,11 @@ impl AppConfig {
             combined_modules: None,
             fuzzy_match: FuzzyMatchConfig::default_const(),
             layer_shell_layer: LayerShellLayer::Overlay,
+            font: FontConfig {
+                font_family: None,
+                mono_font_family: None,
+                font_size: None,
+            },
         }
     }
 
@@ -191,6 +221,7 @@ impl Default for AppConfig {
             combined_modules: None,
             fuzzy_match: FuzzyMatchConfig::default(),
             layer_shell_layer: LayerShellLayer::default(),
+            font: FontConfig::default(),
         }
     }
 }
