@@ -1,7 +1,7 @@
 //! Theme configuration and handling for the daemon.
 
 use crate::error::IpcError;
-use gpui::hsla;
+use gpui::{hsla, px};
 use gpui_component::theme::Theme;
 
 /// Handle the SetTheme IPC command.
@@ -27,11 +27,30 @@ pub fn handle_set_theme(name: &str) -> Result<(), IpcError> {
 /// Sets up transparent backgrounds and minimal borders for the overlay look.
 pub fn configure_theme(cx: &mut gpui::App) {
     let theme = Theme::global_mut(cx);
+    let config = crate::config::config();
+    let theme_config = crate::ui::theme::theme();
+
+    // Get font family and size from config
+    let font_family = theme_config
+        .font
+        .font_family
+        .clone()
+        .or(config.font.font_family.clone()); // Fallback to config font if theme has no font set
+    let font_size = theme_config.font.font_size.or(config.font.font_size);
+
+    // Apply font family and size
+    if let Some(family) = font_family {
+        theme.font_family = family.into();
+    }
+    if let Some(size) = font_size {
+        theme.font_size = px(size);
+    }
+
+    // Set the background overlay thing
     theme.background = hsla(0.0, 0.0, 0.0, 0.0); // Fully transparent
     theme.window_border = hsla(0.0, 0.0, 0.0, 0.0); // No window border
     theme.border = hsla(0.0, 0.0, 1.0, 0.1); // Subtle separator between search and list
     theme.list_active_border = hsla(0.0, 0.0, 0.0, 0.0); // No selection border
     theme.list_active = hsla(0.0, 0.0, 0.0, 0.0); // Fully transparent - we handle selection ourselves
     theme.list_hover = hsla(0.0, 0.0, 0.0, 0.0); // Fully transparent - we handle hover ourselves
-    theme.mono_font_family = "Mononoki Nerd Font Mono".into(); // Monospace font for code blocks
 }

@@ -1,3 +1,4 @@
+use crate::config::FontConfig;
 use gpui::{Hsla, Pixels, hsla, px};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -438,6 +439,10 @@ pub struct LauncherTheme {
     #[serde(with = "hsla_serde")]
     pub empty_state_color: Hsla,
 
+    // Font
+    #[serde(default)]
+    pub font: FontConfig,
+
     // Sub-themes for specific components
     pub calculator: CalculatorTheme,
     pub action_indicator: ActionIndicatorTheme,
@@ -588,6 +593,9 @@ impl Default for LauncherTheme {
             // Empty state
             empty_state_height: px(200.0),
             empty_state_color: hsla(0.0, 0.0, 1.0, 0.25), // 25% white
+
+            // Use font Default implementation
+            font: FontConfig::default(),
 
             // Sub-themes use their Default implementations
             calculator: CalculatorTheme::default(),

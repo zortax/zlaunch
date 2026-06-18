@@ -18,7 +18,8 @@ pub mod validation;
 
 // Re-export types
 pub use types::{
-    AppConfig, ConfigModule, ConfigSearchProvider, FuzzyMatchConfig, LauncherMode, LayerShellLayer,
+    AppConfig, ConfigModule, ConfigSearchProvider, FontConfig, FuzzyMatchConfig, LauncherMode,
+    LayerShellLayer,
 };
 
 // Re-export service functions
