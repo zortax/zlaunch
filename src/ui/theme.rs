@@ -319,9 +319,6 @@ pub struct MarkdownTheme {
     /// Border radius for code blocks
     #[serde(with = "pixels_serde")]
     pub code_block_radius: Pixels,
-    /// Font family for code blocks
-    #[serde(skip)]
-    pub code_font_family: &'static str,
     /// Line height for code text
     #[serde(with = "pixels_serde")]
     pub code_line_height: Pixels,
@@ -520,7 +517,6 @@ impl Default for MarkdownTheme {
             paragraph_line_height: px(20.0),
             heading_line_height: px(22.0),
             code_block_radius: px(6.0),
-            code_font_family: "Hack Nerd Font Mono",
             code_line_height: px(18.0),
         }
     }
