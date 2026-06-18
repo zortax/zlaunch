@@ -4,6 +4,7 @@ use super::Compositor;
 use super::hyprland::HyprlandCompositor;
 use super::kwin::KwinCompositor;
 use super::niri::NiriCompositor;
+use super::mangowm::MangowmCompositor;
 use super::noop::NoopCompositor;
 use tracing::{info, warn};
 
@@ -33,6 +34,12 @@ pub fn detect_compositor() -> Box<dyn Compositor> {
     // Try Niri
     if let Some(compositor) = NiriCompositor::new() {
         info!("Detected Niri compositor");
+        return Box::new(compositor);
+    }
+
+    // Try MangoWM
+    if let Some(compositor) = MangowmCompositor::new() {
+        info!("Detected MangoWM compositor");
         return Box::new(compositor);
     }
 
