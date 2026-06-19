@@ -151,6 +151,9 @@ pub struct AppConfig {
     pub font: FontConfig,
     /// Max number of items to store in clipboard.db.
     pub max_clipboard_history: Option<usize>,
+    /// Whether to store passwords in the clipboard history.
+    /// Default: false.
+    pub store_passwords: bool,
 }
 
 impl AppConfig {
@@ -175,6 +178,7 @@ impl AppConfig {
                 font_size: None,
             },
             max_clipboard_history: None,
+            store_passwords: false,
         }
     }
 
@@ -226,6 +230,7 @@ impl Default for AppConfig {
             layer_shell_layer: LayerShellLayer::default(),
             font: FontConfig::default(),
             max_clipboard_history: None,
+            store_passwords: false,
         }
     }
 }

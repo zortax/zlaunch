@@ -15,6 +15,8 @@ use wayland_protocols_wlr::data_control::v1::client::{
     zwlr_data_control_source_v1,
 };
 
+use crate::config;
+
 /// State for the Wayland clipboard monitor.
 struct ClipboardMonitorState {
     manager: Option<zwlr_data_control_manager_v1::ZwlrDataControlManagerV1>,
@@ -171,7 +173,9 @@ impl Dispatch<zwlr_data_control_device_v1::ZwlrDataControlDeviceV1, ()> for Clip
                         .any(|m| m == "x-kde-passwordManagerHint");
                 state.mime_types.clear();
 
-                if is_password {
+                let store_passwords = config::config().store_passwords;
+
+                if is_password && !store_passwords {
                     debug!("Detected password, not storing in history");
                 } else if id.is_some() {
                     debug!("Clipboard selection changed");
