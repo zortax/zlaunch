@@ -1,6 +1,7 @@
 //! Clipboard history data storage and search.
 
 use super::item::{ClipboardContent, ClipboardItem};
+use crate::config;
 use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use lazy_static::lazy_static;
@@ -9,8 +10,7 @@ use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::sync::RwLock;
 use std::time::{Duration, UNIX_EPOCH};
-
-const MAX_HISTORY: usize = 500;
+use tracing::debug;
 
 /// Global clipboard history storage.
 static CLIPBOARD_HISTORY: RwLock<Option<VecDeque<ClipboardItem>>> = RwLock::new(None);
@@ -41,7 +41,6 @@ lazy_static! {
         Mutex::new(conn)
     };
 }
-
 
 /// Initialize the clipboard history storage.
 pub fn init() {
@@ -152,13 +151,26 @@ pub fn add_item(content: ClipboardContent) {
             .expect("Failed to insert clipboard item");
         }
     }
-    db.execute(
-        "DELETE FROM clipboard_history WHERE id <= (
+
+    let max_history = config::config()
+        .max_clipboard_history
+        .filter(|&v| v > 0)
+        .unwrap_or(500);
+
+    if history.len() >= max_history {
+        debug!(
+            "Deleted last item from clipboard because max history length of {} has been reached.",
+            max_history
+        );
+
+        db.execute(
+            "DELETE FROM clipboard_history WHERE id <= (
             SELECT id FROM clipboard_history ORDER BY id DESC LIMIT 1 OFFSET ?
         )",
-        rusqlite::params![MAX_HISTORY as i64],
-    )
-    .ok();
+            rusqlite::params![max_history as i64],
+        )
+        .ok();
+    }
     drop(db);
 
     history.push_front(item);
