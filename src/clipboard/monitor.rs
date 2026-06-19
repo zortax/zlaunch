@@ -21,6 +21,7 @@ struct ClipboardMonitorState {
     seat: Option<wl_seat::WlSeat>,
     device: Option<zwlr_data_control_device_v1::ZwlrDataControlDeviceV1>,
     running: Arc<AtomicBool>,
+    mime_types: Vec<String>,
 }
 
 /// Start monitoring clipboard changes in a background thread.
@@ -54,6 +55,7 @@ fn run_monitor(running: Arc<AtomicBool>) -> Result<(), Box<dyn std::error::Error
         seat: None,
         device: None,
         running,
+        mime_types: Vec::new(),
     };
 
     // Initial roundtrip to get globals
@@ -152,7 +154,7 @@ impl Dispatch<zwlr_data_control_manager_v1::ZwlrDataControlManagerV1, ()>
 
 impl Dispatch<zwlr_data_control_device_v1::ZwlrDataControlDeviceV1, ()> for ClipboardMonitorState {
     fn event(
-        _: &mut Self,
+        state: &mut Self,
         _: &zwlr_data_control_device_v1::ZwlrDataControlDeviceV1,
         event: zwlr_data_control_device_v1::Event,
         _: &(),
@@ -161,7 +163,17 @@ impl Dispatch<zwlr_data_control_device_v1::ZwlrDataControlDeviceV1, ()> for Clip
     ) {
         match event {
             zwlr_data_control_device_v1::Event::Selection { id } => {
-                if id.is_some() {
+                // Check if it's a password
+                let is_password = id.is_some()
+                    && state
+                        .mime_types
+                        .iter()
+                        .any(|m| m == "x-kde-passwordManagerHint");
+                state.mime_types.clear();
+
+                if is_password {
+                    debug!("Detected password, not storing in history");
+                } else if id.is_some() {
                     debug!("Clipboard selection changed");
                     // Clipboard changed, read the new content
                     if let Err(e) = read_clipboard_content() {
@@ -191,13 +203,17 @@ impl Dispatch<zwlr_data_control_device_v1::ZwlrDataControlDeviceV1, ()> for Clip
 
 impl Dispatch<zwlr_data_control_offer_v1::ZwlrDataControlOfferV1, ()> for ClipboardMonitorState {
     fn event(
-        _: &mut Self,
+        state: &mut Self,
         _: &zwlr_data_control_offer_v1::ZwlrDataControlOfferV1,
-        _: zwlr_data_control_offer_v1::Event,
+        event: zwlr_data_control_offer_v1::Event,
         _: &(),
         _: &Connection,
         _: &QueueHandle<Self>,
     ) {
+        if let zwlr_data_control_offer_v1::Event::Offer { mime_type } = event {
+            debug!("Clipboard MIME type: {}", mime_type);
+            state.mime_types.push(mime_type);
+        }
     }
 }
 
