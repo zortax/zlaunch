@@ -4,6 +4,7 @@ use crate::assets::PhosphorIcon;
 use crate::clipboard::{ClipboardContent, ClipboardItem};
 use crate::ui::theme::theme;
 use crate::ui::utils::color::{Color, parse_color};
+use crate::ui::views::render_action_indicator;
 use gpui::{Div, ElementId, SharedString, Stateful, div, img, prelude::*, px, svg};
 use std::fs;
 use std::path::PathBuf;
@@ -25,7 +26,7 @@ pub fn render_clipboard_item(item: &ClipboardItem, selected: bool, row: usize) -
     // Get preview text
     let preview = get_item_preview(item);
 
-    div()
+    let mut container = div()
         .id(ElementId::NamedInteger("clipboard-item".into(), row as u64))
         .ml(px(0.0))
         .mr(t.item_margin_x)
@@ -71,7 +72,13 @@ pub fn render_clipboard_item(item: &ClipboardItem, selected: bool, row: usize) -
                         .text_ellipsis()
                         .child(SharedString::from(timestamp_str)),
                 ),
-        )
+        );
+
+    if selected {
+        container = container.child(render_action_indicator("Delete", Some("Del")));
+    }
+
+    container
 }
 
 /// Get preview text for a clipboard item.

@@ -149,6 +149,11 @@ pub struct AppConfig {
     /// Font configuration for the launcher UI.
     /// Can be overridden by the active theme's `[font]` section.
     pub font: FontConfig,
+    /// Max number of items to store in clipboard.db.
+    pub max_clipboard_history: Option<usize>,
+    /// Whether to store passwords in the clipboard history.
+    /// Default: false.
+    pub store_passwords: bool,
 }
 
 impl AppConfig {
@@ -172,6 +177,8 @@ impl AppConfig {
                 mono_font_family: None,
                 font_size: None,
             },
+            max_clipboard_history: None,
+            store_passwords: false,
         }
     }
 
@@ -222,6 +229,8 @@ impl Default for AppConfig {
             fuzzy_match: FuzzyMatchConfig::default(),
             layer_shell_layer: LayerShellLayer::default(),
             font: FontConfig::default(),
+            max_clipboard_history: None,
+            store_passwords: false,
         }
     }
 }
