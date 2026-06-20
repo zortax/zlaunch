@@ -15,7 +15,7 @@ pub fn render_theme_item(theme_item: &ThemeItem, selected: bool, row: usize) -> 
         ));
 
     if selected {
-        item = item.child(render_action_indicator("Apply"));
+        item = item.child(render_action_indicator("Apply", None));
     }
 
     item

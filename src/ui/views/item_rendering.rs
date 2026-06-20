@@ -40,7 +40,7 @@ fn render_application(
         ));
 
     if selected {
-        item = item.child(render_action_indicator("Open"));
+        item = item.child(render_action_indicator("Open", None));
     }
 
     item
@@ -64,7 +64,7 @@ fn render_window(win: &crate::items::WindowItem, selected: bool, row: usize) -> 
         ));
 
     if selected {
-        item = item.child(render_action_indicator("Switch"));
+        item = item.child(render_action_indicator("Switch", None));
     }
 
     item
@@ -82,7 +82,7 @@ fn render_action(act: &crate::items::ActionItem, selected: bool, row: usize) -> 
         ));
 
     if selected {
-        item = item.child(render_action_indicator("Run"));
+        item = item.child(render_action_indicator("Run", None));
     }
 
     item
@@ -101,7 +101,7 @@ fn render_submenu(sub: &crate::items::SubmenuItem, selected: bool, row: usize) -
 
     if selected {
         // Show arrow to indicate submenu
-        item = item.child(render_action_indicator("→"));
+        item = item.child(render_action_indicator("→", None));
     }
 
     item
@@ -149,7 +149,7 @@ fn render_calculator(
 
     // Add action indicator when selected
     if selected {
-        container = container.child(render_action_indicator("Copy"));
+        container = container.child(render_action_indicator("Copy", None));
     }
 
     container
@@ -221,7 +221,7 @@ fn render_search(search: &crate::items::SearchItem, selected: bool, row: usize) 
         .child(render_text_content(&search.name, None, selected));
 
     if selected {
-        item = item.child(render_action_indicator("Open"));
+        item = item.child(render_action_indicator("Open", None));
     }
 
     item
@@ -234,7 +234,7 @@ fn render_ai(ai: &crate::items::AiItem, selected: bool, row: usize) -> Stateful<
         .child(render_text_content(&ai.name, ai.description(), selected));
 
     if selected {
-        item = item.child(render_action_indicator("Ask"));
+        item = item.child(render_action_indicator("Ask", None));
     }
 
     item
@@ -397,8 +397,9 @@ pub fn render_text_content(name: &str, description: Option<&str>, selected: bool
 }
 
 /// Render the action indicator shown on selected items.
-pub fn render_action_indicator(label: &str) -> Div {
+pub fn render_action_indicator(label: &str, icon: Option<&str>) -> Div {
     let theme = theme();
+    let icon = icon.unwrap_or("↵").to_string();
 
     div()
         .absolute()
@@ -428,6 +429,6 @@ pub fn render_action_indicator(label: &str) -> Div {
                 .text_size(theme.action_indicator.key_font_size)
                 .line_height(theme.action_indicator.key_line_height)
                 .text_color(theme.action_indicator.key_color)
-                .child(SharedString::from("↵")),
+                .child(SharedString::from(icon)),
         )
 }
