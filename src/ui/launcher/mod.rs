@@ -194,6 +194,10 @@ impl LauncherView {
             let Some(launcher) = weak_launcher.upgrade() else {
                 return;
             };
+            // Only delete if you are on the clipboard history view
+            if launcher.read(cx).view_mode == ViewMode::ClipboardHistory {
+                return;
+            }
             launcher.update(cx, |launcher, cx| {
                 launcher.delete_selected_clipboard(window, cx)
             });
