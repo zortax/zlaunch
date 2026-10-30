@@ -4,7 +4,7 @@
 //! mathematical expressions and formatting results.
 
 use crate::items::CalculatorItem;
-use fend_core::Context;
+use fend_core::{Context, FendResult, SpanKind};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
