@@ -13,7 +13,7 @@ use crate::desktop::launch_application;
 use crate::items::{Executable, ListItem};
 
 use super::state::ViewMode;
-use super::{Cancel, Confirm, GoBack, LauncherView};
+use super::{Cancel, Confirm, DeleteClipboardEntry, GoBack, LauncherView};
 
 impl LauncherView {
     /// Handle confirming the selected item.
@@ -203,10 +203,20 @@ impl LauncherView {
         }
     }
 
-    /// Delete the selected clipboard item.
-    pub fn delete_selected_clipboard(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
-        let Some(handler) = self.clipboard_mode_handler.as_ref() else {
-            return;
+    /// Handle deleting the selected clipboard history entry.
+    pub fn delete_clipboard_entry(
+        &mut self,
+        _: &DeleteClipboardEntry,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let handler = match (self.view_mode, self.clipboard_mode_handler.as_ref()) {
+            (ViewMode::ClipboardHistory, Some(handler)) => handler,
+            _ => {
+                // Let the input handle the keystroke as usual
+                cx.propagate();
+                return;
+            }
         };
         let list = handler.list_state().clone();
 

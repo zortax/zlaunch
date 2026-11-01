@@ -75,7 +75,7 @@ pub fn render_clipboard_item(item: &ClipboardItem, selected: bool, row: usize) -
         );
 
     if selected {
-        container = container.child(render_action_indicator("Delete", Some("Del")));
+        container = container.child(render_action_indicator("Delete", Some("⇧Del")));
     }
 
     container

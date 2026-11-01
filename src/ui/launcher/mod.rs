@@ -32,6 +32,7 @@
 //! - `Enter` - Execute selected item
 //! - `Escape` - Hide launcher or go back
 //! - `Backspace` (empty input) - Return to previous mode
+//! - `Shift+Delete/Shift+Backspace` - Delete selected entry (clipboard mode)
 
 mod actions;
 mod mode_switching;
@@ -43,10 +44,7 @@ pub use state::{ModeState, ViewMode};
 
 use std::sync::Arc;
 
-use gpui::{
-    App, AppContext, Context, Entity, FocusHandle, Focusable, KeyBinding, Subscription, Window,
-    actions,
-};
+use gpui::{App, AppContext, Context, Entity, FocusHandle, Focusable, KeyBinding, Window, actions};
 use gpui_component::input::{InputEvent, InputState};
 use gpui_component::list::ListState;
 
@@ -71,7 +69,8 @@ actions!(
         Cancel,
         GoBack,
         SwitchModeNext,
-        SwitchModePrev
+        SwitchModePrev,
+        DeleteClipboardEntry
     ]
 );
 
@@ -87,6 +86,25 @@ pub fn init(cx: &mut App) {
         KeyBinding::new("backspace", GoBack, Some("LauncherView")),
         KeyBinding::new("ctrl-tab", SwitchModeNext, Some("LauncherView")),
         KeyBinding::new("ctrl-shift-tab", SwitchModePrev, Some("LauncherView")),
+        // Also bound in the input context so these take precedence over the input's own
+        // shift-delete/shift-backspace bindings. Outside of clipboard mode the action
+        // propagates, so the input bindings still apply there.
+        KeyBinding::new("shift-delete", DeleteClipboardEntry, Some("LauncherView")),
+        KeyBinding::new(
+            "shift-backspace",
+            DeleteClipboardEntry,
+            Some("LauncherView"),
+        ),
+        KeyBinding::new(
+            "shift-delete",
+            DeleteClipboardEntry,
+            Some("LauncherView > Input"),
+        ),
+        KeyBinding::new(
+            "shift-backspace",
+            DeleteClipboardEntry,
+            Some("LauncherView > Input"),
+        ),
     ]);
 }
 
@@ -116,8 +134,6 @@ pub struct LauncherView {
     pub(crate) current_theme: LauncherTheme,
     /// Theme preview subscription
     pub(crate) _theme_preview_subscription: Option<gpui::Subscription>,
-    /// Keystroke interceptor
-    pub(crate) _keystroke_interceptor: Subscription,
     /// Input state
     pub(crate) input_state: Entity<InputState>,
     /// Focus handle
@@ -184,26 +200,6 @@ impl LauncherView {
 
         let focus_handle = cx.focus_handle();
 
-        // Intercept the Delete key so it can be used for deleting clipboard entries
-        let weak_launcher = cx.entity().downgrade();
-        let keystroke_interceptor = cx.intercept_keystrokes(move |event, window, cx| {
-            let keystroke = &event.keystroke;
-            if keystroke.key != "delete" || keystroke.modifiers.modified() {
-                return;
-            }
-            let Some(launcher) = weak_launcher.upgrade() else {
-                return;
-            };
-            // Only delete if you are on the clipboard history view
-            if launcher.read(cx).view_mode != ViewMode::ClipboardHistory {
-                return;
-            }
-            launcher.update(cx, |launcher, cx| {
-                launcher.delete_selected_clipboard(window, cx)
-            });
-            cx.stop_propagation();
-        });
-
         // Hide when the view loses focus
         let on_hide_for_blur = on_hide.clone();
         cx.on_blur(&focus_handle, window, move |_this, _window, _cx| {
@@ -236,7 +232,6 @@ impl LauncherView {
             theme_mode_handler: None,
             current_theme: crate::config::load_configured_theme(),
             _theme_preview_subscription: None,
-            _keystroke_interceptor: keystroke_interceptor,
             input_state,
             focus_handle,
             on_hide,
