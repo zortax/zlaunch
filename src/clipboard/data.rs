@@ -47,11 +47,42 @@ lazy_static! {
     };
 }
 
+/// Default max number of clipboard history entries.
+const DEFAULT_MAX_HISTORY: usize = 500;
+
+/// Max number of clipboard history entries, from config.
+fn max_history() -> usize {
+    config::config()
+        .max_clipboard_history
+        .filter(|&v| v > 0)
+        .unwrap_or(DEFAULT_MAX_HISTORY)
+}
+
+/// Delete all but the newest `max` entries from the database.
+fn prune_db(db: &Connection, max: usize) {
+    let deleted = db
+        .execute(
+            "DELETE FROM clipboard_history WHERE id <= (
+                SELECT id FROM clipboard_history ORDER BY id DESC LIMIT 1 OFFSET ?1
+            )",
+            rusqlite::params![max as i64],
+        )
+        .unwrap_or(0);
+    if deleted > 0 {
+        debug!(
+            "Pruned {} clipboard history entries (max history length is {})",
+            deleted, max
+        );
+    }
+}
+
 /// Initialize the clipboard history storage.
 pub fn init() {
     let mut history = CLIPBOARD_HISTORY.write().unwrap();
     if history.is_none() {
         let db = DB.lock().unwrap();
+        // Apply a possibly lowered limit from the config
+        prune_db(&db, max_history());
         let mut stmt = db
             .prepare(
                 "SELECT id, content_type, text_value, image_width, image_height,
@@ -161,28 +192,12 @@ pub fn add_item(content: ClipboardContent) {
 
     item.id = db.last_insert_rowid();
 
-    let max_history = config::config()
-        .max_clipboard_history
-        .filter(|&v| v > 0)
-        .unwrap_or(500);
-
-    if history.len() >= max_history {
-        debug!(
-            "Deleted last item from clipboard because max history length of {} has been reached.",
-            max_history
-        );
-
-        db.execute(
-            "DELETE FROM clipboard_history WHERE id <= (
-            SELECT id FROM clipboard_history ORDER BY id DESC LIMIT 1 OFFSET ?
-        )",
-            rusqlite::params![max_history as i64],
-        )
-        .ok();
-    }
+    let max = max_history();
+    prune_db(&db, max);
     drop(db);
 
     history.push_front(item);
+    history.truncate(max);
 }
 
 /// Delete the selected clipboard item from the database.
