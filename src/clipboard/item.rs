@@ -1,6 +1,7 @@
 //! Clipboard item data structures.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::SystemTime;
 
 /// Represents a single clipboard history entry.
@@ -16,16 +17,28 @@ pub struct ClipboardItem {
 pub enum ClipboardContent {
     /// Plain text content
     Text(String),
-    /// Image data with dimensions (raw RGBA pixel data)
+    /// Image with dimensions
     Image {
         width: usize,
         height: usize,
-        rgba_bytes: Vec<u8>,
+        data: ImageData,
     },
     /// File path(s) copied from file manager
     FilePaths(Vec<PathBuf>),
     /// Rich text / HTML content
     RichText { plain: String, html: String },
+}
+
+/// PNG-encoded data of a clipboard image.
+///
+/// Images are only kept in memory until they are stored in the database,
+/// afterwards they are loaded on demand (see `data::image_png`).
+#[derive(Clone, Debug)]
+pub enum ImageData {
+    /// PNG data held in memory
+    Png(Arc<[u8]>),
+    /// PNG data stored in the clipboard database
+    Stored,
 }
 
 impl ClipboardItem {

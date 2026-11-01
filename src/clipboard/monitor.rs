@@ -1,7 +1,7 @@
 //! Clipboard monitoring using Wayland data-control protocol.
 
 use super::data;
-use super::item::ClipboardContent;
+use super::item::{ClipboardContent, ImageData};
 use arboard::Clipboard;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -259,10 +259,11 @@ fn read_clipboard_content() -> Result<(), Box<dyn std::error::Error>> {
             image.height,
             image.bytes.len()
         );
+        let png = data::encode_png(image.width, image.height, &image.bytes)?;
         data::add_item(ClipboardContent::Image {
             width: image.width,
             height: image.height,
-            rgba_bytes: image.bytes.to_vec(),
+            data: ImageData::Png(png.into()),
         });
         return Ok(());
     }

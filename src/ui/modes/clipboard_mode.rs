@@ -6,7 +6,8 @@
 //! - Handling clipboard item selection and pasting
 
 use crate::clipboard::{
-    ClipboardContent, copy_image_to_clipboard, copy_to_clipboard, data::search_items,
+    ClipboardContent, copy_image_to_clipboard, copy_to_clipboard,
+    data::{image_rgba, search_items},
 };
 use crate::ui::delegates::ClipboardListDelegate;
 use gpui::{AppContext, Context, Entity, Subscription, Window};
@@ -41,15 +42,14 @@ impl ClipboardModeHandler {
                         tracing::warn!(%e, "Failed to copy text to clipboard");
                     }
                 }
-                ClipboardContent::Image {
-                    width,
-                    height,
-                    rgba_bytes,
-                } => {
-                    if let Err(e) = copy_image_to_clipboard(*width, *height, rgba_bytes) {
-                        tracing::warn!(%e, "Failed to copy image to clipboard");
+                ClipboardContent::Image { width, height, .. } => match image_rgba(item) {
+                    Some(rgba) => {
+                        if let Err(e) = copy_image_to_clipboard(*width, *height, &rgba) {
+                            tracing::warn!(%e, "Failed to copy image to clipboard");
+                        }
                     }
-                }
+                    None => tracing::warn!("Failed to load clipboard image"),
+                },
                 ClipboardContent::FilePaths(paths) => {
                     let text = paths
                         .iter()

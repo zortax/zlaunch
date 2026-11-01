@@ -6,4 +6,4 @@ pub mod item;
 pub mod monitor;
 
 pub use copy::{copy_image_to_clipboard, copy_to_clipboard};
-pub use item::{ClipboardContent, ClipboardItem};
+pub use item::{ClipboardContent, ClipboardItem, ImageData};
