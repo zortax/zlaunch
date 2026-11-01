@@ -205,16 +205,16 @@ impl LauncherView {
 
     /// Delete the selected clipboard item.
     pub fn delete_selected_clipboard(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
-        let list = self
-            .clipboard_mode_handler
-            .as_ref()
-            .expect("delete_selected_clipboard called with no clipboard_mode_handler")
-            .list_state()
-            .clone();
-
-        let Some(id) = list.read(cx).delegate().selected_item().map(|item| item.id) else {
+        let Some(handler) = self.clipboard_mode_handler.as_ref() else {
             return;
         };
+        let list = handler.list_state().clone();
+
+        let delegate = list.read(cx).delegate();
+        let Some(id) = delegate.selected_item().map(|item| item.id) else {
+            return;
+        };
+        let selected_index = delegate.selected_index().unwrap_or(0);
 
         // Delete from the database.
         crate::clipboard::data::delete_item(id);
@@ -222,6 +222,10 @@ impl LauncherView {
         list.update(cx, |state, cx| {
             let d = state.delegate_mut();
             d.set_items(crate::clipboard::data::search_items(""));
+            // Keep the selection at the same position instead of jumping to the top
+            if d.filtered_count() > 0 {
+                d.set_selected(selected_index.min(d.filtered_count() - 1));
+            }
             cx.notify();
         });
     }

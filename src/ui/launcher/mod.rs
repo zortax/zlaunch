@@ -195,7 +195,7 @@ impl LauncherView {
                 return;
             };
             // Only delete if you are on the clipboard history view
-            if launcher.read(cx).view_mode == ViewMode::ClipboardHistory {
+            if launcher.read(cx).view_mode != ViewMode::ClipboardHistory {
                 return;
             }
             launcher.update(cx, |launcher, cx| {
