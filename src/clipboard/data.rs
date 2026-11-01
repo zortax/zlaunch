@@ -4,51 +4,70 @@ use super::item::{ClipboardContent, ClipboardItem};
 use crate::config;
 use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
-use lazy_static::lazy_static;
-use rusqlite::Connection;
+use rusqlite::{Connection, params};
 use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::sync::RwLock;
+use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::{LazyLock, Mutex, RwLock};
 use std::time::{Duration, UNIX_EPOCH};
-use tracing::debug;
+use tracing::{debug, error, warn};
 
 /// Global clipboard history storage.
 static CLIPBOARD_HISTORY: RwLock<Option<VecDeque<ClipboardItem>>> = RwLock::new(None);
 
-lazy_static! {
-    static ref DB: Mutex<Connection> = {
-        let cache_dir = dirs::cache_dir().expect("No cache directory found");
-        let path = cache_dir.join("zlaunch").join("clipboard.db");
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).ok();
-        }
-        let conn = Connection::open(&path).expect("Failed to open clipboard database");
+/// Clipboard history database, `None` if it could not be opened.
+static DB: LazyLock<Option<Mutex<Connection>>> = LazyLock::new(|| match open_db() {
+    Ok(conn) => Some(Mutex::new(conn)),
+    Err(e) => {
+        error!(
+            "Failed to open clipboard database, history will not be persisted: {}",
+            e
+        );
+        None
+    }
+});
 
-        // This feature makes sure that the clipboard.db shrinks when entries are deleted.
-        conn.execute_batch("PRAGMA auto_vacuum = FULL;")
-            .expect("Failed to set auto_vacuum");
-
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS clipboard_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                content_type TEXT NOT NULL,
-                text_value TEXT,
-                image_width INTEGER,
-                image_height INTEGER,
-                image_data BLOB,
-                file_paths TEXT,
-                rich_plain TEXT,
-                rich_html TEXT,
-                timestamp INTEGER NOT NULL
-            );",
-        )
-        .expect("Failed to create clipboard history table");
-        Mutex::new(conn)
-    };
-}
+/// Next id for items that could not be stored in the database.
+/// Negative so it can never collide with a database row id.
+static NEXT_MEMORY_ID: AtomicI64 = AtomicI64::new(-1);
 
 /// Default max number of clipboard history entries.
 const DEFAULT_MAX_HISTORY: usize = 500;
+
+fn open_db() -> Result<Connection, Box<dyn std::error::Error>> {
+    let dir = dirs::cache_dir()
+        .ok_or("No cache directory found")?
+        .join("zlaunch");
+    std::fs::create_dir_all(&dir)?;
+    let conn = Connection::open(dir.join("clipboard.db"))?;
+
+    // This feature makes sure that the clipboard.db shrinks when entries are deleted.
+    conn.execute_batch("PRAGMA auto_vacuum = FULL;")?;
+
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS clipboard_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            content_type TEXT NOT NULL,
+            text_value TEXT,
+            image_width INTEGER,
+            image_height INTEGER,
+            image_data BLOB,
+            file_paths TEXT,
+            rich_plain TEXT,
+            rich_html TEXT,
+            timestamp INTEGER NOT NULL
+        );",
+    )?;
+    Ok(conn)
+}
+
+/// Run `f` with the database connection, logging any error.
+/// Returns `None` if the database is unavailable or `f` failed.
+fn with_db<T>(f: impl FnOnce(&Connection) -> rusqlite::Result<T>) -> Option<T> {
+    let db = DB.as_ref()?.lock().unwrap();
+    f(&db)
+        .inspect_err(|e| error!("Clipboard database error: {}", e))
+        .ok()
+}
 
 /// Max number of clipboard history entries, from config.
 fn max_history() -> usize {
@@ -59,74 +78,121 @@ fn max_history() -> usize {
 }
 
 /// Delete all but the newest `max` entries from the database.
-fn prune_db(db: &Connection, max: usize) {
-    let deleted = db
-        .execute(
-            "DELETE FROM clipboard_history WHERE id <= (
-                SELECT id FROM clipboard_history ORDER BY id DESC LIMIT 1 OFFSET ?1
-            )",
-            rusqlite::params![max as i64],
-        )
-        .unwrap_or(0);
+fn prune_db(db: &Connection, max: usize) -> rusqlite::Result<()> {
+    let deleted = db.execute(
+        "DELETE FROM clipboard_history WHERE id <= (
+            SELECT id FROM clipboard_history ORDER BY id DESC LIMIT 1 OFFSET ?1
+        )",
+        params![max as i64],
+    )?;
     if deleted > 0 {
         debug!(
             "Pruned {} clipboard history entries (max history length is {})",
             deleted, max
         );
     }
+    Ok(())
+}
+
+/// Load all clipboard history entries from the database, newest first.
+fn load_items(db: &Connection) -> rusqlite::Result<Vec<ClipboardItem>> {
+    let mut stmt = db.prepare(
+        "SELECT id, content_type, text_value, image_width, image_height,
+                image_data, file_paths, rich_plain, rich_html, timestamp
+         FROM clipboard_history ORDER BY id DESC",
+    )?;
+    let items = stmt
+        .query_map([], |row| {
+            let id = row.get::<_, i64>("id")?;
+            let ts =
+                UNIX_EPOCH + Duration::from_secs(row.get::<_, i64>("timestamp")?.max(0) as u64);
+            let content = match row.get::<_, String>("content_type")?.as_str() {
+                "text" => ClipboardContent::Text(row.get("text_value")?),
+                "image" => ClipboardContent::Image {
+                    width: row.get::<_, i64>("image_width")? as usize,
+                    height: row.get::<_, i64>("image_height")? as usize,
+                    rgba_bytes: row.get("image_data")?,
+                },
+                "file_paths" => ClipboardContent::FilePaths(
+                    serde_json::from_str(&row.get::<_, String>("file_paths")?).unwrap_or_default(),
+                ),
+                "rich_text" => ClipboardContent::RichText {
+                    plain: row.get("rich_plain")?,
+                    html: row.get("rich_html")?,
+                },
+                _ => {
+                    return Err(rusqlite::Error::InvalidColumnName(
+                        "unknown content_type".to_string(),
+                    ));
+                }
+            };
+            Ok(ClipboardItem {
+                id,
+                content,
+                timestamp: ts,
+            })
+        })?
+        .filter_map(|r| {
+            r.inspect_err(|e| warn!("Skipping clipboard entry: {}", e))
+                .ok()
+        })
+        .collect();
+    Ok(items)
 }
 
 /// Initialize the clipboard history storage.
 pub fn init() {
     let mut history = CLIPBOARD_HISTORY.write().unwrap();
     if history.is_none() {
-        let db = DB.lock().unwrap();
-        // Apply a possibly lowered limit from the config
-        prune_db(&db, max_history());
-        let mut stmt = db
-            .prepare(
-                "SELECT id, content_type, text_value, image_width, image_height,
-                        image_data, file_paths, rich_plain, rich_html, timestamp
-                 FROM clipboard_history ORDER BY id DESC",
-            )
-            .expect("Failed to prepare query");
-        let items: Vec<ClipboardItem> = stmt
-            .query_map([], |row| {
-                let id = row.get::<_, i64>("id")?;
-                let ts =
-                    UNIX_EPOCH + Duration::from_secs(row.get::<_, i64>("timestamp")?.max(0) as u64);
-                let content = match row.get::<_, String>("content_type")?.as_str() {
-                    "text" => ClipboardContent::Text(row.get("text_value")?),
-                    "image" => ClipboardContent::Image {
-                        width: row.get::<_, i64>("image_width")? as usize,
-                        height: row.get::<_, i64>("image_height")? as usize,
-                        rgba_bytes: row.get("image_data")?,
-                    },
-                    "file_paths" => ClipboardContent::FilePaths(
-                        serde_json::from_str(&row.get::<_, String>("file_paths")?)
-                            .unwrap_or_default(),
-                    ),
-                    "rich_text" => ClipboardContent::RichText {
-                        plain: row.get("rich_plain")?,
-                        html: row.get("rich_html")?,
-                    },
-                    _ => {
-                        return Err(rusqlite::Error::InvalidColumnName(
-                            "unknown content_type".to_string(),
-                        ));
-                    }
-                };
-                Ok(ClipboardItem {
-                    id,
-                    content,
-                    timestamp: ts,
-                })
-            })
-            .expect("Failed to get clipboard history")
-            .filter_map(|r| r.ok())
-            .collect();
+        let items = with_db(|db| {
+            // Apply a possibly lowered limit from the config
+            prune_db(db, max_history())?;
+            load_items(db)
+        })
+        .unwrap_or_default();
         *history = Some(VecDeque::from(items));
     }
+}
+
+/// Insert a clipboard item into the database, returning its row id.
+fn insert_item(db: &Connection, item: &ClipboardItem) -> rusqlite::Result<i64> {
+    let ts = item
+        .timestamp
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or(Duration::ZERO)
+        .as_secs() as i64;
+
+    match &item.content {
+        ClipboardContent::Text(text) => db.execute(
+            "INSERT INTO clipboard_history (content_type,text_value,timestamp)
+             VALUES ('text',?1,?2)",
+            params![text, ts],
+        )?,
+        ClipboardContent::Image {
+            width,
+            height,
+            rgba_bytes,
+        } => db.execute(
+            "INSERT INTO clipboard_history (content_type,image_width,image_height,image_data,timestamp)
+             VALUES ('image',?1,?2,?3,?4)",
+            params![*width as i64, *height as i64, rgba_bytes, ts],
+        )?,
+        ClipboardContent::FilePaths(paths) => {
+            let json = serde_json::to_string(paths)
+                .map_err(|e| rusqlite::Error::ToSqlConversionFailure(e.into()))?;
+            db.execute(
+                "INSERT INTO clipboard_history (content_type,file_paths,timestamp)
+                 VALUES ('file_paths',?1,?2)",
+                params![json, ts],
+            )?
+        }
+        ClipboardContent::RichText { plain, html } => db.execute(
+            "INSERT INTO clipboard_history (content_type,rich_plain,rich_html,timestamp)
+             VALUES ('rich_text',?1,?2,?3)",
+            params![plain, html, ts],
+        )?,
+    };
+    Ok(db.last_insert_rowid())
 }
 
 /// Add a new item to clipboard history.
@@ -143,78 +209,28 @@ pub fn add_item(content: ClipboardContent) {
     }
 
     let mut item = ClipboardItem::new(content);
-    let ts = item
-        .timestamp
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or(Duration::ZERO)
-        .as_secs() as i64;
-
-    let db = DB.lock().unwrap();
-    match &item.content {
-        ClipboardContent::Text(text) => {
-            db.execute(
-                "INSERT INTO clipboard_history (content_type,text_value,timestamp)
-                 VALUES ('text',?1,?2)",
-                rusqlite::params![text, ts],
-            )
-            .expect("Failed to insert item");
-        }
-        ClipboardContent::Image {
-            width,
-            height,
-            rgba_bytes,
-        } => {
-            db.execute(
-                "INSERT INTO clipboard_history (content_type,image_width,image_height,image_data,timestamp)
-                 VALUES ('image',?1,?2,?3,?4)",
-                rusqlite::params![*width as i64, *height as i64, rgba_bytes, ts],
-            )
-            .expect("Failed to insert clipboard item");
-        }
-        ClipboardContent::FilePaths(paths) => {
-            let json = serde_json::to_string(paths).expect("Failed to serialize paths");
-            db.execute(
-                "INSERT INTO clipboard_history (content_type,file_paths,timestamp)
-                 VALUES ('file_paths',?1,?2)",
-                rusqlite::params![json, ts],
-            )
-            .expect("Failed to insert clipboard item");
-        }
-        ClipboardContent::RichText { plain, html } => {
-            db.execute(
-                "INSERT INTO clipboard_history (content_type,rich_plain,rich_html,timestamp)
-                 VALUES ('rich_text',?1,?2,?3)",
-                rusqlite::params![plain, html, ts],
-            )
-            .expect("Failed to insert clipboard item");
-        }
-    }
-
-    item.id = db.last_insert_rowid();
-
     let max = max_history();
-    prune_db(&db, max);
-    drop(db);
+
+    // Fall back to keeping the item in memory only if it can't be stored
+    item.id = with_db(|db| {
+        let id = insert_item(db, &item)?;
+        prune_db(db, max)?;
+        Ok(id)
+    })
+    .unwrap_or_else(|| NEXT_MEMORY_ID.fetch_sub(1, Ordering::Relaxed));
 
     history.push_front(item);
     history.truncate(max);
 }
 
-/// Delete the selected clipboard item from the database.
-pub fn delete_item(id: i64) -> bool {
+/// Delete a clipboard item from the history and the database.
+pub fn delete_item(id: i64) {
     let mut history = CLIPBOARD_HISTORY.write().unwrap();
     let history = history.as_mut().expect("Clipboard history not initialized");
 
     history.retain(|item| item.id != id);
 
-    DB.lock()
-        .unwrap()
-        .execute(
-            "DELETE FROM clipboard_history WHERE id = ?1",
-            rusqlite::params![id],
-        )
-        .expect("Failed to delete clipboard item");
-    true
+    with_db(|db| db.execute("DELETE FROM clipboard_history WHERE id = ?1", params![id]));
 }
 
 /// Check if two clipboard contents are the same.
@@ -295,7 +311,5 @@ pub fn clear_history() {
     if let Some(h) = history.as_mut() {
         h.clear();
     }
-    let db = DB.lock().unwrap();
-    db.execute("DELETE FROM clipboard_history", [])
-        .expect("Failed to clear clipboard history");
+    with_db(|db| db.execute("DELETE FROM clipboard_history", []));
 }
