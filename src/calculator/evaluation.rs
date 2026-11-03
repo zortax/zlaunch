@@ -86,12 +86,9 @@ fn format_display(value: &FendResult) -> String {
 fn format_with_separators(value: &str, result: &mut String) {
     // Check if the value is a complex number or other unsupported kind
     for c in value.chars() {
-        match c {
-            'A'..='F' | 'a'..='f' | '0'..='9' | '.' => {}
-            _ => {
-                result.push_str(value);
-                return;
-            }
+        if !matches!(c, '0'..='9' | '.' | '-') {
+            result.push_str(value);
+            return;
         }
     }
 
@@ -105,7 +102,7 @@ fn format_with_separators(value: &str, result: &mut String) {
         .map(|s| (s, true))
         .unwrap_or((integer, false));
 
-    result.reserve(value.len() + (digits.len() - 1) / 3);
+    result.reserve(value.len() + digits.len() / 3);
 
     if negative {
         result.push('-');
