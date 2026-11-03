@@ -13,7 +13,7 @@ use crate::desktop::launch_application;
 use crate::items::{Executable, ListItem};
 
 use super::state::ViewMode;
-use super::{Cancel, Confirm, GoBack, LauncherView};
+use super::{Cancel, Confirm, DeleteClipboardEntry, GoBack, LauncherView};
 
 impl LauncherView {
     /// Handle confirming the selected item.
@@ -201,5 +201,42 @@ impl LauncherView {
                 tracing::debug!("Theme item selected");
             }
         }
+    }
+
+    /// Handle deleting the selected clipboard history entry.
+    pub fn delete_clipboard_entry(
+        &mut self,
+        _: &DeleteClipboardEntry,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let handler = match (self.view_mode, self.clipboard_mode_handler.as_ref()) {
+            (ViewMode::ClipboardHistory, Some(handler)) => handler,
+            _ => {
+                // Let the input handle the keystroke as usual
+                cx.propagate();
+                return;
+            }
+        };
+        let list = handler.list_state().clone();
+
+        let delegate = list.read(cx).delegate();
+        let Some(id) = delegate.selected_item().map(|item| item.id) else {
+            return;
+        };
+        let selected_index = delegate.selected_index().unwrap_or(0);
+
+        // Delete from the database.
+        crate::clipboard::data::delete_item(id);
+
+        list.update(cx, |state, cx| {
+            let d = state.delegate_mut();
+            d.set_items(crate::clipboard::data::search_items(""));
+            // Keep the selection at the same position instead of jumping to the top
+            if d.filtered_count() > 0 {
+                d.set_selected(selected_index.min(d.filtered_count() - 1));
+            }
+            cx.notify();
+        });
     }
 }

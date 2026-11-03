@@ -11,11 +11,10 @@ pub fn render_theme_item(theme_item: &ThemeItem, selected: bool, row: usize) -> 
         .child(render_text_content(
             &theme_item.name,
             Some(theme_item.description.as_str()),
-            selected,
         ));
 
     if selected {
-        item = item.child(render_action_indicator("Apply"));
+        item = item.child(render_action_indicator("Apply", None));
     }
 
     item

@@ -1,19 +1,27 @@
 //! Clipboard monitoring using Wayland data-control protocol.
 
 use super::data;
-use super::item::ClipboardContent;
+use super::item::{ClipboardContent, ImageData};
 use arboard::Clipboard;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 use tracing::{debug, error, info};
 use wayland_client::protocol::{wl_registry, wl_seat};
-use wayland_client::{Connection, Dispatch, QueueHandle};
+use wayland_client::{Connection, Dispatch, Proxy, QueueHandle};
 use wayland_protocols_wlr::data_control::v1::client::{
     zwlr_data_control_device_v1, zwlr_data_control_manager_v1, zwlr_data_control_offer_v1,
     zwlr_data_control_source_v1,
 };
+
+use crate::config;
+
+/// MIME type set by password managers (e.g. KeePassXC) on copied secrets.
+const PASSWORD_HINT_MIME_TYPE: &str = "x-kde-passwordManagerHint";
+
+/// MIME types announced for a single data offer, stored as the offer's user data.
+type OfferMimeTypes = Mutex<Vec<String>>;
 
 /// State for the Wayland clipboard monitor.
 struct ClipboardMonitorState {
@@ -160,8 +168,19 @@ impl Dispatch<zwlr_data_control_device_v1::ZwlrDataControlDeviceV1, ()> for Clip
         _: &QueueHandle<Self>,
     ) {
         match event {
-            zwlr_data_control_device_v1::Event::Selection { id } => {
-                if id.is_some() {
+            zwlr_data_control_device_v1::Event::Selection { id: Some(offer) } => {
+                let is_password = offer.data::<OfferMimeTypes>().is_some_and(|m| {
+                    m.lock()
+                        .unwrap()
+                        .iter()
+                        .any(|m| m == PASSWORD_HINT_MIME_TYPE)
+                });
+                // The content is read via arboard, so the offer itself is not needed
+                offer.destroy();
+
+                if is_password && !config::config().store_passwords {
+                    debug!("Detected password, not storing in history");
+                } else {
                     debug!("Clipboard selection changed");
                     // Clipboard changed, read the new content
                     if let Err(e) = read_clipboard_content() {
@@ -169,8 +188,9 @@ impl Dispatch<zwlr_data_control_device_v1::ZwlrDataControlDeviceV1, ()> for Clip
                     }
                 }
             }
-            zwlr_data_control_device_v1::Event::PrimarySelection { .. } => {
+            zwlr_data_control_device_v1::Event::PrimarySelection { id: Some(offer) } => {
                 // Ignore primary selection for now
+                offer.destroy();
             }
             _ => {}
         }
@@ -182,22 +202,30 @@ impl Dispatch<zwlr_data_control_device_v1::ZwlrDataControlDeviceV1, ()> for Clip
     ) -> std::sync::Arc<dyn wayland_client::backend::ObjectData> {
         match opcode {
             zwlr_data_control_device_v1::EVT_DATA_OFFER_OPCODE => {
-                qhandle.make_data::<zwlr_data_control_offer_v1::ZwlrDataControlOfferV1, _>(())
+                qhandle.make_data::<zwlr_data_control_offer_v1::ZwlrDataControlOfferV1, _>(
+                    OfferMimeTypes::default(),
+                )
             }
             _ => panic!("Unknown opcode {} for zwlr_data_control_device_v1", opcode),
         }
     }
 }
 
-impl Dispatch<zwlr_data_control_offer_v1::ZwlrDataControlOfferV1, ()> for ClipboardMonitorState {
+impl Dispatch<zwlr_data_control_offer_v1::ZwlrDataControlOfferV1, OfferMimeTypes>
+    for ClipboardMonitorState
+{
     fn event(
         _: &mut Self,
         _: &zwlr_data_control_offer_v1::ZwlrDataControlOfferV1,
-        _: zwlr_data_control_offer_v1::Event,
-        _: &(),
+        event: zwlr_data_control_offer_v1::Event,
+        mime_types: &OfferMimeTypes,
         _: &Connection,
         _: &QueueHandle<Self>,
     ) {
+        if let zwlr_data_control_offer_v1::Event::Offer { mime_type } = event {
+            debug!("Clipboard MIME type: {}", mime_type);
+            mime_types.lock().unwrap().push(mime_type);
+        }
     }
 }
 
@@ -231,10 +259,11 @@ fn read_clipboard_content() -> Result<(), Box<dyn std::error::Error>> {
             image.height,
             image.bytes.len()
         );
+        let png = data::encode_png(image.width, image.height, &image.bytes)?;
         data::add_item(ClipboardContent::Image {
             width: image.width,
             height: image.height,
-            rgba_bytes: image.bytes.to_vec(),
+            data: ImageData::Png(png.into()),
         });
         return Ok(());
     }

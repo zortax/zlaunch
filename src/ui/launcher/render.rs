@@ -69,6 +69,7 @@ impl gpui::Render for LauncherView {
                 .on_action(cx.listener(Self::go_back))
                 .on_action(cx.listener(Self::switch_mode_next))
                 .on_action(cx.listener(Self::switch_mode_prev))
+                .on_action(cx.listener(Self::delete_clipboard_entry))
                 .size_full()
                 .flex()
                 .items_center()
@@ -99,6 +100,7 @@ impl gpui::Render for LauncherView {
                 .on_action(cx.listener(Self::go_back))
                 .on_action(cx.listener(Self::switch_mode_next))
                 .on_action(cx.listener(Self::switch_mode_prev))
+                .on_action(cx.listener(Self::delete_clipboard_entry))
                 .into_any_element()
         }
     }

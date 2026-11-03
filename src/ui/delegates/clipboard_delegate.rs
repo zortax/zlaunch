@@ -63,6 +63,12 @@ impl ClipboardListDelegate {
         self.filter_items();
     }
 
+    /// Replace all items and re-apply the current query filter.
+    pub fn set_items(&mut self, items: Vec<ClipboardItem>) {
+        self.base.set_items(items);
+        self.filter_items();
+    }
+
     /// Filter items based on the current query
     fn filter_items(&mut self) {
         let query = self.base.query();

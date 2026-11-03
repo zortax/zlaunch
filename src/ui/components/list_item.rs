@@ -1,5 +1,6 @@
 use crate::ui::theme::theme;
-use gpui::{Div, ElementId, SharedString, Stateful, div, img, prelude::*, px};
+use crate::ui::views::render_action_indicator;
+use gpui::{Div, ElementId, SharedString, Stateful, div, img, prelude::*};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -136,7 +137,7 @@ impl ListItemComponent {
         if self.selected
             && let Some(label) = self.action_label
         {
-            container = container.child(render_action_indicator(&label));
+            container = container.child(render_action_indicator(&label, None));
         }
 
         container
@@ -192,7 +193,7 @@ fn render_placeholder_icon(container: Div, text: &str) -> Div {
 }
 
 /// Render the text content (title and optional description)
-fn render_text_content(name: &str, description: Option<&str>, selected: bool) -> Div {
+fn render_text_content(name: &str, description: Option<&str>, _selected: bool) -> Div {
     let theme = theme();
 
     let name_element = div()
@@ -205,11 +206,9 @@ fn render_text_content(name: &str, description: Option<&str>, selected: bool) ->
         .text_ellipsis()
         .child(SharedString::from(name.to_string()));
 
-    let max_width = theme.max_text_width(px(crate::config::launcher_size().0), selected);
-
     let mut content = div()
         .h(theme.item_content_height)
-        .max_w(max_width)
+        .flex_1()
         .flex()
         .flex_col()
         .justify_center()
@@ -231,39 +230,4 @@ fn render_text_content(name: &str, description: Option<&str>, selected: bool) ->
     }
 
     content
-}
-
-/// Render the action indicator shown on selected items
-fn render_action_indicator(label: &str) -> Div {
-    let theme = theme();
-
-    div()
-        .absolute()
-        .right(theme.action_indicator.right_position)
-        .top_0()
-        .bottom_0()
-        .flex()
-        .flex_row()
-        .items_center()
-        .gap_2()
-        .child(
-            div()
-                .text_xs()
-                .text_color(theme.action_indicator.label_color)
-                .child(SharedString::from(label.to_string())),
-        )
-        .child(
-            div()
-                .px(theme.action_indicator.key_padding_x)
-                .pt(theme.action_indicator.key_padding_top)
-                .pb(theme.action_indicator.key_padding_bottom)
-                .bg(theme.action_indicator.key_background)
-                .border_1()
-                .border_color(theme.action_indicator.key_border)
-                .rounded(theme.action_indicator.key_border_radius)
-                .text_size(theme.action_indicator.key_font_size)
-                .line_height(theme.action_indicator.key_line_height)
-                .text_color(theme.action_indicator.key_color)
-                .child(SharedString::from("↵")),
-        )
 }

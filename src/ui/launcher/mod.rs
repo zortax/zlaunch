@@ -32,6 +32,7 @@
 //! - `Enter` - Execute selected item
 //! - `Escape` - Hide launcher or go back
 //! - `Backspace` (empty input) - Return to previous mode
+//! - `Shift+Delete/Shift+Backspace` - Delete selected entry (clipboard mode)
 
 mod actions;
 mod mode_switching;
@@ -68,7 +69,8 @@ actions!(
         Cancel,
         GoBack,
         SwitchModeNext,
-        SwitchModePrev
+        SwitchModePrev,
+        DeleteClipboardEntry
     ]
 );
 
@@ -84,6 +86,25 @@ pub fn init(cx: &mut App) {
         KeyBinding::new("backspace", GoBack, Some("LauncherView")),
         KeyBinding::new("ctrl-tab", SwitchModeNext, Some("LauncherView")),
         KeyBinding::new("ctrl-shift-tab", SwitchModePrev, Some("LauncherView")),
+        // Also bound in the input context so these take precedence over the input's own
+        // shift-delete/shift-backspace bindings. Outside of clipboard mode the action
+        // propagates, so the input bindings still apply there.
+        KeyBinding::new("shift-delete", DeleteClipboardEntry, Some("LauncherView")),
+        KeyBinding::new(
+            "shift-backspace",
+            DeleteClipboardEntry,
+            Some("LauncherView"),
+        ),
+        KeyBinding::new(
+            "shift-delete",
+            DeleteClipboardEntry,
+            Some("LauncherView > Input"),
+        ),
+        KeyBinding::new(
+            "shift-backspace",
+            DeleteClipboardEntry,
+            Some("LauncherView > Input"),
+        ),
     ]);
 }
 
