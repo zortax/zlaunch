@@ -606,25 +606,6 @@ impl Default for LauncherTheme {
     }
 }
 
-impl LauncherTheme {
-    /// Calculate the maximum text width for item content.
-    /// Accounts for window width, margins, padding, icon, and optionally action indicator.
-    pub fn max_text_width(&self, window_width: Pixels, with_action_indicator: bool) -> Pixels {
-        let base = window_width
-            - self.item_margin_x * 2.0
-            - self.item_padding_x * 2.0
-            - self.icon_size
-            - px(8.0)  // gap between icon and text
-            - px(16.0); // buffer
-
-        if with_action_indicator {
-            base - self.action_indicator.width
-        } else {
-            base
-        }
-    }
-}
-
 /// Global theme instance (cached for performance, synced from config).
 static THEME: std::sync::RwLock<Option<LauncherTheme>> = std::sync::RwLock::new(None);
 

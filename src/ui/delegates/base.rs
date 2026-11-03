@@ -55,6 +55,12 @@ impl<T: Clone> BaseDelegate<T> {
         self.on_cancel = Some(Arc::new(callback));
     }
 
+    /// Replace all items and reset the filtered list/selection.
+    pub fn set_items(&mut self, items: Vec<T>) {
+        self.items = items;
+        self.reset_filter();
+    }
+
     /// Get the currently selected index
     pub fn selected_index(&self) -> Option<usize> {
         self.selected_index

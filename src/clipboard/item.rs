@@ -1,11 +1,13 @@
 //! Clipboard item data structures.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::SystemTime;
 
 /// Represents a single clipboard history entry.
 #[derive(Clone, Debug)]
 pub struct ClipboardItem {
+    pub id: i64,
     pub content: ClipboardContent,
     pub timestamp: SystemTime,
 }
@@ -15,11 +17,11 @@ pub struct ClipboardItem {
 pub enum ClipboardContent {
     /// Plain text content
     Text(String),
-    /// Image data with dimensions (raw RGBA pixel data)
+    /// Image with dimensions
     Image {
         width: usize,
         height: usize,
-        rgba_bytes: Vec<u8>,
+        data: ImageData,
     },
     /// File path(s) copied from file manager
     FilePaths(Vec<PathBuf>),
@@ -27,10 +29,23 @@ pub enum ClipboardContent {
     RichText { plain: String, html: String },
 }
 
+/// PNG-encoded data of a clipboard image.
+///
+/// Images are only kept in memory until they are stored in the database,
+/// afterwards they are loaded on demand (see `data::image_png`).
+#[derive(Clone, Debug)]
+pub enum ImageData {
+    /// PNG data held in memory
+    Png(Arc<[u8]>),
+    /// PNG data stored in the clipboard database
+    Stored,
+}
+
 impl ClipboardItem {
     /// Create a new clipboard item with the current timestamp.
     pub fn new(content: ClipboardContent) -> Self {
         Self {
+            id: 0,
             content,
             timestamp: SystemTime::now(),
         }
@@ -42,7 +57,7 @@ impl ClipboardItem {
 
         match &self.content {
             ClipboardContent::Text(text) => {
-                let first_line = text.lines().next().unwrap_or("");
+                let first_line = text.trim_start().lines().next().unwrap_or("");
                 truncate_preview_line(first_line, MAX_LENGTH)
             }
             ClipboardContent::Image { .. } => "[Image]".to_string(),
@@ -58,7 +73,7 @@ impl ClipboardItem {
                 }
             }
             ClipboardContent::RichText { plain, .. } => {
-                let first_line = plain.lines().next().unwrap_or("");
+                let first_line = plain.trim_start().lines().next().unwrap_or("");
                 truncate_preview_line(first_line, MAX_LENGTH)
             }
         }

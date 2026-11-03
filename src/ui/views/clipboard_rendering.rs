@@ -4,10 +4,16 @@ use crate::assets::PhosphorIcon;
 use crate::clipboard::{ClipboardContent, ClipboardItem};
 use crate::ui::theme::theme;
 use crate::ui::utils::color::{Color, parse_color};
+use crate::ui::views::render_action_indicator;
 use gpui::{Div, ElementId, SharedString, Stateful, div, img, prelude::*, px, svg};
 use std::fs;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
+
+/// The last previewed clipboard image by item id, so it isn't loaded
+/// from the database again on every render.
+static IMAGE_PREVIEW_CACHE: Mutex<Option<(i64, Arc<gpui::Image>)>> = Mutex::new(None);
 
 /// Render a clipboard item in the list.
 pub fn render_clipboard_item(item: &ClipboardItem, selected: bool, row: usize) -> Stateful<Div> {
@@ -25,7 +31,7 @@ pub fn render_clipboard_item(item: &ClipboardItem, selected: bool, row: usize) -
     // Get preview text
     let preview = get_item_preview(item);
 
-    div()
+    let mut container = div()
         .id(ElementId::NamedInteger("clipboard-item".into(), row as u64))
         .ml(px(0.0))
         .mr(t.item_margin_x)
@@ -71,7 +77,13 @@ pub fn render_clipboard_item(item: &ClipboardItem, selected: bool, row: usize) -
                         .text_ellipsis()
                         .child(SharedString::from(timestamp_str)),
                 ),
-        )
+        );
+
+    if selected {
+        container = container.child(render_action_indicator("Delete", Some("⇧Del")));
+    }
+
+    container
 }
 
 /// Get preview text for a clipboard item.
@@ -333,14 +345,7 @@ pub fn render_preview_panel(item: Option<&ClipboardItem>) -> Div {
                     .child(SharedString::from(text.clone())),
             )
         }
-        ClipboardContent::Image {
-            width,
-            height,
-            rgba_bytes,
-        } => {
-            // Try to render the image
-            render_image_preview_full(panel, *width, *height, rgba_bytes)
-        }
+        ClipboardContent::Image { .. } => render_image_preview_full(panel, item),
         ClipboardContent::FilePaths(paths) => {
             if paths.len() == 1 {
                 let path = &paths[0];
@@ -436,33 +441,30 @@ pub fn render_preview_panel(item: Option<&ClipboardItem>) -> Div {
     }
 }
 
-/// Render an image from raw RGBA bytes in the preview panel.
-fn render_image_preview_full(panel: Div, width: usize, height: usize, rgba_bytes: &[u8]) -> Div {
-    use image::{ImageBuffer, ImageFormat, Rgba};
-    use std::io::Cursor;
-    use std::sync::Arc;
+/// Render a clipboard image in the preview panel.
+fn render_image_preview_full(panel: Div, item: &ClipboardItem) -> Div {
     let t = theme();
 
-    // Create ImageBuffer from raw RGBA pixel data
-    if let Some(img_buffer) =
-        ImageBuffer::<Rgba<u8>, _>::from_raw(width as u32, height as u32, rgba_bytes.to_vec())
-    {
-        // Encode image as PNG in memory
-        let mut png_bytes = Vec::new();
-        let mut cursor = Cursor::new(&mut png_bytes);
+    let mut cache = IMAGE_PREVIEW_CACHE.lock().unwrap();
+    let image = match cache.as_ref() {
+        Some((id, image)) if *id == item.id => Some(image.clone()),
+        _ => crate::clipboard::data::image_png(item).map(|png| {
+            let image = Arc::new(gpui::Image::from_bytes(
+                gpui::ImageFormat::Png,
+                png.to_vec(),
+            ));
+            *cache = Some((item.id, image.clone()));
+            image
+        }),
+    };
 
-        if img_buffer.write_to(&mut cursor, ImageFormat::Png).is_ok() {
-            // Create GPUI Image from PNG bytes and wrap in Arc
-            let gpui_image = Arc::new(gpui::Image::from_bytes(gpui::ImageFormat::Png, png_bytes));
-
-            // Use the in-memory image directly
-            return panel.child(
-                img(gpui_image)
-                    .w_full()
-                    .h_full()
-                    .object_fit(gpui::ObjectFit::Contain),
-            );
-        }
+    if let Some(image) = image {
+        return panel.child(
+            img(image)
+                .w_full()
+                .h_full()
+                .object_fit(gpui::ObjectFit::Contain),
+        );
     }
 
     // Fallback: show error message
