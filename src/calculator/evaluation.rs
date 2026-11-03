@@ -4,7 +4,7 @@
 //! mathematical expressions and formatting results.
 
 use crate::items::CalculatorItem;
-use fend_core::Context;
+use fend_core::{Context, FendResult, SpanKind};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
@@ -32,7 +32,7 @@ static CONTEXT: OnceLock<Mutex<Context>> = OnceLock::new();
 /// Evaluate a mathematical expression.
 ///
 /// Returns `Ok(CalculatorItem)` if the expression can be parsed,
-/// or `None` if parsing fails entirely.
+/// or `Err` if parsing fails entirely.
 pub fn evaluate_expression(input: &str) -> Result<CalculatorItem, String> {
     let expression = input.trim().to_string();
 
@@ -43,12 +43,11 @@ pub fn evaluate_expression(input: &str) -> Result<CalculatorItem, String> {
     let interrupt = TimeoutInterrupt::new(Duration::from_millis(50));
     match fend_core::evaluate_with_interrupt(&expression, &mut context, &interrupt) {
         Ok(value) => {
-            let value = value.get_main_result();
-            let calc_value = value.trim_start_matches("approx. ");
+            let calc_value = value.get_main_result().trim_start_matches("approx. ");
             Ok(CalculatorItem {
                 id: "calculator-result".to_string(),
                 expression,
-                display_result: format_display(value),
+                display_result: format_display(&value),
                 clipboard_result: Some(calc_value.to_string()),
                 is_error: false,
             })
@@ -70,50 +69,55 @@ pub fn evaluate_expression(input: &str) -> Result<CalculatorItem, String> {
 }
 
 /// Format a number for display with thousand separators.
-fn format_display(value: &str) -> String {
-    // Convert to f64, else return the original string
-    let Ok(value) = value.parse::<f64>() else {
-        return value.to_string();
-    };
-    if value.fract() == 0.0 && value.abs() < 1e15 {
-        // Integer display with thousand separators
-        format_with_separators(value as i64)
-    } else {
-        // Decimal display
-        let formatted = format!("{:.10}", value);
-        let trimmed = formatted.trim_end_matches('0').trim_end_matches('.');
+fn format_display(value: &FendResult) -> String {
+    let mut output = String::new();
 
-        // Add thousand separators to the integer part
-        if let Some(dot_pos) = trimmed.find('.') {
-            let (int_part, dec_part) = trimmed.split_at(dot_pos);
-            let int_val: i64 = int_part.parse().unwrap_or(0);
-            format!("{}{}", format_with_separators(int_val), dec_part)
-        } else {
-            let int_val: i64 = trimmed.parse().unwrap_or(0);
-            format_with_separators(int_val)
+    for span in value.get_main_result_spans() {
+        match span.kind() {
+            SpanKind::Number => format_with_separators(span.string(), &mut output),
+            _ => output.push_str(span.string()),
         }
     }
+
+    output
 }
 
 /// Format an integer with thousand separators.
-fn format_with_separators(value: i64) -> String {
-    let is_negative = value < 0;
-    let abs_value = value.abs();
-    let s = abs_value.to_string();
-
-    let mut result = String::new();
-    for (i, c) in s.chars().rev().enumerate() {
-        if i > 0 && i % 3 == 0 {
-            result.push(',');
+fn format_with_separators(value: &str, result: &mut String) {
+    // Check if the value is a complex number or other unsupported kind
+    for c in value.chars() {
+        if !matches!(c, '0'..='9' | '.' | '-') {
+            result.push_str(value);
+            return;
         }
-        result.push(c);
     }
 
-    let formatted: String = result.chars().rev().collect();
-    if is_negative {
-        format!("-{}", formatted)
-    } else {
-        formatted
+    let (integer, fraction) = value
+        .split_once('.')
+        .map(|(int, frac)| (int, Some(frac)))
+        .unwrap_or((value, None));
+
+    let (digits, negative) = integer
+        .strip_prefix('-')
+        .map(|s| (s, true))
+        .unwrap_or((integer, false));
+
+    result.reserve(value.len() + digits.len() / 3);
+
+    if negative {
+        result.push('-');
+    }
+
+    for (i, ch) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i) % 3 == 0 {
+            result.push(',');
+        }
+        result.push(ch);
+    }
+
+    if let Some(frac) = fraction {
+        result.push('.');
+        result.push_str(frac);
     }
 }
 
@@ -139,7 +143,7 @@ mod tests {
     fn test_decimal_result() {
         let result = evaluate_expression("1 / 3").unwrap();
         // Should have decimal places, no trailing zeros
-        assert!(result.display_result.starts_with("approx. 0.333"));
+        assert!(result.display_result.starts_with("approx. 0.3333333333"));
     }
 
     #[test]
