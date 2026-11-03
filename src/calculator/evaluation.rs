@@ -95,14 +95,18 @@ fn format_with_separators(value: &str, result: &mut String) {
         }
     }
 
-    let (integer, fraction) = match value.split_once('.') {
-        Some((int, frac)) => (int, Some(frac)),
-        None => (value, None),
-    };
+    let (integer, fraction) = value
+        .split_once('.')
+        .map(|(int, frac)| (int, Some(frac)))
+        .unwrap_or((value, None));
 
-    let (digits, negative) = integer.strip_prefix('-').map(|s| (s, true)).unwrap_or((integer, false));
+    let (digits, negative) = integer
+        .strip_prefix('-')
+        .map(|s| (s, true))
+        .unwrap_or((integer, false));
 
     result.reserve(value.len() + (digits.len() - 1) / 3);
+
     if negative {
         result.push('-');
     }
