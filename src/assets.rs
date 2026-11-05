@@ -1,9 +1,9 @@
 //! Embedded assets for zlaunch.
 //!
 //! This module provides embedded Phosphor icons (bold style) for use in the launcher,
-//! combined with gpui-component-assets for the UI component icons.
+//! combined with gpui-kit-assets for the UI component icons.
 
-use gpui::{AssetSource, Result, SharedString};
+use gpui_kit::{AssetSource, Result, SharedString};
 use rust_embed::RustEmbed;
 use std::borrow::Cow;
 
@@ -14,7 +14,7 @@ use std::borrow::Cow;
 struct PhosphorAssets;
 
 /// Combined asset source that serves both zlaunch's Phosphor icons
-/// and gpui-component's UI icons.
+/// and gpui-kit's UI icons.
 pub struct CombinedAssets;
 
 impl AssetSource for CombinedAssets {
@@ -28,8 +28,8 @@ impl AssetSource for CombinedAssets {
             return Ok(Some(file.data));
         }
 
-        // Fall back to gpui-component-assets
-        gpui_component_assets::Assets.load(path)
+        // Fall back to gpui-kit assets
+        gpui_kit::assets::Assets.load(path)
     }
 
     fn list(&self, path: &str) -> Result<Vec<SharedString>> {
@@ -40,8 +40,8 @@ impl AssetSource for CombinedAssets {
             })
             .collect();
 
-        // Add gpui-component assets
-        if let Ok(component_assets) = gpui_component_assets::Assets.list(path) {
+        // Add gpui-kit assets
+        if let Ok(component_assets) = gpui_kit::assets::Assets.list(path) {
             result.extend(component_assets);
         }
 

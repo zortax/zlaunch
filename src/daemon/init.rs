@@ -50,7 +50,7 @@ pub fn prepare_ipc_socket() -> Result<()> {
 /// Returns an error if the socket cannot be bound.
 pub fn start_ipc_server(
     event_tx: flume::Sender<crate::app::DaemonEvent>,
-    cx: &gpui::App,
+    cx: &gpui_kit::App,
 ) -> Result<IpcServerHandle> {
     start_server(event_tx, cx)
 }

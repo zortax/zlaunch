@@ -10,9 +10,9 @@ use crate::config::{list_all_themes_with_source, load_theme, update_config};
 use crate::items::ThemeItem;
 use crate::ui::delegates::ThemeListDelegate;
 use crate::ui::theme::LauncherTheme;
-use gpui::{AppContext, Context, Entity, Subscription, Window};
-use gpui_component::input::{InputEvent, InputState};
-use gpui_component::list::ListState;
+use gpui_kit::component::input::{InputEvent, InputState};
+use gpui_kit::component::list::ListState;
+use gpui_kit::{AppContext, Context, Entity, Subscription, Window};
 use std::sync::Arc;
 
 /// Handler for theme picker mode.

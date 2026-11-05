@@ -3,7 +3,7 @@
 //! Provides a multi-threaded tokio runtime stored as a GPUI global,
 //! allowing async tokio tasks to be spawned from anywhere in the app.
 
-use gpui::{App, Global};
+use gpui_kit::{App, Global};
 use std::future::Future;
 use tokio::runtime::{Handle, Runtime};
 

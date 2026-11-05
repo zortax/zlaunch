@@ -44,9 +44,11 @@ pub use state::{ModeState, ViewMode};
 
 use std::sync::Arc;
 
-use gpui::{App, AppContext, Context, Entity, FocusHandle, Focusable, KeyBinding, Window, actions};
-use gpui_component::input::{InputEvent, InputState};
-use gpui_component::list::ListState;
+use gpui_kit::component::input::{InputEvent, InputState};
+use gpui_kit::component::list::ListState;
+use gpui_kit::{
+    App, AppContext, Context, Entity, FocusHandle, Focusable, KeyBinding, Window, actions,
+};
 
 use crate::compositor::Compositor;
 use crate::config::{ConfigModule, LauncherMode, get_combined_modules};
@@ -133,7 +135,7 @@ pub struct LauncherView {
     /// Current theme (for live preview)
     pub(crate) current_theme: LauncherTheme,
     /// Theme preview subscription
-    pub(crate) _theme_preview_subscription: Option<gpui::Subscription>,
+    pub(crate) _theme_preview_subscription: Option<gpui_kit::Subscription>,
     /// Input state
     pub(crate) input_state: Entity<InputState>,
     /// Focus handle
@@ -342,7 +344,7 @@ impl LauncherView {
 }
 
 impl Focusable for LauncherView {
-    fn focus_handle(&self, _cx: &gpui::App) -> FocusHandle {
+    fn focus_handle(&self, _cx: &gpui_kit::App) -> FocusHandle {
         self.focus_handle.clone()
     }
 }

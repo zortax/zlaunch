@@ -1,5 +1,5 @@
 use crate::config::FontConfig;
-use gpui::{Hsla, Pixels, hsla, px};
+use gpui_kit::{Hsla, Pixels, hsla, px};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Custom serde module for Hsla colors

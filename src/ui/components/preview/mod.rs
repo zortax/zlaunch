@@ -18,7 +18,7 @@
 //! preview contexts.
 
 use crate::ui::theme::theme;
-use gpui::{Div, SharedString, div, prelude::*};
+use gpui_kit::{Div, SharedString, div, prelude::*};
 
 /// Render an empty state for when no item is selected.
 ///

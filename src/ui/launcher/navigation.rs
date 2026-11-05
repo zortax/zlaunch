@@ -2,8 +2,8 @@
 //!
 //! Handles up/down/tab navigation across all view modes.
 
-use gpui::{Context, ScrollStrategy, Window};
-use gpui_component::IndexPath;
+use gpui_kit::component::IndexPath;
+use gpui_kit::{Context, ScrollStrategy, Window};
 
 use super::state::ViewMode;
 use super::{LauncherView, SelectNext, SelectPrev, SelectTab, SelectTabPrev};

@@ -2,8 +2,8 @@
 
 use crate::ui::markdown::render_markdown_with_id;
 use crate::ui::theme::theme;
-use gpui::{App, Div, ElementId, SharedString, Window, div, prelude::*};
-use gpui_component::scroll::ScrollableElement;
+use gpui_kit::component::scroll::ScrollableElement;
+use gpui_kit::{App, Div, ElementId, SharedString, Window, div, prelude::*};
 use llm::chat::ChatMessage;
 
 /// View for displaying AI response with streaming support.
@@ -95,7 +95,7 @@ impl AiResponseView {
                             .child(
                                 div()
                                     .text_sm()
-                                    .font_weight(gpui::FontWeight::SEMIBOLD)
+                                    .font_weight(gpui_kit::FontWeight::SEMIBOLD)
                                     .text_color(t.ai.error_title_color)
                                     .child(SharedString::from("Error")),
                             )

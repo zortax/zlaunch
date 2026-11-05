@@ -8,16 +8,14 @@ license = "MIT"
 authors = ["Leonard Seibold <git@zrtx.de>"]
 
 [dependencies]
-gpui = { git = "https://github.com/zed-industries/zed" }
-gpui-component = { git = "https://github.com/longbridge/gpui-component", rev = "11b02b0e7a9fb51639dd9a28f3ad5aa4f99fdd81" }
-gpui-component-assets = { git = "https://github.com/longbridge/gpui-component", rev = "11b02b0e7a9fb51639dd9a28f3ad5aa4f99fdd81" }
+gpui-kit = "0.9"
 rust-embed = "8"
 anyhow = "1"
 thiserror = "2"
 clap = { version = "4", features = ["derive"] }
 freedesktop-desktop-entry = "0.8"
 freedesktop-icons = "0.4"
-dirs = "6"
+dirs = "7"
 flume = "0.12"
 fuzzy-matcher = "0.3"
 serde = { version = "1", features = ["derive"] }
@@ -28,7 +26,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 fend-core = "1.5"
 arboard = { version = "3", features = ["wayland-data-control"] }
 regex = "1"
-emojis = "0.8"
+emojis = "0.9"
 image = "0.25"
 wayland-client = "0.31"
 wayland-protocols-wlr = { version = "0.3", features = ["client"] }
@@ -36,20 +34,11 @@ urlencoding = "2"
 llm = "1.3"
 futures = "0.3"
 tokio = { version = "1", features = ["rt", "macros", "sync"] }
-tarpc = { version = "0.37", features = ["serde-transport", "tokio1", "serde1"] }
+tarpc = { version = "0.38", features = ["serde-transport", "tokio1", "serde1"] }
 tokio-serde = { version = "0.9", features = ["json"] }
 tokio-util = { version = "0.7", features = ["codec"] }
-toml = "0.9"
-libc = "0.2"
+toml = "1"
+libc = "=0.2.189"
 zbus = { version = "5", default-features = false, features = ["blocking-api"] }
 notify = "8"
-rusqlite = { version = "0.40", features = ["bundled"] }
-
-[patch.crates-io]
-gpui = { git = "https://github.com/zed-industries/zed" }
-zbus = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zbus_macros = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zbus_names = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zvariant = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zvariant_derive = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zvariant_utils = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
+rusqlite = { version = "0.41", features = ["bundled"] }

@@ -10,9 +10,9 @@ use crate::clipboard::{
     data::{image_rgba, search_items},
 };
 use crate::ui::delegates::ClipboardListDelegate;
-use gpui::{AppContext, Context, Entity, Subscription, Window};
-use gpui_component::input::{InputEvent, InputState};
-use gpui_component::list::ListState;
+use gpui_kit::component::input::{InputEvent, InputState};
+use gpui_kit::component::list::ListState;
+use gpui_kit::{AppContext, Context, Entity, Subscription, Window};
 use std::sync::Arc;
 
 /// Handler for clipboard history mode.
