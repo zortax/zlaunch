@@ -11,8 +11,8 @@ use image::{ImageBuffer, ImageFormat, Rgba};
 use std::collections::{HashMap, HashSet};
 use std::io::Cursor;
 use std::process::Command;
-use zbus::blocking::{Connection, Proxy};
 use zbus::zvariant::{OwnedValue, Structure, Value};
+use zbus::{Connection, Proxy, block_on};
 
 /// Type alias for KRunner match results from WindowsRunner.Match D-Bus call.
 /// Tuple: (match_id, text, subtext, type, relevance, properties)
@@ -130,12 +130,18 @@ impl KwinCompositor {
         }
 
         // Connect to session D-Bus
-        let connection = Connection::session().ok()?;
+        let connection = block_on(Connection::session()).ok()?;
 
         // Verify KWin is available by calling supportInformation
-        let kwin_proxy = Proxy::new(&connection, "org.kde.KWin", "/KWin", "org.kde.KWin").ok()?;
+        let kwin_proxy = block_on(Proxy::new(
+            &connection,
+            "org.kde.KWin",
+            "/KWin",
+            "org.kde.KWin",
+        ))
+        .ok()?;
 
-        let _: String = kwin_proxy.call("supportInformation", &()).ok()?;
+        let _: String = block_on(kwin_proxy.call("supportInformation", &())).ok()?;
 
         Some(Self { connection })
     }
@@ -144,18 +150,17 @@ impl KwinCompositor {
     /// Returns tuples of (match_id, title, subtext, type, relevance, properties)
     fn list_windows_via_runner(&self) -> Result<Vec<WindowInfo>> {
         // Create proxy for WindowsRunner
-        let runner_proxy = Proxy::new(
+        let runner_proxy = block_on(Proxy::new(
             &self.connection,
             "org.kde.KWin",
             "/WindowsRunner",
             "org.kde.krunner1",
-        )
+        ))
         .context("Failed to create WindowsRunner proxy")?;
 
         // Call Match with empty query to get all windows
         // Returns: a(sssida{sv}) - array of tuples
-        let result: Vec<KRunnerMatch> = runner_proxy
-            .call("Match", &("",))
+        let result: Vec<KRunnerMatch> = block_on(runner_proxy.call("Match", &("",)))
             .context("Failed to call WindowsRunner.Match")?;
 
         // Track seen window IDs to deduplicate (KRunner returns multiple actions per window)
@@ -203,20 +208,19 @@ impl KwinCompositor {
 
     /// Focus a window using the WindowsRunner Run method.
     fn focus_window_via_runner(&self, window_id: &str) -> Result<()> {
-        let runner_proxy = Proxy::new(
+        let runner_proxy = block_on(Proxy::new(
             &self.connection,
             "org.kde.KWin",
             "/WindowsRunner",
             "org.kde.krunner1",
-        )
+        ))
         .context("Failed to create WindowsRunner proxy")?;
 
         // match_id needs the "0_" prefix for the activate action
         let match_id = format!("0_{}", window_id);
 
         // Run with empty action_id (default action = activate)
-        let _: () = runner_proxy
-            .call("Run", &(&match_id, ""))
+        let _: () = block_on(runner_proxy.call("Run", &(&match_id, "")))
             .context("Failed to call WindowsRunner.Run")?;
 
         Ok(())
