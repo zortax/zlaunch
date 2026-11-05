@@ -10,8 +10,8 @@ mod theme;
 mod watcher;
 
 use anyhow::Result;
-use gpui_kit::component::theme::{Theme, ThemeMode};
 use gpui_kit::QuitMode;
+use gpui_kit::component::theme::{Theme, ThemeMode};
 use tracing::info;
 
 use crate::app::create_daemon_channel;
