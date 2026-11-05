@@ -2,7 +2,7 @@
 
 use crate::emoji::EmojiItem;
 use crate::ui::theme::theme;
-use gpui::{Div, ElementId, SharedString, Stateful, div, prelude::*};
+use gpui_kit::{Div, ElementId, SharedString, Stateful, div, prelude::*};
 
 /// Render a single emoji cell in the grid.
 pub fn render_emoji_cell(emoji: &EmojiItem, selected: bool, index: usize) -> Stateful<Div> {
@@ -11,7 +11,7 @@ pub fn render_emoji_cell(emoji: &EmojiItem, selected: bool, index: usize) -> Sta
     let bg = if selected {
         theme.emoji.cell_selected_bg
     } else {
-        gpui::hsla(0.0, 0.0, 0.0, 0.0) // transparent
+        gpui_kit::hsla(0.0, 0.0, 0.0, 0.0) // transparent
     };
 
     div()

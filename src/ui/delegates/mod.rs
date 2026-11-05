@@ -1,7 +1,7 @@
 //! List delegates for GPUI list components.
 //!
 //! Delegates are the data providers and renderers for list views in GPUI.
-//! They implement the `ListDelegate` trait from `gpui-component` and handle:
+//! They implement the `ListDelegate` trait from `gpui-kit` and handle:
 //!
 //! - Item rendering
 //! - Item filtering (fuzzy search)

@@ -1,7 +1,7 @@
 use crate::ipc::IpcServerHandle;
 use crate::items::{ApplicationItem, ListItem};
-use gpui::WindowHandle;
-use gpui_component::Root;
+use gpui_kit::WindowHandle;
+use gpui_kit::component::Root;
 
 /// Context for a single view in the navigation stack.
 /// Each view has its own items, filter state, and selection.

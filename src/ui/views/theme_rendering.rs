@@ -2,7 +2,7 @@ use crate::items::ThemeItem;
 use crate::ui::styled::lighten_color;
 use crate::ui::theme::{LauncherTheme, theme};
 use crate::ui::views::{item_container, render_action_indicator, render_text_content};
-use gpui::{Div, Stateful, div, prelude::*, px};
+use gpui_kit::{Div, Stateful, div, prelude::*, px};
 
 /// Render a theme item with a dynamic color preview icon.
 pub fn render_theme_item(theme_item: &ThemeItem, selected: bool, row: usize) -> Stateful<Div> {

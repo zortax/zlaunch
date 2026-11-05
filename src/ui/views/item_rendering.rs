@@ -6,7 +6,7 @@
 use crate::assets::PhosphorIcon;
 use crate::items::{DisplayItem, IconProvider, ListItem};
 use crate::ui::theme::theme;
-use gpui::{Div, ElementId, ImageFormat, SharedString, Stateful, div, img, prelude::*, svg};
+use gpui_kit::{Div, ElementId, ImageFormat, SharedString, Stateful, div, img, prelude::*, svg};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -160,7 +160,7 @@ fn render_calculator_icon() -> Div {
         .child(
             div()
                 .text_sm()
-                .font_weight(gpui::FontWeight::BOLD)
+                .font_weight(gpui_kit::FontWeight::BOLD)
                 .text_color(icon_color)
                 .child(SharedString::from("=")),
         )
@@ -261,7 +261,7 @@ fn render_icon_from_data(data: &[u8]) -> Div {
         .items_center()
         .justify_center();
 
-    let image = Arc::new(gpui::Image::from_bytes(ImageFormat::Png, data.to_vec()));
+    let image = Arc::new(gpui_kit::Image::from_bytes(ImageFormat::Png, data.to_vec()));
     icon_container.child(img(image).w(size).h(size).rounded(theme.icon_border_radius))
 }
 

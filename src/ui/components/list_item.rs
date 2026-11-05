@@ -1,6 +1,6 @@
 use crate::ui::theme::theme;
 use crate::ui::views::render_action_indicator;
-use gpui::{Div, ElementId, SharedString, Stateful, div, img, prelude::*};
+use gpui_kit::{Div, ElementId, SharedString, Stateful, div, img, prelude::*};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -32,7 +32,7 @@ pub enum Icon {
     /// Path to an image file
     Path(PathBuf),
     /// In-memory PNG image data
-    Data(Arc<gpui::Image>),
+    Data(Arc<gpui_kit::Image>),
     /// Named Phosphor icon
     Named(String),
     /// Custom placeholder text
@@ -42,7 +42,10 @@ pub enum Icon {
 impl Icon {
     /// Create an icon from PNG bytes
     pub fn from_png_bytes(bytes: Vec<u8>) -> Self {
-        let image = Arc::new(gpui::Image::from_bytes(gpui::ImageFormat::Png, bytes));
+        let image = Arc::new(gpui_kit::Image::from_bytes(
+            gpui_kit::ImageFormat::Png,
+            bytes,
+        ));
         Icon::Data(image)
     }
 }

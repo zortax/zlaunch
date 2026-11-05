@@ -3,13 +3,13 @@ use crate::compositor::Compositor;
 use crate::config::{ConfigModule, LauncherMode, get_combined_modules};
 use crate::items::{ApplicationItem, ListItem, WindowItem};
 use crate::ui::LauncherView;
-use gpui::{
+use gpui_kit::component::Root;
+use gpui_kit::{
     App, AppContext, Bounds, Entity, WindowBackgroundAppearance, WindowBounds, WindowDecorations,
     WindowHandle, WindowKind, WindowOptions,
     layer_shell::{Anchor, KeyboardInteractivity, LayerShellOptions},
     point, px, size,
 };
-use gpui_component::Root;
 use std::sync::Arc;
 use tracing::warn;
 

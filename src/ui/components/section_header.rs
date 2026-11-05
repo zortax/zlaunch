@@ -1,5 +1,5 @@
 use crate::ui::theme::theme;
-use gpui::{Div, SharedString, div, prelude::*};
+use gpui_kit::{Div, SharedString, div, prelude::*};
 
 /// A section header component for dividing groups of items in a list.
 ///
@@ -50,7 +50,7 @@ impl SectionHeader {
         header = header.child(
             div()
                 .text_xs()
-                .font_weight(gpui::FontWeight::SEMIBOLD)
+                .font_weight(gpui_kit::FontWeight::SEMIBOLD)
                 .text_color(theme.section_header.color)
                 .child(SharedString::from(title_text.to_uppercase())),
         );

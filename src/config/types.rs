@@ -1,6 +1,6 @@
 //! Configuration type definitions.
 
-use gpui::layer_shell::Layer;
+use gpui_kit::layer_shell::Layer;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -725,7 +725,7 @@ mod tests {
 
     #[test]
     fn test_layer_shell_layer_into_gpui_layer() {
-        use gpui::layer_shell::Layer;
+        use gpui_kit::layer_shell::Layer;
         let layer: Layer = LayerShellLayer::Overlay.into();
         assert!(matches!(layer, Layer::Overlay));
         let layer: Layer = LayerShellLayer::Top.into();

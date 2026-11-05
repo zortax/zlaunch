@@ -12,8 +12,8 @@
 //!
 //! Instead, we provide shared utility functions that mode handlers can use.
 
-use gpui::{Context, Window};
-use gpui_component::input::InputState;
+use gpui_kit::component::input::InputState;
+use gpui_kit::{Context, Window};
 
 /// Default placeholder text for the main launcher view.
 pub const DEFAULT_PLACEHOLDER: &str = "Search applications...";
