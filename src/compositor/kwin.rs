@@ -11,8 +11,7 @@ use image::{ImageBuffer, ImageFormat, Rgba};
 use std::collections::{HashMap, HashSet};
 use std::io::Cursor;
 use std::process::Command;
-use zbus::zvariant::{OwnedValue, Structure, Value};
-use zbus::{Connection, Proxy, block_on};
+use zbus::{Connection, OwnedVariant, Proxy, Structure, Variant, block_on};
 
 /// Type alias for KRunner match results from WindowsRunner.Match D-Bus call.
 /// Tuple: (match_id, text, subtext, type, relevance, properties)
@@ -22,7 +21,7 @@ type KRunnerMatch = (
     String,
     i32,
     f64,
-    HashMap<String, OwnedValue>,
+    HashMap<String, OwnedVariant>,
 );
 
 /// KWin compositor client using D-Bus WindowsRunner API.
@@ -40,7 +39,7 @@ pub struct KwinCompositor {
 /// - i32: bits_per_sample (usually 8)
 /// - i32: channels (3 for RGB, 4 for RGBA)
 /// - Vec<u8>: pixel data
-fn parse_icon_data(icon_data: &OwnedValue) -> Option<Vec<u8>> {
+fn parse_icon_data(icon_data: &OwnedVariant) -> Option<Vec<u8>> {
     // Try to extract the structure
     let structure: &Structure = icon_data.downcast_ref().ok()?;
     let fields = structure.fields();
@@ -66,7 +65,7 @@ fn parse_icon_data(icon_data: &OwnedValue) -> Option<Vec<u8>> {
 
     // Get the pixel data array
     let pixel_data: Vec<u8> = match &fields[6] {
-        Value::Array(arr) => arr
+        Variant::Array(arr) => arr
             .iter()
             .filter_map(|v| v.downcast_ref::<u8>().ok())
             .collect(),
