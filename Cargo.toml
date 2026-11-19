@@ -8,7 +8,7 @@ license = "MIT"
 authors = ["Leonard Seibold <git@zrtx.de>"]
 
 [dependencies]
-gpui-kit = "0.9"
+gpui-kit = "0.10"
 rust-embed = "8"
 anyhow = "1"
 thiserror = "2"
@@ -41,4 +41,4 @@ toml = "1"
 libc = "0.2"
 zbus = "6" 
 notify = "8"
-rusqlite = { version = "0.41", features = ["bundled"] }
+rusqlite = { version = "0.43", features = ["bundled"] }
