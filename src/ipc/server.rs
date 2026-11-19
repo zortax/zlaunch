@@ -142,7 +142,7 @@ pub fn prepare_socket() -> anyhow::Result<PathBuf> {
 /// Blocks until the socket is successfully bound, ensuring the socket file exists before returning.
 pub fn start_server(
     event_tx: flume::Sender<DaemonEvent>,
-    cx: &gpui::App,
+    cx: &gpui_kit::App,
 ) -> anyhow::Result<IpcServerHandle> {
     let socket_path = get_socket_path();
     let socket_path_clone = socket_path.clone();

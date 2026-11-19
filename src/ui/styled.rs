@@ -4,7 +4,7 @@
 //! reducing duplication across rendering components.
 
 use crate::ui::theme::theme;
-use gpui::{Hsla, Pixels, hsla};
+use gpui_kit::{Hsla, Pixels, hsla};
 
 /// Get the background color based on selection state.
 ///

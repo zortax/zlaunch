@@ -1,5 +1,5 @@
-use gpui::{Context, Entity, Subscription, Window};
-use gpui_component::input::{InputEvent, InputState};
+use gpui_kit::component::input::{InputEvent, InputState};
+use gpui_kit::{Context, Entity, Subscription, Window};
 
 /// Manages input handling and query updates for views
 /// This consolidates input subscription logic that was scattered across the old code

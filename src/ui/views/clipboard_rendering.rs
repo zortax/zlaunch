@@ -5,7 +5,7 @@ use crate::clipboard::{ClipboardContent, ClipboardItem};
 use crate::ui::theme::theme;
 use crate::ui::utils::color::{Color, parse_color};
 use crate::ui::views::render_action_indicator;
-use gpui::{Div, ElementId, SharedString, Stateful, div, img, prelude::*, px, svg};
+use gpui_kit::{Div, ElementId, SharedString, Stateful, div, img, prelude::*, px, svg};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -13,7 +13,7 @@ use std::time::SystemTime;
 
 /// The last previewed clipboard image by item id, so it isn't loaded
 /// from the database again on every render.
-static IMAGE_PREVIEW_CACHE: Mutex<Option<(i64, Arc<gpui::Image>)>> = Mutex::new(None);
+static IMAGE_PREVIEW_CACHE: Mutex<Option<(i64, Arc<gpui_kit::Image>)>> = Mutex::new(None);
 
 /// Render a clipboard item in the list.
 pub fn render_clipboard_item(item: &ClipboardItem, selected: bool, row: usize) -> Stateful<Div> {
@@ -115,7 +115,7 @@ fn render_item_icon(item: &ClipboardItem) -> Div {
                         .w(t.clipboard.color_icon_size)
                         .h(t.clipboard.color_icon_size)
                         .rounded(t.clipboard.color_icon_size * 0.5)
-                        .bg(gpui::hsla(
+                        .bg(gpui_kit::hsla(
                             h as f32 / 360.0,
                             s as f32 / 100.0,
                             l as f32 / 100.0,
@@ -294,7 +294,7 @@ pub fn render_preview_panel(item: Option<&ClipboardItem>) -> Div {
                             img(path)
                                 .w_full()
                                 .h_full()
-                                .object_fit(gpui::ObjectFit::Contain),
+                                .object_fit(gpui_kit::ObjectFit::Contain),
                         );
                     } else if matches!(
                         ext_lower.as_str(),
@@ -362,7 +362,7 @@ pub fn render_preview_panel(item: Option<&ClipboardItem>) -> Div {
                             img(path.clone())
                                 .w_full()
                                 .h_full()
-                                .object_fit(gpui::ObjectFit::Contain),
+                                .object_fit(gpui_kit::ObjectFit::Contain),
                         );
                     } else if matches!(
                         ext_lower.as_str(),
@@ -449,8 +449,8 @@ fn render_image_preview_full(panel: Div, item: &ClipboardItem) -> Div {
     let image = match cache.as_ref() {
         Some((id, image)) if *id == item.id => Some(image.clone()),
         _ => crate::clipboard::data::image_png(item).map(|png| {
-            let image = Arc::new(gpui::Image::from_bytes(
-                gpui::ImageFormat::Png,
+            let image = Arc::new(gpui_kit::Image::from_bytes(
+                gpui_kit::ImageFormat::Png,
                 png.to_vec(),
             ));
             *cache = Some((item.id, image.clone()));
@@ -463,7 +463,7 @@ fn render_image_preview_full(panel: Div, item: &ClipboardItem) -> Div {
             img(image)
                 .w_full()
                 .h_full()
-                .object_fit(gpui::ObjectFit::Contain),
+                .object_fit(gpui_kit::ObjectFit::Contain),
         );
     }
 
@@ -492,7 +492,7 @@ fn render_color_preview(panel: Div, color: &Color) -> Div {
                 .h(t.clipboard.color_swatch_size)
                 .flex_shrink_0()
                 .rounded(t.clipboard.color_swatch_size * 0.5)
-                .bg(gpui::hsla(
+                .bg(gpui_kit::hsla(
                     h as f32 / 360.0,
                     s as f32 / 100.0,
                     l as f32 / 100.0,

@@ -1,10 +1,10 @@
 use crate::ui::theme::theme;
-use gpui::{Div, div, prelude::*, px};
-use gpui_component::input::Input;
+use gpui_kit::component::input::Input;
+use gpui_kit::{Div, div, prelude::*, px};
 
 /// A styled input field component for search/query input.
 ///
-/// This wraps the gpui_component Input with consistent styling.
+/// This wraps the gpui_kit Input with consistent styling.
 pub struct InputField;
 
 impl InputField {

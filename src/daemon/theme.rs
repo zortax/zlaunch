@@ -1,8 +1,8 @@
 //! Theme configuration and handling for the daemon.
 
 use crate::error::IpcError;
-use gpui::{hsla, px};
-use gpui_component::theme::Theme;
+use gpui_kit::component::theme::Theme;
+use gpui_kit::{hsla, px};
 
 /// Handle the SetTheme IPC command.
 ///
@@ -25,7 +25,7 @@ pub fn handle_set_theme(name: &str) -> Result<(), IpcError> {
 /// Configure the global theme for transparent launcher appearance.
 ///
 /// Sets up transparent backgrounds and minimal borders for the overlay look.
-pub fn configure_theme(cx: &mut gpui::App) {
+pub fn configure_theme(cx: &mut gpui_kit::App) {
     let theme = Theme::global_mut(cx);
     let config = crate::config::config();
     let theme_config = crate::ui::theme::theme();

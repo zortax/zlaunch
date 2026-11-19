@@ -33,7 +33,7 @@ impl WindowState {
     }
 
     /// Close the window if it exists.
-    pub fn close(&mut self, cx: &mut gpui::App) {
+    pub fn close(&mut self, cx: &mut gpui_kit::App) {
         if let Some(ref lw) = self.launcher_window {
             window::close_window(&lw.handle, cx);
         }
@@ -56,7 +56,7 @@ pub async fn run_event_loop(
     event_tx: flume::Sender<DaemonEvent>,
     initial_applications: Vec<ApplicationItem>,
     compositor: Arc<dyn Compositor>,
-    cx: &mut gpui::AsyncApp,
+    cx: &mut gpui_kit::AsyncApp,
 ) {
     let mut window_state = WindowState::new();
     let mut applications = initial_applications;
@@ -199,7 +199,7 @@ fn handle_show(
     applications: &[ApplicationItem],
     compositor: &Arc<dyn Compositor>,
     event_tx: &flume::Sender<DaemonEvent>,
-    cx: &mut gpui::AsyncApp,
+    cx: &mut gpui_kit::AsyncApp,
 ) -> Result<(), IpcError> {
     if window_state.visible {
         return Ok(()); // Already visible

@@ -11,8 +11,8 @@
 use crate::ai;
 use crate::ui::views::AiResponseView;
 use flume::Receiver;
-use gpui::{AsyncApp, Context, Task, WeakEntity, Window};
-use gpui_component::input::InputState;
+use gpui_kit::component::input::InputState;
+use gpui_kit::{AsyncApp, Context, Task, WeakEntity, Window};
 
 /// Handler for AI response mode.
 ///
