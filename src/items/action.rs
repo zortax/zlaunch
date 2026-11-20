@@ -116,17 +116,25 @@ impl IconProvider for ActionItem {
     }
 }
 
+/// Spawn a power command via `systemctl`, falling back to `loginctl` on non-systemd systems.
+fn spawn_power_cmd(action: &str) -> std::io::Result<std::process::Child> {
+    Command::new("systemctl")
+        .arg(action)
+        .spawn()
+        .or_else(|_| Command::new("loginctl").arg(action).spawn())
+}
+
 impl Executable for ActionItem {
     fn execute(&self) -> anyhow::Result<()> {
         match &self.kind {
             ActionKind::Shutdown => {
-                Command::new("systemctl").arg("poweroff").spawn()?;
+                spawn_power_cmd("poweroff")?;
             }
             ActionKind::Reboot => {
-                Command::new("systemctl").arg("reboot").spawn()?;
+                spawn_power_cmd("reboot")?;
             }
             ActionKind::Suspend => {
-                Command::new("systemctl").arg("suspend").spawn()?;
+                spawn_power_cmd("suspend")?;
             }
             ActionKind::Lock => {
                 Command::new("loginctl").arg("lock-session").spawn()?;
