@@ -10,8 +10,8 @@ mod theme;
 mod watcher;
 
 use anyhow::Result;
-use gpui::{Application, QuitMode};
-use gpui_component::theme::{Theme, ThemeMode};
+use gpui_kit::QuitMode;
+use gpui_kit::component::theme::{Theme, ThemeMode};
 use tracing::info;
 
 use crate::app::create_daemon_channel;
@@ -56,11 +56,11 @@ pub fn run() -> Result<()> {
     let applications = init::load_application_items();
 
     // Run GPUI application
-    Application::new()
+    gpui_kit::application()
         .with_assets(CombinedAssets)
         .with_quit_mode(QuitMode::Explicit)
         .run(move |cx| {
-            gpui_component::init(cx);
+            gpui_kit::component::init(cx);
             init_launcher(cx);
             Theme::change(ThemeMode::Dark, None, cx);
 
@@ -91,7 +91,7 @@ pub fn run() -> Result<()> {
 
             // Main event loop (runs on GPUI executor)
             // Move ipc_handle into the async block to keep it alive for the daemon's lifetime
-            cx.spawn(async move |cx: &mut gpui::AsyncApp| {
+            cx.spawn(async move |cx: &mut gpui_kit::AsyncApp| {
                 event_handler::run_event_loop(
                     event_rx,
                     event_tx_clone,

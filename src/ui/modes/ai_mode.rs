@@ -11,8 +11,8 @@
 use crate::ai;
 use crate::ui::views::AiResponseView;
 use flume::Receiver;
-use gpui::{AsyncApp, Context, Task, WeakEntity, Window};
-use gpui_component::input::InputState;
+use gpui_kit::component::input::InputState;
+use gpui_kit::{AsyncApp, Context, Task, WeakEntity, Window};
 
 /// Handler for AI response mode.
 ///
@@ -93,7 +93,7 @@ impl AiModeHandler {
                 let is_complete = matches!(msg, Ok(ref s) if s.is_empty());
                 let is_error = msg.is_err();
 
-                let _ = cx.update(|cx| {
+                cx.update(|cx| {
                     if let Some(launcher) = launcher_entity.upgrade() {
                         launcher.update(cx, |launcher, cx| {
                             // Call the update method on the launcher

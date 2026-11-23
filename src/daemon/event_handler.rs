@@ -33,7 +33,7 @@ impl WindowState {
     }
 
     /// Close the window if it exists.
-    pub fn close(&mut self, cx: &mut gpui::App) {
+    pub fn close(&mut self, cx: &mut gpui_kit::App) {
         if let Some(ref lw) = self.launcher_window {
             window::close_window(&lw.handle, cx);
         }
@@ -56,7 +56,7 @@ pub async fn run_event_loop(
     event_tx: flume::Sender<DaemonEvent>,
     initial_applications: Vec<ApplicationItem>,
     compositor: Arc<dyn Compositor>,
-    cx: &mut gpui::AsyncApp,
+    cx: &mut gpui_kit::AsyncApp,
 ) {
     let mut window_state = WindowState::new();
     let mut applications = initial_applications;
@@ -64,7 +64,7 @@ pub async fn run_event_loop(
     while let Ok(event) = event_rx.recv_async().await {
         match event {
             DaemonEvent::Window(WindowEvent::RequestHide) if window_state.visible => {
-                let _ = cx.update(|cx| {
+                cx.update(|cx| {
                     window_state.close(cx);
                 });
             }
@@ -85,7 +85,7 @@ pub async fn run_event_loop(
 
             DaemonEvent::Hide { response_tx } => {
                 if window_state.visible {
-                    let _ = cx.update(|cx| {
+                    cx.update(|cx| {
                         window_state.close(cx);
                     });
                 }
@@ -97,7 +97,7 @@ pub async fn run_event_loop(
             DaemonEvent::Toggle { modes, response_tx } => {
                 debug!("Processing Toggle event, visible={}", window_state.visible);
                 let result = if window_state.visible {
-                    let _ = cx.update(|cx| {
+                    cx.update(|cx| {
                         window_state.close(cx);
                     });
                     Ok(())
@@ -120,7 +120,7 @@ pub async fn run_event_loop(
                 if response_tx.send(Ok(())).is_err() {
                     debug!("Client disconnected before receiving quit response");
                 }
-                let _ = cx.update(|cx| {
+                cx.update(|cx| {
                     cx.quit();
                 });
                 return;
@@ -133,7 +133,7 @@ pub async fn run_event_loop(
                     && let Some(ref lw) = window_state.launcher_window
                 {
                     let view = lw.launcher_view.clone();
-                    let _ = cx.update(|cx| {
+                    cx.update(|cx| {
                         view.update(cx, |launcher, cx| {
                             launcher.refresh_theme(cx);
                         });
@@ -152,14 +152,14 @@ pub async fn run_event_loop(
 
                 // Close window if visible
                 if window_state.visible {
-                    let _ = cx.update(|cx| {
+                    cx.update(|cx| {
                         window_state.close(cx);
                     });
                 }
 
                 // Signal reload and quit GPUI
                 set_reload_requested(true);
-                let _ = cx.update(|cx| {
+                cx.update(|cx| {
                     cx.quit();
                 });
                 return;
@@ -176,7 +176,7 @@ pub async fn run_event_loop(
                     if let Some(ref lw) = window_state.launcher_window {
                         let view = lw.launcher_view.clone();
                         let apps = applications.clone();
-                        let _ = cx.update(|cx| {
+                        cx.update(|cx| {
                             let _ = lw.handle.update(cx, |_, window, cx| {
                                 view.update(cx, |launcher, cx| {
                                     launcher.refresh_applications(apps, window, cx);
@@ -199,7 +199,7 @@ fn handle_show(
     applications: &[ApplicationItem],
     compositor: &Arc<dyn Compositor>,
     event_tx: &flume::Sender<DaemonEvent>,
-    cx: &mut gpui::AsyncApp,
+    cx: &mut gpui_kit::AsyncApp,
 ) -> Result<(), IpcError> {
     if window_state.visible {
         return Ok(()); // Already visible

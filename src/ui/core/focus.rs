@@ -1,4 +1,4 @@
-use gpui::{App, Context, FocusHandle, Focusable, Subscription, Window};
+use gpui_kit::{App, Context, FocusHandle, Focusable, Subscription, Window};
 
 /// Manages focus for a view with automatic blur handling
 pub struct FocusManager {
@@ -48,7 +48,7 @@ impl FocusManager {
 }
 
 impl Focusable for FocusManager {
-    fn focus_handle(&self, _cx: &gpui::App) -> FocusHandle {
+    fn focus_handle(&self, _cx: &gpui_kit::App) -> FocusHandle {
         self.focus_handle.clone()
     }
 }

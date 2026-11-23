@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use gpui::{Context, Window};
+use gpui_kit::{Context, Window};
 
 use crate::clipboard::copy_to_clipboard;
 use crate::compositor::Compositor;

@@ -9,9 +9,9 @@ use crate::items::{ActionItem, ListItem, SubmenuItem};
 use crate::ui::delegates::BaseDelegate;
 use crate::ui::theme::theme;
 use crate::ui::views::render_item;
-use gpui::{App, Context, SharedString, Task, Window, div, prelude::*};
-use gpui_component::IndexPath;
-use gpui_component::list::{ListDelegate, ListItem as GpuiListItem, ListState};
+use gpui_kit::component::IndexPath;
+use gpui_kit::component::list::{ListDelegate, ListItem as GpuiListItem, ListState};
+use gpui_kit::{App, Context, SharedString, Task, Window, div, prelude::*};
 use std::sync::Arc;
 
 use super::dynamic_items::DynamicItems;
@@ -404,7 +404,7 @@ impl ListDelegate for ItemListDelegate {
                 .pt(theme.section_header.margin_top)
                 .pb(theme.section_header.margin_bottom)
                 .text_xs()
-                .font_weight(gpui::FontWeight::EXTRA_BOLD)
+                .font_weight(gpui_kit::FontWeight::EXTRA_BOLD)
                 .text_color(theme.section_header.color)
                 .child(SharedString::from(title)),
         )

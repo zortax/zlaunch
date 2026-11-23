@@ -2,7 +2,7 @@
 
 use super::data;
 use super::item::{ClipboardContent, ImageData};
-use arboard::Clipboard;
+use std::io::Read;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -14,6 +14,7 @@ use wayland_protocols_wlr::data_control::v1::client::{
     zwlr_data_control_device_v1, zwlr_data_control_manager_v1, zwlr_data_control_offer_v1,
     zwlr_data_control_source_v1,
 };
+use wl_clipboard_rs::paste::{ClipboardType, MimeType, Seat, get_contents};
 
 use crate::config;
 
@@ -175,7 +176,7 @@ impl Dispatch<zwlr_data_control_device_v1::ZwlrDataControlDeviceV1, ()> for Clip
                         .iter()
                         .any(|m| m == PASSWORD_HINT_MIME_TYPE)
                 });
-                // The content is read via arboard, so the offer itself is not needed
+                // The content is read via wl-clipboard-rs, so the offer itself is not needed
                 offer.destroy();
 
                 if is_password && !config::config().store_passwords {
@@ -246,30 +247,31 @@ fn read_clipboard_content() -> Result<(), Box<dyn std::error::Error>> {
     // Small delay to let clipboard settle
     thread::sleep(Duration::from_millis(50));
 
-    let mut clipboard = Clipboard::new()?;
-
     // Try to get image first - browsers often put both image data and HTML markup
     // on the clipboard, and we prefer the actual image over the HTML representation
-    if let Ok(image) = clipboard.get_image()
-        && !image.bytes.is_empty()
+    if let Some(png) = read_mime(MimeType::Specific("image/png"))
+        && let Ok((width, height)) =
+            image::ImageReader::with_format(std::io::Cursor::new(&png), image::ImageFormat::Png)
+                .into_dimensions()
     {
+        let (width, height) = (width as usize, height as usize);
         debug!(
             "Adding image to clipboard history: {}×{} ({} bytes)",
-            image.width,
-            image.height,
-            image.bytes.len()
+            width,
+            height,
+            png.len()
         );
-        let png = data::encode_png(image.width, image.height, &image.bytes)?;
         data::add_item(ClipboardContent::Image {
-            width: image.width,
-            height: image.height,
+            width,
+            height,
             data: ImageData::Png(png.into()),
         });
         return Ok(());
     }
 
     // Try to get text
-    if let Ok(text) = clipboard.get_text()
+    if let Some(bytes) = read_mime(MimeType::Text)
+        && let Ok(text) = String::from_utf8(bytes)
         && !text.is_empty()
     {
         debug!("Adding text to clipboard history: {} chars", text.len());
@@ -278,4 +280,12 @@ fn read_clipboard_content() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+/// Read the regular clipboard for a given MIME type; `None` if empty or not offered.
+fn read_mime(mime: MimeType) -> Option<Vec<u8>> {
+    let (mut pipe, _) = get_contents(ClipboardType::Regular, Seat::Unspecified, mime).ok()?;
+    let mut buf = Vec::new();
+    pipe.read_to_end(&mut buf).ok()?;
+    (!buf.is_empty()).then_some(buf)
 }
