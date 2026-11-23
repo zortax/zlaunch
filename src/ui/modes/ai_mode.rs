@@ -93,7 +93,7 @@ impl AiModeHandler {
                 let is_complete = matches!(msg, Ok(ref s) if s.is_empty());
                 let is_error = msg.is_err();
 
-                let _ = cx.update(|cx| {
+                cx.update(|cx| {
                     if let Some(launcher) = launcher_entity.upgrade() {
                         launcher.update(cx, |launcher, cx| {
                             // Call the update method on the launcher
