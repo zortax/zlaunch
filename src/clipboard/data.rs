@@ -293,15 +293,6 @@ pub fn image_png(item: &ClipboardItem) -> Option<Arc<[u8]>> {
     }
 }
 
-/// Get the raw RGBA pixels of a clipboard image, loading it from the database if needed.
-pub fn image_rgba(item: &ClipboardItem) -> Option<Vec<u8>> {
-    let png = image_png(item)?;
-    image::load_from_memory_with_format(&png, image::ImageFormat::Png)
-        .inspect_err(|e| error!("Failed to decode clipboard image: {}", e))
-        .ok()
-        .map(|image| image.into_rgba8().into_raw())
-}
-
 /// Convert images stored as raw RGBA data by earlier versions to PNG.
 fn migrate_raw_images(db: &Connection) -> rusqlite::Result<()> {
     let mut stmt = db.prepare(

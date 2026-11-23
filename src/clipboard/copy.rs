@@ -2,7 +2,6 @@
 
 use wl_clipboard_rs::copy::{MimeType, Options, Source};
 
-use super::data;
 use crate::error::ClipboardError;
 
 /// Copy text to the system clipboard.
@@ -14,16 +13,10 @@ pub fn copy_to_clipboard(text: &str) -> Result<(), ClipboardError> {
         .map_err(|e| ClipboardError::CopyFailed(e.to_string()))
 }
 
-/// Copy an RGBA image to the system clipboard.
+/// Copy PNG-encoded image data to the system clipboard.
 ///
 /// Returns `Ok(())` on success, or a `ClipboardError` on failure.
-pub fn copy_image_to_clipboard(
-    width: usize,
-    height: usize,
-    rgba_bytes: &[u8],
-) -> Result<(), ClipboardError> {
-    let png = data::encode_png(width, height, rgba_bytes)
-        .map_err(|e| ClipboardError::CopyFailed(e.to_string()))?;
+pub fn copy_image_to_clipboard(png: &[u8]) -> Result<(), ClipboardError> {
     Options::new()
         .copy(
             Source::Bytes(png.into()),
