@@ -1,18 +1,16 @@
 //! Clipboard copy utilities.
 
-use arboard::Clipboard;
+use wl_clipboard_rs::copy::{MimeType, Options, Source};
 
+use super::data;
 use crate::error::ClipboardError;
 
 /// Copy text to the system clipboard.
 ///
 /// Returns `Ok(())` on success, or a `ClipboardError` on failure.
 pub fn copy_to_clipboard(text: &str) -> Result<(), ClipboardError> {
-    let mut clipboard =
-        Clipboard::new().map_err(|e| ClipboardError::AccessFailed(e.to_string()))?;
-
-    clipboard
-        .set_text(text.to_string())
+    Options::new()
+        .copy(Source::Bytes(text.as_bytes().into()), MimeType::Text)
         .map_err(|e| ClipboardError::CopyFailed(e.to_string()))
 }
 
@@ -24,16 +22,12 @@ pub fn copy_image_to_clipboard(
     height: usize,
     rgba_bytes: &[u8],
 ) -> Result<(), ClipboardError> {
-    let mut clipboard =
-        Clipboard::new().map_err(|e| ClipboardError::AccessFailed(e.to_string()))?;
-
-    let image_data = arboard::ImageData {
-        width,
-        height,
-        bytes: std::borrow::Cow::Borrowed(rgba_bytes),
-    };
-
-    clipboard
-        .set_image(image_data)
+    let png = data::encode_png(width, height, rgba_bytes)
+        .map_err(|e| ClipboardError::CopyFailed(e.to_string()))?;
+    Options::new()
+        .copy(
+            Source::Bytes(png.into()),
+            MimeType::Specific("image/png".into()),
+        )
         .map_err(|e| ClipboardError::CopyFailed(e.to_string()))
 }
