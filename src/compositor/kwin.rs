@@ -59,7 +59,7 @@ fn parse_icon_data(icon_data: &OwnedVariant) -> Option<Vec<u8>> {
     if width <= 0 || height <= 0 || width > 256 || height > 256 {
         return None;
     }
-    if rowstride <= 0 || channels < 3 || channels > 4 {
+    if rowstride <= 0 || !(3..=4).contains(&channels) {
         return None;
     }
 
@@ -179,9 +179,7 @@ impl KwinCompositor {
                 }
 
                 // Try to parse icon-data as PNG bytes if available
-                let icon_data = props
-                    .get("icon-data")
-                    .and_then(|data| parse_icon_data(data));
+                let icon_data = props.get("icon-data").and_then(parse_icon_data);
 
                 // Use icon name for class if available, otherwise extract from title
                 let icon_name = props

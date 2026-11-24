@@ -83,26 +83,26 @@ pub fn validate_config(config: &AppConfig) -> Vec<ValidationWarning> {
     }
 
     // Validate window_size if set (only relevant when enable_backdrop is true)
-    if config.enable_backdrop {
-        if let Some((w, h)) = config.window_size {
-            if w < launcher_w {
-                warnings.push(ValidationWarning {
-                    field: "window_size".to_string(),
-                    message: format!(
-                        "window_size width ({}) is smaller than launcher_size width ({}). Will use {}.",
-                        w, launcher_w, launcher_w
-                    ),
-                });
-            }
-            if h < launcher_h {
-                warnings.push(ValidationWarning {
+    if config.enable_backdrop
+        && let Some((w, h)) = config.window_size
+    {
+        if w < launcher_w {
+            warnings.push(ValidationWarning {
+                field: "window_size".to_string(),
+                message: format!(
+                    "window_size width ({}) is smaller than launcher_size width ({}). Will use {}.",
+                    w, launcher_w, launcher_w
+                ),
+            });
+        }
+        if h < launcher_h {
+            warnings.push(ValidationWarning {
                     field: "window_size".to_string(),
                     message: format!(
                         "window_size height ({}) is smaller than launcher_size height ({}). Will use {}.",
                         h, launcher_h, launcher_h
                     ),
                 });
-            }
         }
     }
 

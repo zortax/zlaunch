@@ -16,10 +16,10 @@ pub fn get_directory_mtimes() -> HashMap<PathBuf, SystemTime> {
     let mut mtimes = HashMap::new();
 
     for dir in get_xdg_application_dirs() {
-        if let Ok(metadata) = fs::metadata(&dir) {
-            if let Ok(mtime) = metadata.modified() {
-                mtimes.insert(dir, mtime);
-            }
+        if let Ok(metadata) = fs::metadata(&dir)
+            && let Ok(mtime) = metadata.modified()
+        {
+            mtimes.insert(dir, mtime);
         }
     }
 

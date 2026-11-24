@@ -132,10 +132,10 @@ impl ItemFilter {
         }
 
         // Fall back to description match (with penalty)
-        if let Some(desc) = item.description() {
-            if let Some(score) = self.score_text_match(desc, query, item, true) {
-                return Some(score);
-            }
+        if let Some(desc) = item.description()
+            && let Some(score) = self.score_text_match(desc, query, item, true)
+        {
+            return Some(score);
         }
 
         None

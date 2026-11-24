@@ -39,6 +39,6 @@ pub fn search_emojis(query: &str) -> Vec<usize> {
         .collect();
 
     // Sort by score descending
-    scored.sort_by(|a, b| b.1.cmp(&a.1));
+    scored.sort_by_key(|a| std::cmp::Reverse(a.1));
     scored.into_iter().map(|(idx, _)| idx).collect()
 }

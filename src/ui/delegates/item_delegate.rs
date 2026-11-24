@@ -302,14 +302,14 @@ impl ItemListDelegate {
         let base_idx = offset + row;
 
         // If best match is from this section and we're past where it would be, add 1
-        if let Some(best_pos) = best_match_pos {
-            if self.sections.best_match_original_section() == Some(section_type) {
-                // The best match was removed from this section
-                // We need to map our row to the correct position in filtered items
-                // by skipping the best match position
-                if base_idx >= best_pos {
-                    return base_idx + 1;
-                }
+        if let Some(best_pos) = best_match_pos
+            && self.sections.best_match_original_section() == Some(section_type)
+        {
+            // The best match was removed from this section
+            // We need to map our row to the correct position in filtered items
+            // by skipping the best match position
+            if base_idx >= best_pos {
+                return base_idx + 1;
             }
         }
 

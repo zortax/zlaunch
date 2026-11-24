@@ -91,6 +91,7 @@ impl Default for FuzzyMatchConfig {
 /// Font configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct FontConfig {
     /// Font family name, for example "CaskaydiaCove Nerd Font Mono".
     pub font_family: Option<String>,
@@ -98,16 +99,6 @@ pub struct FontConfig {
     pub mono_font_family: Option<String>,
     /// Font size in pixels.
     pub font_size: Option<f32>,
-}
-
-impl Default for FontConfig {
-    fn default() -> Self {
-        Self {
-            font_family: None,
-            mono_font_family: None,
-            font_size: None,
-        }
-    }
 }
 
 /// Application configuration.
