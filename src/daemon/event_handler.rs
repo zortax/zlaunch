@@ -172,18 +172,18 @@ pub async fn run_event_loop(
                 applications = new_apps;
 
                 // If window visible, refresh the view
-                if window_state.visible {
-                    if let Some(ref lw) = window_state.launcher_window {
-                        let view = lw.launcher_view.clone();
-                        let apps = applications.clone();
-                        cx.update(|cx| {
-                            let _ = lw.handle.update(cx, |_, window, cx| {
-                                view.update(cx, |launcher, cx| {
-                                    launcher.refresh_applications(apps, window, cx);
-                                });
+                if window_state.visible
+                    && let Some(ref lw) = window_state.launcher_window
+                {
+                    let view = lw.launcher_view.clone();
+                    let apps = applications.clone();
+                    cx.update(|cx| {
+                        let _ = lw.handle.update(cx, |_, window, cx| {
+                            view.update(cx, |launcher, cx| {
+                                launcher.refresh_applications(apps, window, cx);
                             });
                         });
-                    }
+                    });
                 }
             }
 

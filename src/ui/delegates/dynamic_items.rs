@@ -47,10 +47,11 @@ impl DynamicItems {
         }
 
         // Check for calculator expression
-        if calculator_enabled && query.chars().any(|c| c.is_numeric()) {
-            if let Ok(result) = evaluate_expression(query) {
-                self.calculator_item = Some(result);
-            }
+        if calculator_enabled
+            && query.chars().any(|c| c.is_numeric())
+            && let Ok(result) = evaluate_expression(query)
+        {
+            self.calculator_item = Some(result);
         }
 
         // Check for trigger phrases
@@ -79,12 +80,10 @@ impl DynamicItems {
             if ai_enabled {
                 self.ai_item = Some(AiItem::new(trimmed.to_string()));
             }
-            if search_enabled {
-                if let SearchDetection::Fallback { query } = search_detection {
-                    for provider in get_providers() {
-                        self.search_items
-                            .push(SearchItem::new(provider, query.clone()));
-                    }
+            if search_enabled && let SearchDetection::Fallback { query } = search_detection {
+                for provider in get_providers() {
+                    self.search_items
+                        .push(SearchItem::new(provider, query.clone()));
                 }
             }
         }
