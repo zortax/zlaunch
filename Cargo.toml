@@ -8,17 +8,15 @@ license = "MIT"
 authors = ["Leonard Seibold <git@zrtx.de>"]
 
 [dependencies]
-gpui = { git = "https://github.com/zed-industries/zed" }
-gpui-component = { git = "https://github.com/longbridge/gpui-component", rev = "11b02b0e7a9fb51639dd9a28f3ad5aa4f99fdd81" }
-gpui-component-assets = { git = "https://github.com/longbridge/gpui-component", rev = "11b02b0e7a9fb51639dd9a28f3ad5aa4f99fdd81" }
+gpui-kit = { version = "0.11", default-features = false, features = ["component", "assets"] }
 rust-embed = "8"
 anyhow = "1"
 thiserror = "2"
 clap = { version = "4", features = ["derive"] }
 freedesktop-desktop-entry = "0.8"
 freedesktop-icons = "0.4"
-dirs = "6"
-flume = "0.12"
+dirs = "7"
+flume = { version = "0.12", default-features = false, features = ["async"] }
 fuzzy-matcher = "0.3"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -26,30 +24,21 @@ lazy_static = "1.4"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 fend-core = "1.5"
-arboard = { version = "3", features = ["wayland-data-control"] }
+wl-clipboard-rs = "0.9"
 regex = "1"
-emojis = "0.8"
-image = "0.25"
+emojis = "0.9"
+image = { version = "0.25", default-features = false, features = ["png"] }
 wayland-client = "0.31"
 wayland-protocols-wlr = { version = "0.3", features = ["client"] }
 urlencoding = "2"
-llm = "1.3"
+llm = { version = "1.3", default-features = false, features = ["ollama", "google", "openai", "openrouter"] }
 futures = "0.3"
 tokio = { version = "1", features = ["rt", "macros", "sync"] }
-tarpc = { version = "0.37", features = ["serde-transport", "tokio1", "serde1"] }
+tarpc = { version = "0.38", features = ["serde-transport", "tokio1", "serde1"] }
 tokio-serde = { version = "0.9", features = ["json"] }
 tokio-util = { version = "0.7", features = ["codec"] }
-toml = "0.9"
+toml = "1"
 libc = "0.2"
-zbus = { version = "5", default-features = false, features = ["blocking-api"] }
-notify = "8"
-rusqlite = { version = "0.40", features = ["bundled"] }
-
-[patch.crates-io]
-gpui = { git = "https://github.com/zed-industries/zed" }
-zbus = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zbus_macros = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zbus_names = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zvariant = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zvariant_derive = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
-zvariant_utils = { git = "https://github.com/dbus2/zbus.git", tag = "zvariant-5.8.0" }
+zbus = "6"
+notify = "9"
+rusqlite = { version = "0.43", default-features = false, features = ["bundled"] }

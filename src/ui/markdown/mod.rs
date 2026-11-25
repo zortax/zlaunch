@@ -1,6 +1,6 @@
 //! Markdown rendering support for AI responses.
 //!
-//! Uses gpui-component's TextView for full GFM markdown support including:
+//! Uses gpui-kit's TextView for full GFM markdown support including:
 //! - Paragraphs, headings (H1-H6)
 //! - Bold, italic, strikethrough
 //! - Inline code, code blocks with syntax highlighting
@@ -10,13 +10,15 @@
 
 use std::sync::Arc;
 
-use gpui::{App, IntoElement, SharedString, StyleRefinement, Window, div, prelude::*, px, rems};
-use gpui_component::highlighter::HighlightTheme;
-use gpui_component::text::{TextView, TextViewStyle};
+use gpui_kit::component::highlighter::HighlightTheme;
+use gpui_kit::component::text::{TextView, TextViewStyle};
+use gpui_kit::{
+    App, IntoElement, SharedString, StyleRefinement, Window, div, prelude::*, px, rems,
+};
 
 use crate::ui::theme::theme;
 
-/// Render markdown text using gpui-component's TextView.
+/// Render markdown text using gpui-kit's TextView.
 ///
 /// Supports full GFM markdown:
 /// - Paragraphs, headings (H1-H6)
@@ -65,6 +67,7 @@ pub fn render_markdown_with_id(
             .bg(code_block_bg)
             .rounded(code_block_radius),
         is_dark,
+        ..Default::default()
     };
 
     let id: SharedString = id.into();

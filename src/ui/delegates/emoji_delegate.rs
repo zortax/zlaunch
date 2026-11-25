@@ -2,9 +2,9 @@ use crate::emoji::EmojiItem;
 use crate::ui::delegates::BaseDelegate;
 use crate::ui::theme::theme;
 use crate::ui::views::render_emoji_row;
-use gpui::{App, Context, SharedString, Task, Window, div, prelude::*};
-use gpui_component::IndexPath;
-use gpui_component::list::{ListDelegate, ListItem as GpuiListItem, ListState};
+use gpui_kit::component::IndexPath;
+use gpui_kit::component::list::{ListDelegate, ListItem as GpuiListItem, ListState};
+use gpui_kit::{App, Context, SharedString, Task, Window, div, prelude::*};
 
 /// Delegate for the emoji picker grid.
 ///

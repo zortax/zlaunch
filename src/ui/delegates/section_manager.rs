@@ -5,7 +5,7 @@
 
 use crate::config::ConfigModule;
 use crate::items::ListItem;
-use gpui_component::IndexPath;
+use gpui_kit::component::IndexPath;
 
 use super::item_filter::FilteredItem;
 

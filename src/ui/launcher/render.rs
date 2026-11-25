@@ -1,13 +1,13 @@
 //! Rendering implementation for LauncherView.
 
-use gpui::{Context, Length, Window, div, image_cache, prelude::*, px, retain_all};
-use gpui_component::list::List;
-use gpui_component::{ActiveTheme, Icon, IconName};
+use gpui_kit::component::list::List;
+use gpui_kit::component::{ActiveTheme, Icon, IconName};
+use gpui_kit::{Context, Length, Window, div, image_cache, prelude::*, px, retain_all};
 
 use super::LauncherView;
 use super::state::ViewMode;
 
-impl gpui::Render for LauncherView {
+impl gpui_kit::Render for LauncherView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         // Clone theme to avoid borrow conflicts
         let theme = self.current_theme.clone();
@@ -45,7 +45,7 @@ impl gpui::Render for LauncherView {
                     .border_b_1()
                     .border_color(cx.theme().border)
                     .child(
-                        gpui_component::input::Input::new(&self.input_state)
+                        gpui_kit::component::input::Input::new(&self.input_state)
                             .appearance(false)
                             .cleanable(true)
                             .prefix(input_prefix),
@@ -75,12 +75,12 @@ impl gpui::Render for LauncherView {
                 .items_center()
                 .justify_center()
                 // Click on backdrop to close
-                .on_mouse_down(gpui::MouseButton::Left, move |_event, _window, _cx| {
+                .on_mouse_down(gpui_kit::MouseButton::Left, move |_event, _window, _cx| {
                     on_hide();
                 })
                 // Stop click propagation on the panel
                 .child(launcher_panel.on_mouse_down(
-                    gpui::MouseButton::Left,
+                    gpui_kit::MouseButton::Left,
                     |_event, _window, cx| {
                         cx.stop_propagation();
                     },
@@ -108,7 +108,7 @@ impl gpui::Render for LauncherView {
 
 impl LauncherView {
     /// Render the input prefix icon based on current mode and navigation state.
-    fn render_input_prefix(&self, cx: &mut Context<Self>) -> gpui::AnyElement {
+    fn render_input_prefix(&self, cx: &mut Context<Self>) -> gpui_kit::AnyElement {
         match self.view_mode {
             ViewMode::Main => {
                 // Icon based on current launcher mode
@@ -216,7 +216,7 @@ impl LauncherView {
         &mut self,
         window: &mut Window,
         cx: &mut Context<Self>,
-    ) -> gpui::AnyElement {
+    ) -> gpui_kit::AnyElement {
         let theme = &self.current_theme;
 
         match self.view_mode {
@@ -254,7 +254,7 @@ impl LauncherView {
                         // List column
                         .child(
                             div()
-                                .w(Length::Definite(gpui::DefiniteLength::Fraction(0.5)))
+                                .w(Length::Definite(gpui_kit::DefiniteLength::Fraction(0.5)))
                                 .h_full()
                                 .child(List::new(clipboard_state)),
                         )

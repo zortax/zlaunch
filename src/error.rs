@@ -71,10 +71,6 @@ pub enum ConfigError {
 /// Clipboard errors.
 #[derive(Error, Debug, Clone)]
 pub enum ClipboardError {
-    /// Failed to access the clipboard.
-    #[error("Failed to access clipboard: {0}")]
-    AccessFailed(String),
-
     /// Failed to copy content to the clipboard.
     #[error("Failed to copy to clipboard: {0}")]
     CopyFailed(String),

@@ -7,12 +7,12 @@
 
 use crate::clipboard::{
     ClipboardContent, copy_image_to_clipboard, copy_to_clipboard,
-    data::{image_rgba, search_items},
+    data::{image_png, search_items},
 };
 use crate::ui::delegates::ClipboardListDelegate;
-use gpui::{AppContext, Context, Entity, Subscription, Window};
-use gpui_component::input::{InputEvent, InputState};
-use gpui_component::list::ListState;
+use gpui_kit::component::input::{InputEvent, InputState};
+use gpui_kit::component::list::ListState;
+use gpui_kit::{AppContext, Context, Entity, Subscription, Window};
 use std::sync::Arc;
 
 /// Handler for clipboard history mode.
@@ -42,9 +42,9 @@ impl ClipboardModeHandler {
                         tracing::warn!(%e, "Failed to copy text to clipboard");
                     }
                 }
-                ClipboardContent::Image { width, height, .. } => match image_rgba(item) {
-                    Some(rgba) => {
-                        if let Err(e) = copy_image_to_clipboard(*width, *height, &rgba) {
+                ClipboardContent::Image { .. } => match image_png(item) {
+                    Some(png) => {
+                        if let Err(e) = copy_image_to_clipboard(&png) {
                             tracing::warn!(%e, "Failed to copy image to clipboard");
                         }
                     }
